@@ -114,9 +114,15 @@ def crop_unit(unit_id: str, source_root: Path, unit_names: dict[str, str]) -> di
                     )
                     continue
 
-                filename = f"{index:02d}.png"
+                filename = f"{index:02d}.webp"
                 output_path = output_form / filename
-                sheet.crop((left, top, right, bottom)).save(output_path)
+                sheet.crop((left, top, right, bottom)).save(
+                    output_path,
+                    "WEBP",
+                    lossless=True,
+                    quality=100,
+                    method=4,
+                )
 
                 parts.append({
                     "id": f"{form_dir.name}-{index:02d}",
