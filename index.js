@@ -14,9 +14,13 @@ const undoButton = document.querySelector("#undo-button");
 const layerBackButton = document.querySelector("#layer-back-button");
 const layerFrontButton = document.querySelector("#layer-front-button");
 const canvas = document.querySelector("#canvas");
+const canvasWorld = document.querySelector("#canvas-world");
 const selectionFrame = document.querySelector("#selection-frame");
+const marqueeSelection = document.querySelector("#marquee-selection");
 const trashZone = document.querySelector("#trash-zone");
 const unitSelect = document.querySelector("#unit-select");
+const unitSearch = document.querySelector("#unit-search");
+const unitResults = document.querySelector("#unit-results");
 const rankSelect = document.querySelector("#rank-select");
 const unitStatus = document.querySelector("#unit-status");
 const partsList = document.querySelector("#parts-list");
@@ -24,7 +28,13 @@ const unitCatalog = globalThis.UNIT_CATALOG ?? {};
 const history = [];
 let activeParts = new Map();
 let selectedPart = null;
+const selectedParts = new Set();
 let copiedPart = null;
+let matchingUnitIds = [];
+let activeUnitResultIndex = -1;
+let viewScale = 1;
+let viewX = 0;
+let viewY = 0;
 
 const savedTheme = localStorage.getItem("theme");
 const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -66,6 +76,24 @@ function clamp(value, minimum, maximum) {
     return Math.min(Math.max(value, minimum), maximum);
 }
 
+function worldSize() {
+    return { width: canvas.clientWidth, height: canvas.clientHeight };
+}
+
+function clientToWorld(clientX, clientY) {
+    const bounds = canvas.getBoundingClientRect();
+    return {
+        x: (clientX - bounds.left - viewX) / viewScale,
+        y: (clientY - bounds.top - viewY) / viewScale,
+    };
+}
+
+function updateViewTransform() {
+    canvasWorld.style.setProperty("--view-scale", String(viewScale));
+    canvasWorld.style.setProperty("--view-x", `${viewX}px`);
+    canvasWorld.style.setProperty("--view-y", `${viewY}px`);
+}
+
 function positionOf(image) {
     return {
         left: image.style.left,
@@ -93,8 +121,26 @@ function updateLayerButtons() {
 }
 
 function updateSelectionFrame() {
-    if (!selectedPart?.isConnected) {
+    const parts = [...selectedParts].filter((part) => part.isConnected);
+    if (!parts.length) {
         selectionFrame.classList.remove("is-visible");
+        return;
+    }
+
+    if (parts.length > 1) {
+        const bounds = parts.map((part) => part.getBoundingClientRect());
+        const left = Math.min(...bounds.map((bound) => bound.left));
+        const top = Math.min(...bounds.map((bound) => bound.top));
+        const right = Math.max(...bounds.map((bound) => bound.right));
+        const bottom = Math.max(...bounds.map((bound) => bound.bottom));
+        const padding = 10;
+        const center = clientToWorld((left + right) / 2, (top + bottom) / 2);
+        selectionFrame.style.left = `${center.x}px`;
+        selectionFrame.style.top = `${center.y}px`;
+        selectionFrame.style.width = `${(right - left) / viewScale + padding}px`;
+        selectionFrame.style.height = `${(bottom - top) / viewScale + padding}px`;
+        selectionFrame.style.setProperty("--rotation", "0deg");
+        selectionFrame.classList.add("is-visible");
         return;
     }
 
@@ -110,16 +156,27 @@ function updateSelectionFrame() {
     selectionFrame.classList.add("is-visible");
 }
 
-function selectPlacedPart(image) {
-    canvas.querySelectorAll(".placed-part.is-selected").forEach((part) => part.classList.remove("is-selected"));
-    selectedPart = image;
-    if (image) image.classList.add("is-selected");
+function setSelectedParts(parts, primary = parts.at(-1) ?? null) {
+    canvasWorld.querySelectorAll(".placed-part.is-selected, .placed-part.is-primary").forEach((part) => {
+        part.classList.remove("is-selected", "is-primary");
+    });
+    selectedParts.clear();
+    parts.filter((part) => part.isConnected).forEach((part) => {
+        selectedParts.add(part);
+        part.classList.add("is-selected");
+    });
+    selectedPart = selectedParts.has(primary) ? primary : [...selectedParts].at(-1) ?? null;
+    selectedPart?.classList.add("is-primary");
     updateLayerButtons();
     updateSelectionFrame();
 }
 
+function selectPlacedPart(image) {
+    setSelectedParts(image ? [image] : [], image);
+}
+
 function orderedParts() {
-    return [...canvas.querySelectorAll(".placed-part")]
+    return [...canvasWorld.querySelectorAll(".placed-part")]
         .sort((first, second) => Number(first.style.zIndex) - Number(second.style.zIndex));
 }
 
@@ -153,7 +210,7 @@ function restoreImage(image, position) {
     image.style.top = position.top;
     image.style.setProperty("--rotation", position.rotation ?? "0deg");
     setPartScale(image, position.scale ?? "1.6");
-    canvas.append(image);
+    canvasWorld.append(image);
 }
 
 function undo() {
@@ -162,6 +219,7 @@ function undo() {
 
     if (action.type === "add") action.image.remove();
     if (action.type === "move") restoreImage(action.image, action.from);
+    if (action.type === "move-group") action.changes.forEach(({ image, from }) => restoreImage(image, from));
     if (action.type === "rotate") restoreImage(action.image, action.from);
     if (action.type === "scale") restoreImage(action.image, action.from);
     if (action.type === "remove") restoreImage(action.image, action.position);
@@ -184,8 +242,16 @@ function isOverTrash(clientX, clientY) {
 function removePlacedPart(image) {
     if (!image.isConnected) return;
     remember({ type: "remove", image, position: positionOf(image) });
+    const wasSelected = selectedParts.has(image);
+    const remainingParts = [...selectedParts].filter((part) => part !== image && part.isConnected);
     image.remove();
-    if (selectedPart === image) selectPlacedPart(null);
+    if (wasSelected) {
+        setSelectedParts(remainingParts, selectedPart === image ? remainingParts.at(-1) : selectedPart);
+    }
+}
+
+function removeSelectedParts() {
+    [...selectedParts].filter((part) => part.isConnected).forEach(removePlacedPart);
 }
 
 function clearCanvas() {
@@ -233,23 +299,39 @@ function startClearHold(event) {
 
 function makePlacedPartDraggable(image) {
     image.addEventListener("pointerdown", (event) => {
+        if (event.button !== 0) return;
         if (event.target.closest(".rotate-handle")) return;
         event.preventDefault();
-        selectPlacedPart(image);
-        const from = positionOf(image);
-        const startBounds = canvas.getBoundingClientRect();
-        const grabOffsetX = event.clientX - (startBounds.left + Number.parseFloat(image.style.left));
-        const grabOffsetY = event.clientY - (startBounds.top + Number.parseFloat(image.style.top));
+        const dragParts = selectedParts.has(image) && selectedParts.size > 1
+            ? [...selectedParts].filter((part) => part.isConnected)
+            : [image];
+        if (dragParts.length === 1) selectPlacedPart(image);
+
+        const from = dragParts.map((part) => ({ image: part, position: positionOf(part) }));
+        const startPoint = clientToWorld(event.clientX, event.clientY);
+        const imagePosition = positionOf(image);
+        const grabOffsetX = startPoint.x - Number.parseFloat(imagePosition.left);
+        const grabOffsetY = startPoint.y - Number.parseFloat(imagePosition.top);
         let moved = false;
         let overTrash = false;
         image.setPointerCapture(event.pointerId);
 
         const move = (pointerEvent) => {
-            const bounds = canvas.getBoundingClientRect();
-            image.style.left = `${clamp(pointerEvent.clientX - bounds.left - grabOffsetX, 0, bounds.width)}px`;
-            image.style.top = `${clamp(pointerEvent.clientY - bounds.top - grabOffsetY, 0, bounds.height)}px`;
+            const point = clientToWorld(pointerEvent.clientX, pointerEvent.clientY);
+            const size = worldSize();
+            if (dragParts.length > 1) {
+                const deltaX = point.x - startPoint.x;
+                const deltaY = point.y - startPoint.y;
+                from.forEach(({ image: part, position }) => {
+                    part.style.left = `${clamp(Number.parseFloat(position.left) + deltaX, 0, size.width)}px`;
+                    part.style.top = `${clamp(Number.parseFloat(position.top) + deltaY, 0, size.height)}px`;
+                });
+            } else {
+                image.style.left = `${clamp(point.x - grabOffsetX, 0, size.width)}px`;
+                image.style.top = `${clamp(point.y - grabOffsetY, 0, size.height)}px`;
+            }
             updateSelectionFrame();
-            overTrash = isOverTrash(pointerEvent.clientX, pointerEvent.clientY);
+            overTrash = dragParts.length === 1 && isOverTrash(pointerEvent.clientX, pointerEvent.clientY);
             trashZone.classList.toggle("is-ready", overTrash);
             moved = true;
         };
@@ -260,11 +342,15 @@ function makePlacedPartDraggable(image) {
             trashZone.classList.remove("is-ready");
 
             if (overTrash) {
-                image.style.left = from.left;
-                image.style.top = from.top;
+                image.style.left = from[0].position.left;
+                image.style.top = from[0].position.top;
                 removePlacedPart(image);
-            } else if (moved && (image.style.left !== from.left || image.style.top !== from.top)) {
-                remember({ type: "move", image, from, to: positionOf(image) });
+            } else if (moved && dragParts.length === 1 && (image.style.left !== from[0].position.left || image.style.top !== from[0].position.top)) {
+                remember({ type: "move", image, from: from[0].position, to: positionOf(image) });
+            } else if (moved && dragParts.length > 1) {
+                const changes = from.map(({ image: part, position }) => ({ image: part, from: position, to: positionOf(part) }))
+                    .filter(({ from: before, to }) => before.left !== to.left || before.top !== to.top);
+                if (changes.length) remember({ type: "move-group", changes });
             }
         };
 
@@ -272,6 +358,110 @@ function makePlacedPartDraggable(image) {
         image.addEventListener("pointerup", stop);
         image.addEventListener("pointercancel", stop);
     });
+}
+
+function startMarqueeSelection(event) {
+    if (event.button !== 0 || event.target !== canvasWorld) return;
+    event.preventDefault();
+    selectionFrame.classList.remove("is-visible");
+
+    const canvasBounds = canvas.getBoundingClientRect();
+    const start = {
+        x: clamp(event.clientX - canvasBounds.left, 0, canvasBounds.width),
+        y: clamp(event.clientY - canvasBounds.top, 0, canvasBounds.height),
+    };
+    let hasDragged = false;
+    canvas.setPointerCapture(event.pointerId);
+    marqueeSelection.classList.add("is-visible");
+
+    const drawMarquee = (pointerEvent) => {
+        const endX = clamp(pointerEvent.clientX - canvasBounds.left, 0, canvasBounds.width);
+        const endY = clamp(pointerEvent.clientY - canvasBounds.top, 0, canvasBounds.height);
+        const left = Math.min(start.x, endX);
+        const top = Math.min(start.y, endY);
+        const width = Math.abs(endX - start.x);
+        const height = Math.abs(endY - start.y);
+        marqueeSelection.style.left = `${left}px`;
+        marqueeSelection.style.top = `${top}px`;
+        marqueeSelection.style.width = `${width}px`;
+        marqueeSelection.style.height = `${height}px`;
+        hasDragged ||= width > 4 || height > 4;
+    };
+
+    const finish = (pointerEvent) => {
+        canvas.removeEventListener("pointermove", drawMarquee);
+        canvas.removeEventListener("pointerup", finish);
+        canvas.removeEventListener("pointercancel", cancel);
+        marqueeSelection.classList.remove("is-visible");
+        if (!hasDragged) {
+            selectPlacedPart(null);
+            return;
+        }
+
+        const endX = clamp(pointerEvent.clientX, canvasBounds.left, canvasBounds.right);
+        const endY = clamp(pointerEvent.clientY, canvasBounds.top, canvasBounds.bottom);
+        const left = Math.min(event.clientX, endX);
+        const right = Math.max(event.clientX, endX);
+        const top = Math.min(event.clientY, endY);
+        const bottom = Math.max(event.clientY, endY);
+        const partsInRange = orderedParts().filter((part) => {
+            const bounds = part.getBoundingClientRect();
+            return bounds.left < right && bounds.right > left && bounds.top < bottom && bounds.bottom > top;
+        });
+        setSelectedParts(partsInRange);
+    };
+
+    const cancel = () => {
+        canvas.removeEventListener("pointermove", drawMarquee);
+        canvas.removeEventListener("pointerup", finish);
+        canvas.removeEventListener("pointercancel", cancel);
+        marqueeSelection.classList.remove("is-visible");
+    };
+
+    canvas.addEventListener("pointermove", drawMarquee);
+    canvas.addEventListener("pointerup", finish);
+    canvas.addEventListener("pointercancel", cancel);
+}
+
+function zoomCanvas(event) {
+    if (event.target.closest("button, input, select")) return;
+    event.preventDefault();
+    const bounds = canvas.getBoundingClientRect();
+    const worldPoint = clientToWorld(event.clientX, event.clientY);
+    const nextScale = clamp(viewScale * Math.exp(-event.deltaY * 0.0015), 0.5, 2.5);
+    viewX = event.clientX - bounds.left - worldPoint.x * nextScale;
+    viewY = event.clientY - bounds.top - worldPoint.y * nextScale;
+    viewScale = nextScale;
+    updateViewTransform();
+    updateSelectionFrame();
+}
+
+function startCanvasPan(event) {
+    if (event.button !== 1 && event.button !== 2) return;
+    event.preventDefault();
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const originX = viewX;
+    const originY = viewY;
+    canvas.setPointerCapture(event.pointerId);
+    canvas.classList.add("is-panning");
+
+    const move = (pointerEvent) => {
+        viewX = originX + pointerEvent.clientX - startX;
+        viewY = originY + pointerEvent.clientY - startY;
+        updateViewTransform();
+        updateSelectionFrame();
+    };
+    const stop = () => {
+        canvas.removeEventListener("pointermove", move);
+        canvas.removeEventListener("pointerup", stop);
+        canvas.removeEventListener("pointercancel", stop);
+        canvas.classList.remove("is-panning");
+    };
+
+    canvas.addEventListener("pointermove", move);
+    canvas.addEventListener("pointerup", stop);
+    canvas.addEventListener("pointercancel", stop);
 }
 
 function makePlacedPartRotatable(image) {
@@ -304,21 +494,9 @@ function makePlacedPartRotatable(image) {
     });
 }
 
-function makePlacedPartScalable(image) {
-    image.addEventListener("wheel", (event) => {
-        event.preventDefault();
-        selectPlacedPart(image);
-        const from = positionOf(image);
-        const currentScale = Number.parseFloat(from.scale);
-        const nextScale = clamp(currentScale + (event.deltaY < 0 ? 0.1 : -0.1), 0.4, 3.5);
-        setPartScale(image, nextScale);
-        updateSelectionFrame();
-        remember({ type: "scale", image, from, to: positionOf(image) });
-    }, { passive: false });
-}
-
 function addPartToCanvas(part, clientX, clientY, options = {}) {
-    const bounds = canvas.getBoundingClientRect();
+    const size = worldSize();
+    const point = clientToWorld(clientX, clientY);
     const placedPart = document.createElement("div");
     const image = document.createElement("img");
     const rotateHandle = document.createElement("button");
@@ -332,16 +510,14 @@ function addPartToCanvas(part, clientX, clientY, options = {}) {
     rotateHandle.type = "button";
     rotateHandle.setAttribute("aria-label", "拖曳旋轉物件");
     placedPart.style.zIndex = String(orderedParts().length + 1);
-    placedPart.style.left = `${clamp(clientX - bounds.left, 0, bounds.width)}px`;
-    placedPart.style.top = `${clamp(clientY - bounds.top, 0, bounds.height)}px`;
+    placedPart.style.left = `${clamp(point.x, 0, size.width)}px`;
+    placedPart.style.top = `${clamp(point.y, 0, size.height)}px`;
     placedPart.style.setProperty("--rotation", options.rotation ?? "0deg");
     setPartScale(placedPart, options.scale ?? "1.6");
-    placedPart.addEventListener("dblclick", () => removePlacedPart(placedPart));
     placedPart.append(image, rotateHandle);
     makePlacedPartDraggable(placedPart);
     makePlacedPartRotatable(placedPart);
-    makePlacedPartScalable(placedPart);
-    canvas.append(placedPart);
+    canvasWorld.append(placedPart);
     selectPlacedPart(placedPart);
     remember({ type: "add", image: placedPart });
 }
@@ -359,10 +535,11 @@ function copySelectedPart() {
 function pasteCopiedPart() {
     if (!copiedPart) return;
     const bounds = canvas.getBoundingClientRect();
+    const size = worldSize();
     const selectedPosition = selectedPart ? positionOf(selectedPart) : null;
-    const offsetX = selectedPosition ? Number.parseFloat(selectedPosition.left) + 24 : bounds.width / 2;
-    const offsetY = selectedPosition ? Number.parseFloat(selectedPosition.top) + 24 : bounds.height / 2;
-    addPartToCanvas(copiedPart, bounds.left + offsetX, bounds.top + offsetY, { rotation: copiedPart.rotation, scale: copiedPart.scale });
+    const offsetX = selectedPosition ? Number.parseFloat(selectedPosition.left) + 24 : size.width / 2;
+    const offsetY = selectedPosition ? Number.parseFloat(selectedPosition.top) + 24 : size.height / 2;
+    addPartToCanvas(copiedPart, bounds.left + viewX + offsetX * viewScale, bounds.top + viewY + offsetY * viewScale, { rotation: copiedPart.rotation, scale: copiedPart.scale });
 }
 
 function renderParts() {
@@ -381,6 +558,8 @@ function renderParts() {
         card.setAttribute("aria-label", `拖曳 ${part.form} 階級部件：${part.name}`);
         image.src = part.src;
         image.alt = "";
+        image.loading = "lazy";
+        image.decoding = "async";
         card.addEventListener("dragstart", (event) => {
             event.dataTransfer.effectAllowed = "copy";
             event.dataTransfer.setData("text/plain", part.id);
@@ -400,13 +579,78 @@ function updateRankOptions() {
     if (!forms.has(rankSelect.value)) rankSelect.value = [...forms][0] ?? "f";
 }
 
+function unitLabel(unitId) {
+    const name = unitCatalog[unitId]?.name;
+    return name && name !== unitId ? `${unitId} ${name}` : unitId;
+}
+
+function closeUnitResults() {
+    unitResults.classList.remove("is-open");
+    unitSearch.setAttribute("aria-expanded", "false");
+    activeUnitResultIndex = -1;
+}
+
+function updateActiveUnitResult() {
+    unitResults.querySelectorAll(".unit-result").forEach((result, index) => {
+        const isActive = index === activeUnitResultIndex;
+        result.classList.toggle("is-active", isActive);
+        result.setAttribute("aria-selected", String(isActive));
+        if (isActive) result.scrollIntoView({ block: "nearest" });
+    });
+}
+
+function chooseUnit(unitId) {
+    if (!unitCatalog[unitId]) return;
+    unitSelect.value = unitId;
+    unitSearch.value = unitLabel(unitId);
+    closeUnitResults();
+    updateRankOptions();
+    renderParts();
+}
+
+function renderUnitResults() {
+    const query = unitSearch.value.trim().toLocaleLowerCase();
+    matchingUnitIds = Object.keys(unitCatalog)
+        .sort()
+        .filter((unitId) => unitLabel(unitId).toLocaleLowerCase().includes(query));
+    activeUnitResultIndex = -1;
+    unitResults.replaceChildren();
+
+    if (!matchingUnitIds.length) {
+        const empty = document.createElement("p");
+        empty.className = "unit-result-empty";
+        empty.textContent = "找不到角色";
+        unitResults.append(empty);
+    } else {
+        for (const unitId of matchingUnitIds) {
+            const result = document.createElement("button");
+            const id = document.createElement("span");
+            const name = document.createElement("span");
+            result.className = "unit-result";
+            result.type = "button";
+            result.setAttribute("role", "option");
+            id.className = "unit-result-id";
+            name.className = "unit-result-name";
+            id.textContent = unitId;
+            name.textContent = unitCatalog[unitId].name ?? "";
+            result.append(id, name);
+            result.addEventListener("click", () => chooseUnit(unitId));
+            unitResults.append(result);
+        }
+    }
+
+    unitResults.classList.add("is-open");
+    unitSearch.setAttribute("aria-expanded", "true");
+}
+
 function populateUnitSelect() {
     for (const unitId of Object.keys(unitCatalog).sort()) {
         const option = document.createElement("option");
         option.value = unitId;
-        option.textContent = unitId;
+        option.textContent = unitLabel(unitId);
         unitSelect.append(option);
     }
+    unitSearch.value = "";
     updateRankOptions();
 }
 
@@ -443,11 +687,35 @@ undoButton.addEventListener("click", undo);
 layerBackButton.addEventListener("click", () => moveSelectedLayer(-1));
 layerFrontButton.addEventListener("click", () => moveSelectedLayer(1));
 trashZone.addEventListener("pointerdown", startClearHold);
-unitSelect.addEventListener("change", () => {
-    updateRankOptions();
-    renderParts();
+unitSearch.addEventListener("focus", renderUnitResults);
+unitSearch.addEventListener("input", renderUnitResults);
+unitSearch.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        event.preventDefault();
+        if (!unitResults.classList.contains("is-open")) renderUnitResults();
+        if (!matchingUnitIds.length) return;
+        const direction = event.key === "ArrowDown" ? 1 : -1;
+        activeUnitResultIndex = (activeUnitResultIndex + direction + matchingUnitIds.length) % matchingUnitIds.length;
+        updateActiveUnitResult();
+    }
+    if (event.key === "Enter") {
+        event.preventDefault();
+        chooseUnit(matchingUnitIds[activeUnitResultIndex] ?? matchingUnitIds[0]);
+    }
+    if (event.key === "Escape") {
+        unitSearch.value = unitLabel(unitSelect.value);
+        closeUnitResults();
+        unitSearch.blur();
+    }
+});
+document.addEventListener("pointerdown", (event) => {
+    if (!event.target.closest(".unit-search")) closeUnitResults();
 });
 rankSelect.addEventListener("change", renderParts);
+canvas.addEventListener("pointerdown", startMarqueeSelection);
+canvas.addEventListener("pointerdown", startCanvasPan);
+canvas.addEventListener("wheel", zoomCanvas, { passive: false });
+canvas.addEventListener("contextmenu", (event) => event.preventDefault());
 canvas.addEventListener("dragover", (event) => event.preventDefault());
 canvas.addEventListener("drop", (event) => {
     event.preventDefault();
@@ -477,20 +745,21 @@ window.addEventListener("keydown", (event) => {
         return;
     }
 
-    if (!selectedPart) return;
-
     if (event.key === "Delete" || event.key === "Backspace") {
+        if (!selectedParts.size) return;
         event.preventDefault();
-        removePlacedPart(selectedPart);
+        removeSelectedParts();
         return;
     }
 
-    if (event.key === "ArrowUp") {
+    if (!selectedPart) return;
+
+    if (event.key === "ArrowUp" || event.key.toLowerCase() === "w") {
         event.preventDefault();
         moveSelectedLayer(1);
     }
 
-    if (event.key === "ArrowDown") {
+    if (event.key === "ArrowDown" || event.key.toLowerCase() === "s") {
         event.preventDefault();
         moveSelectedLayer(-1);
     }

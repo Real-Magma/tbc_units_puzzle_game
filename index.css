@@ -251,6 +251,17 @@ html, body, .app-frame, .rounded-box, .side-panel, .help-dialog, .icon-button, .
     -webkit-user-select: none;
 }
 
+.canvas-world {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    transform: translate(var(--view-x, 0px), var(--view-y, 0px)) scale(var(--view-scale, 1));
+    transform-origin: 0 0;
+    will-change: transform;
+}
+
+.rounded-box.is-panning { cursor: grabbing; }
+
 .placed-part {
     position: absolute;
     transform: translate(-50%, -50%) scale(var(--scale, 1.6)) rotate(var(--rotation, 0deg));
@@ -280,6 +291,18 @@ html, body, .app-frame, .rounded-box, .side-panel, .help-dialog, .icon-button, .
 }
 
 .selection-frame.is-visible { display: block; }
+
+.marquee-selection {
+    position: absolute;
+    z-index: 1001;
+    display: none;
+    box-sizing: border-box;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.1);
+    pointer-events: none;
+}
+
+.marquee-selection.is-visible { display: block; }
 
 .selection-corner {
     position: absolute;
@@ -337,7 +360,7 @@ html, body, .app-frame, .rounded-box, .side-panel, .help-dialog, .icon-button, .
     cursor: grab;
 }
 
-.placed-part.is-selected .rotate-handle {
+.placed-part.is-primary .rotate-handle {
     display: block;
 }
 
@@ -347,6 +370,7 @@ html, body, .app-frame, .rounded-box, .side-panel, .help-dialog, .icon-button, .
     right: 18px;
     z-index: 1001;
     display: flex;
+    z-index: 2;
     gap: 6px;
 }
 
@@ -383,6 +407,7 @@ html, body, .app-frame, .rounded-box, .side-panel, .help-dialog, .icon-button, .
 
 .trash-zone {
     position: absolute;
+    z-index: 2;
     right: 18px;
     bottom: 18px;
     display: grid;
@@ -443,7 +468,8 @@ html, body, .app-frame, .rounded-box, .side-panel, .help-dialog, .icon-button, .
     font-weight: 700;
 }
 
-.unit-panel select {
+.unit-panel select,
+.unit-search input {
     width: 100%;
     margin: 0 0 16px;
     padding: 9px 8px;
@@ -454,6 +480,47 @@ html, body, .app-frame, .rounded-box, .side-panel, .help-dialog, .icon-button, .
     font-family: "GenJyuuGothic", sans-serif;
     font-weight: 700;
 }
+
+.unit-search { position: relative; }
+.unit-search input { margin-bottom: 16px; }
+
+.unit-results {
+    position: absolute;
+    top: calc(100% - 16px);
+    right: 0;
+    left: 0;
+    z-index: 10;
+    display: none;
+    max-height: min(300px, 45vh);
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: var(--panel-bg);
+    box-shadow: var(--shadow);
+}
+
+.unit-results.is-open { display: block; }
+
+.unit-result {
+    display: flex;
+    width: 100%;
+    gap: 8px;
+    padding: 9px 10px;
+    border: 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 18%, transparent);
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    font-family: "GenJyuuGothic", sans-serif;
+    font-size: 0.78rem;
+    text-align: left;
+}
+
+.unit-result:last-child { border-bottom: 0; }
+.unit-result:hover, .unit-result.is-active { background: var(--button-hover-bg); }
+.unit-result-id { flex: 0 0 32px; }
+.unit-result-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.unit-result-empty { padding: 10px; color: color-mix(in srgb, var(--text) 65%, transparent); font-family: "GenJyuuGothic", sans-serif; font-size: 0.78rem; }
 
 .parts-list {
     display: grid;

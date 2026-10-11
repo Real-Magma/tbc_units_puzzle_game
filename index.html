@@ -30,12 +30,15 @@
                 <section class="game-column" aria-label="遊戲主畫面">
                     <div class="play-area">
                         <div id="canvas" class="rounded-box" aria-label="拼圖遊戲區">
-                            <div id="selection-frame" class="selection-frame" aria-hidden="true">
-                                <span class="selection-corner corner-top-left"></span>
-                                <span class="selection-corner corner-top-right"></span>
-                                <span class="selection-corner corner-bottom-left"></span>
-                                <span class="selection-corner corner-bottom-right"></span>
+                            <div id="canvas-world" class="canvas-world">
+                                <div id="selection-frame" class="selection-frame" aria-hidden="true">
+                                    <span class="selection-corner corner-top-left"></span>
+                                    <span class="selection-corner corner-top-right"></span>
+                                    <span class="selection-corner corner-bottom-left"></span>
+                                    <span class="selection-corner corner-bottom-right"></span>
+                                </div>
                             </div>
+                            <div id="marquee-selection" class="marquee-selection" aria-hidden="true"></div>
                             <div class="layer-controls" aria-label="圖層控制">
                                 <button id="layer-front-button" class="layer-button" type="button" aria-label="上移一層（↑）" title="上移一層（↑）" disabled>
                                     <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
@@ -54,8 +57,12 @@
                 </section>
                 <aside class="side-panel" aria-label="單位與物品面板">
                     <div class="unit-panel">
-                        <label for="unit-select">角色</label>
-                        <select id="unit-select" aria-describedby="unit-status"></select>
+                        <label for="unit-search">角色</label>
+                        <div class="unit-search">
+                            <input id="unit-search" type="search" autocomplete="off" placeholder="搜尋編號或名稱" aria-describedby="unit-status" aria-controls="unit-results" aria-expanded="false">
+                            <div id="unit-results" class="unit-results" role="listbox" aria-label="角色搜尋結果"></div>
+                        </div>
+                        <select id="unit-select" hidden></select>
                         <label for="rank-select">階級</label>
                         <select id="rank-select" aria-describedby="unit-status">
                             <option value="f">1 階</option>
@@ -90,11 +97,15 @@
             </div>
             <div class="help-step">
                 <span class="help-visual help-frame" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-                <p><strong>調整</strong><br>左鍵拖移, 滾輪縮放, 圓點旋轉</p>
+                <p><strong>調整物件</strong><br>左鍵拖移，圓點旋轉</p>
+            </div>
+            <div class="help-step">
+                <span class="help-visual"><i class="fa-solid fa-vector-square"></i></span>
+                <p><strong>畫布與框選</strong><br>滾輪縮放；右鍵／中鍵平移；空白處拖拉可多選</p>
             </div>
             <div class="help-step">
                 <span class="help-visual"><i class="fa-solid fa-layer-group"></i></span>
-                <p><strong>調整圖層</strong><br><kbd>↑</kbd><kbd>↓</kbd> or 上下按鈕</p>
+                <p><strong>調整圖層</strong><br><kbd>↑</kbd><kbd>↓</kbd> / <kbd>W</kbd><kbd>S</kbd> 或上下按鈕</p>
             </div>
             <div class="help-step">
                 <span class="help-visual"><i class="fa-solid fa-copy"></i></span>
@@ -104,7 +115,7 @@
             </div>
             <div class="help-step">
                 <span class="help-visual"><i class="fa-solid fa-trash-can"></i></span>
-                <p><strong>刪除</strong><br><kbd>Delete</kbd> or 雙擊 or 拖到垃圾桶</p>
+                <p><strong>刪除</strong><br><kbd>Backspace</kbd> / <kbd>Delete</kbd> 或拖到垃圾桶</p>
                 <p> / </p>
                 <p><strong>清空全部</strong><br>長按垃圾桶</p>
             </div>
