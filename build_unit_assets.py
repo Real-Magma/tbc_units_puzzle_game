@@ -133,6 +133,45 @@ def crop_unit(unit_id: str, source_root: Path, unit_names: dict[str, str]) -> di
     return {"id": unit_id, "name": unit_name or unit_id, "folder": folder_name, "parts": parts}
 
 
+def write_browser_catalogs(catalog: dict[str, dict[str, object]]) -> None:
+    """Write the legacy catalog plus lightweight index and per-unit manifests."""
+    catalog_path = ASSET_ROOT / "catalog.json"
+    catalog_path.write_text(json.dumps(catalog, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    catalog_script_path = ASSET_ROOT / "catalog.js"
+    catalog_script_path.write_text(
+        f"window.UNIT_CATALOG = {json.dumps(catalog, ensure_ascii=False)};\n",
+        encoding="utf-8",
+    )
+
+    manifests_root = ASSET_ROOT / "manifests"
+    manifests_root.mkdir(exist_ok=True)
+    unit_index: dict[str, dict[str, object]] = {}
+    for unit_id, entry in catalog.items():
+        parts = entry.get("parts", [])
+        unit_index[unit_id] = {
+            "id": entry.get("id", unit_id),
+            "name": entry.get("name", unit_id),
+            "folder": entry.get("folder", unit_id),
+            "forms": sorted({part["form"] for part in parts if "form" in part}),
+        }
+        (manifests_root / f"{unit_id}.json").write_text(
+            json.dumps(entry, ensure_ascii=False, separators=(",", ":")),
+            encoding="utf-8",
+        )
+        (manifests_root / f"{unit_id}.js").write_text(
+            "window.UNIT_MANIFESTS ??= {};"
+            f"window.UNIT_MANIFESTS[{json.dumps(unit_id)}]="
+            f"{json.dumps(entry, ensure_ascii=False, separators=(',', ':'))};\n",
+            encoding="utf-8",
+        )
+
+    (ASSET_ROOT / "index.js").write_text(
+        f"window.UNIT_INDEX = {json.dumps(unit_index, ensure_ascii=False, separators=(',', ':'))};\n",
+        encoding="utf-8",
+    )
+
+
 def main() -> None:
     arguments = sys.argv[1:]
     refresh_names_only = "--refresh-names" in arguments
@@ -169,12 +208,7 @@ def main() -> None:
             print(f"已處理角色 {unit_id}：{len(catalog[unit_id]['parts'])} 個部件")
     finally:
         # Keep the successfully processed units available even if a later file is broken.
-        catalog_path.write_text(json.dumps(catalog, ensure_ascii=False, indent=2), encoding="utf-8")
-        catalog_script_path = ASSET_ROOT / "catalog.js"
-        catalog_script_path.write_text(
-            f"window.UNIT_CATALOG = {json.dumps(catalog, ensure_ascii=False)};\n",
-            encoding="utf-8",
-        )
+        write_browser_catalogs(catalog)
 
 
 if __name__ == "__main__":

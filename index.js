@@ -42,7 +42,9 @@ const unitResults = document.querySelector("#unit-results");
 const rankSelect = document.querySelector("#rank-select");
 const unitStatus = document.querySelector("#unit-status");
 const partsList = document.querySelector("#parts-list");
-const unitCatalog = globalThis.UNIT_CATALOG ?? {};
+let unitCatalog = {};
+let unitIndex = globalThis.UNIT_INDEX ?? {};
+const loadingUnits = new Map();
 const history = [];
 let activeParts = new Map();
 let selectedPart = null;
@@ -1372,6 +1374,12 @@ function pasteCopiedParts() {
 
 function renderParts() {
     const unit = unitCatalog[unitSelect.value];
+    if (!unit) {
+        activeParts = new Map();
+        partsList.replaceChildren();
+        unitStatus.textContent = "正在載入角色部件…";
+        return;
+    }
     const parts = unit?.parts.filter((part) => part.form === rankSelect.value) ?? [];
     activeParts = new Map(parts.map((part) => [part.id, part]));
     partsList.replaceChildren();
@@ -1408,14 +1416,45 @@ function renderParts() {
 }
 
 function updateRankOptions() {
-    const forms = new Set(unitCatalog[unitSelect.value]?.parts.map((part) => part.form));
+    const unit = unitCatalog[unitSelect.value];
+    if (!unit) return;
+    const forms = new Set(unit.parts.map((part) => part.form));
     for (const option of rankSelect.options) option.disabled = !forms.has(option.value);
     if (!forms.has(rankSelect.value)) rankSelect.value = [...forms][0] ?? "f";
 }
 
 function unitLabel(unitId) {
-    const name = unitCatalog[unitId]?.name;
+    const name = unitIndex[unitId]?.name ?? unitCatalog[unitId]?.name;
     return name && name !== unitId ? `${unitId} ${name}` : unitId;
+}
+
+function ensureUnitLoaded(unitId) {
+    if (unitCatalog[unitId]) return Promise.resolve(unitCatalog[unitId]);
+    if (loadingUnits.has(unitId)) return loadingUnits.get(unitId);
+
+    const request = new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.async = true;
+        script.src = `assets/units/manifests/${encodeURIComponent(unitId)}.js`;
+        script.onload = () => {
+            const unit = globalThis.UNIT_MANIFESTS?.[unitId];
+            script.remove();
+            if (!unit) {
+                reject(new Error(`角色 ${unitId} 的資料格式無效`));
+                return;
+            }
+            unitCatalog[unitId] = unit;
+            resolve(unit);
+        };
+        script.onerror = () => {
+            script.remove();
+            reject(new Error(`無法載入角色 ${unitId}`));
+        };
+        document.head.append(script);
+    }).finally(() => loadingUnits.delete(unitId));
+
+    loadingUnits.set(unitId, request);
+    return request;
 }
 
 function closeUnitResults() {
@@ -1433,18 +1472,30 @@ function updateActiveUnitResult() {
     });
 }
 
-function chooseUnit(unitId) {
-    if (!unitCatalog[unitId]) return;
+async function chooseUnit(unitId) {
+    if (!unitIndex[unitId]) return;
     unitSelect.value = unitId;
     unitSearch.value = unitLabel(unitId);
     closeUnitResults();
+    unitStatus.textContent = "正在載入角色部件…";
+    partsList.replaceChildren();
+
+    try {
+        await ensureUnitLoaded(unitId);
+    } catch (error) {
+        console.error(error);
+        if (unitSelect.value === unitId) unitStatus.textContent = "角色部件載入失敗，請再試一次。";
+        return;
+    }
+
+    if (unitSelect.value !== unitId) return;
     updateRankOptions();
     renderParts();
 }
 
 function renderUnitResults() {
     const query = unitSearch.value.trim().toLocaleLowerCase();
-    matchingUnitIds = Object.keys(unitCatalog)
+    matchingUnitIds = Object.keys(unitIndex)
         .sort()
         .filter((unitId) => unitLabel(unitId).toLocaleLowerCase().includes(query));
     activeUnitResultIndex = -1;
@@ -1466,7 +1517,7 @@ function renderUnitResults() {
             id.className = "unit-result-id";
             name.className = "unit-result-name";
             id.textContent = unitId;
-            name.textContent = unitCatalog[unitId].name ?? "";
+            name.textContent = unitIndex[unitId].name ?? "";
             result.append(id, name);
             result.addEventListener("click", () => chooseUnit(unitId));
             unitResults.append(result);
@@ -1478,22 +1529,39 @@ function renderUnitResults() {
 }
 
 function populateUnitSelect() {
-    for (const unitId of Object.keys(unitCatalog).sort()) {
+    for (const unitId of Object.keys(unitIndex).sort()) {
         const option = document.createElement("option");
         option.value = unitId;
         option.textContent = unitLabel(unitId);
         unitSelect.append(option);
     }
     unitSearch.value = "";
-    updateRankOptions();
+}
+
+function initializeUnitIndex() {
+    unitIndex = globalThis.UNIT_INDEX ?? {};
+    if (!Object.keys(unitIndex).length || unitSelect.options.length) return;
+    populateUnitSelect();
+    const initialUnitId = unitSelect.value;
+    unitStatus.textContent = "正在載入角色部件…";
+    ensureUnitLoaded(initialUnitId)
+        .then(() => {
+            if (unitSelect.value !== initialUnitId) return;
+            updateRankOptions();
+            renderParts();
+        })
+        .catch((error) => {
+            console.error(error);
+            unitStatus.textContent = "角色部件載入失敗，請重新選擇角色。";
+        });
 }
 
 setTheme(initialTheme);
 setVolume(initialVolume);
 setMuted(initialMuted);
 setEffectsMuted(initialEffectsMuted);
-populateUnitSelect();
-renderParts();
+initializeUnitIndex();
+window.addEventListener("unitindexready", initializeUnitIndex);
 resetCanvasView();
 updateUndoButton();
 makeSelectedGroupRotatable();
