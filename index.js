@@ -905,6 +905,7 @@ setMuted(initialMuted);
 setEffectsMuted(initialEffectsMuted);
 populateUnitSelect();
 renderParts();
+resetCanvasView();
 updateUndoButton();
 makeSelectedGroupRotatable();
 makeSelectionScalable();
