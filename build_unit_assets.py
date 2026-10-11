@@ -16,7 +16,7 @@ from PIL import Image
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
-DEFAULT_SOURCE_ROOT = PROJECT_ROOT / "org" / "unit"
+DEFAULT_SOURCE_ROOT = PROJECT_ROOT / "assets" / "units_original"
 ASSET_ROOT = PROJECT_ROOT / "assets" / "units"
 
 
