@@ -32,14 +32,19 @@
                         <div id="canvas" class="rounded-box" aria-label="拼圖遊戲區">
                             <div id="canvas-world" class="canvas-world">
                                 <div id="selection-frame" class="selection-frame" aria-hidden="true">
-                                    <span class="selection-corner corner-top-left"></span>
-                                    <span class="selection-corner corner-top-right"></span>
-                                    <span class="selection-corner corner-bottom-left"></span>
-                                    <span class="selection-corner corner-bottom-right"></span>
+                                    <button class="selection-corner corner-top-left" type="button" data-corner="top-left" aria-label="縮放選取物件"></button>
+                                    <button class="selection-corner corner-top-right" type="button" data-corner="top-right" aria-label="縮放選取物件"></button>
+                                    <button class="selection-corner corner-bottom-left" type="button" data-corner="bottom-left" aria-label="縮放選取物件"></button>
+                                    <button class="selection-corner corner-bottom-right" type="button" data-corner="bottom-right" aria-label="縮放選取物件"></button>
+                                    <button id="selection-rotate-handle" class="selection-rotate-handle" type="button" aria-label="旋轉選取物件"></button>
                                 </div>
                             </div>
                             <div id="marquee-selection" class="marquee-selection" aria-hidden="true"></div>
                             <div class="layer-controls" aria-label="圖層控制">
+                                <button id="view-home-button" class="layer-button" type="button" aria-label="回到畫布原點" title="回到原點">
+                                    <i class="fa-solid fa-house" aria-hidden="true"></i>
+                                    <span class="icon-tooltip" aria-hidden="true">回到原點</span>
+                                </button>
                                 <button id="layer-front-button" class="layer-button" type="button" aria-label="上移一層（↑）" title="上移一層（↑）" disabled>
                                     <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
                                     <span class="icon-tooltip" aria-hidden="true">上層</span>
@@ -97,15 +102,15 @@
             </div>
             <div class="help-step">
                 <span class="help-visual help-frame" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-                <p><strong>調整物件</strong><br>左鍵拖移，圓點旋轉</p>
+                <p><strong>調整物件</strong><br>左鍵拖移；圓點旋轉；拖四角可縮放</p>
             </div>
             <div class="help-step">
                 <span class="help-visual"><i class="fa-solid fa-vector-square"></i></span>
-                <p><strong>畫布與框選</strong><br>滾輪縮放；右鍵／中鍵平移；空白處拖拉可多選</p>
+                <p><strong>畫布與框選</strong><br>無邊界畫布；滾輪縮放；右鍵／中鍵平移；房子回原點</p>
             </div>
             <div class="help-step">
                 <span class="help-visual"><i class="fa-solid fa-layer-group"></i></span>
-                <p><strong>調整圖層</strong><br><kbd>↑</kbd><kbd>↓</kbd> / <kbd>W</kbd><kbd>S</kbd> 或上下按鈕</p>
+                <p><strong>調整圖層</strong><br><kbd>↑</kbd><kbd>↓</kbd> / <kbd>W</kbd><kbd>S</kbd>；加 <kbd>Shift</kbd> 直達最上／下層</p>
             </div>
             <div class="help-step">
                 <span class="help-visual"><i class="fa-solid fa-copy"></i></span>
