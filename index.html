@@ -1,14 +1,52 @@
 <!doctype html>
-
 <html lang="zh-Hant">
-
 <head>
     <meta charset="UTF-8">
-    <title>tbc puzzle game website</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TBC Units Puzzle Game</title>
+    <link rel="stylesheet" href="index.css">
+    <script src="https://kit.fontawesome.com/9e790ea2d1.js" crossorigin="anonymous"></script>
 </head>
-
 <body>
-    <h1>hello</h1>
-</body>
+    <main id="game" aria-label="TBC Units Puzzle Game">
+        <section class="app-frame">
+            <header class="top-bar">
+                <h1 class="sr-only">TBC Units Puzzle Game</h1>
+                <nav class="top-actions" aria-label="工具">
+                    <button id="help-button" class="icon-button" type="button" aria-label="遊戲說明"><i class="fa-solid fa-circle-info" aria-hidden="true"></i><span class="icon-tooltip" aria-hidden="true">說明</span></button>
+                    <button id="theme-button" class="icon-button" type="button" aria-label="切換深色模式"><i class="fa-regular fa-moon" aria-hidden="true"></i><span id="theme-tooltip" class="icon-tooltip" aria-hidden="true">關燈</span></button>
+                    <button id="sound-button" class="icon-button" type="button" aria-label="關閉音效" aria-pressed="false"><i class="fa-solid fa-volume-high" aria-hidden="true"></i><span id="sound-tooltip" class="icon-tooltip" aria-hidden="true">關聲音</span></button>
+                </nav>
+            </header>
 
+            <div class="workspace">
+                <section class="game-column" aria-label="遊戲主畫面">
+                    <div class="play-area">
+                        <div id="canvas" class="rounded-box" aria-label="拼圖遊戲區">
+                            <p class="canvas-hint">從右側拖曳角色部件到這裡</p>
+                        </div>
+                    </div>
+                </section>
+                <aside class="side-panel" aria-label="單位與物品面板">
+                    <div class="unit-panel">
+                        <label for="unit-input">角色編號</label>
+                        <div class="unit-picker">
+                            <input id="unit-input" type="text" inputmode="numeric" maxlength="3" value="001" aria-describedby="unit-status">
+                            <button id="load-unit-button" type="button">載入</button>
+                        </div>
+                        <p id="unit-status" class="unit-status" role="status">正在載入角色 001…</p>
+                        <div id="parts-list" class="parts-list" aria-label="可拖曳部件"></div>
+                    </div>
+                </aside>
+            </div>
+        </section>
+    </main>
+
+    <dialog id="help-dialog" class="help-dialog" aria-labelledby="help-title">
+        <h2 id="help-title">遊戲說明</h2>
+        <p>這裡可以放入遊戲規則與操作說明。</p>
+        <button id="close-help-button" type="button">關閉</button>
+    </dialog>
+    <script src="index.js"></script>
+</body>
 </html>
