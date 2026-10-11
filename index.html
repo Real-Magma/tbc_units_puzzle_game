@@ -10,12 +10,19 @@
 <body>
     <main id="game" aria-label="TBC Units Puzzle Game">
         <section class="app-frame">
+            <button id="undo-button" class="icon-button undo-button" type="button" aria-label="返回上一步" disabled>
+                <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+                <span class="icon-tooltip" aria-hidden="true">返回</span>
+            </button>
             <header class="top-bar">
                 <h1 class="sr-only">TBC Units Puzzle Game</h1>
                 <nav class="top-actions" aria-label="工具">
                     <button id="help-button" class="icon-button" type="button" aria-label="遊戲說明"><i class="fa-solid fa-circle-info" aria-hidden="true"></i><span class="icon-tooltip" aria-hidden="true">說明</span></button>
                     <button id="theme-button" class="icon-button" type="button" aria-label="切換深色模式"><i class="fa-regular fa-moon" aria-hidden="true"></i><span id="theme-tooltip" class="icon-tooltip" aria-hidden="true">關燈</span></button>
-                    <button id="sound-button" class="icon-button" type="button" aria-label="關閉音效" aria-pressed="false"><i class="fa-solid fa-volume-high" aria-hidden="true"></i><span id="sound-tooltip" class="icon-tooltip" aria-hidden="true">關聲音</span></button>
+                    <div class="sound-controls">
+                        <button id="sound-button" class="icon-button" type="button" aria-label="關閉音效" aria-pressed="false"><i class="fa-solid fa-volume-high" aria-hidden="true"></i><span id="sound-tooltip" class="icon-tooltip" aria-hidden="true">關聲音</span></button>
+                        <input id="volume-slider" type="range" min="0" max="1" step="0.01" value="0.5" aria-label="音樂音量">
+                    </div>
                 </nav>
             </header>
 
@@ -23,30 +30,97 @@
                 <section class="game-column" aria-label="遊戲主畫面">
                     <div class="play-area">
                         <div id="canvas" class="rounded-box" aria-label="拼圖遊戲區">
-                            <p class="canvas-hint">從右側拖曳角色部件到這裡</p>
+                            <div id="selection-frame" class="selection-frame" aria-hidden="true">
+                                <span class="selection-corner corner-top-left"></span>
+                                <span class="selection-corner corner-top-right"></span>
+                                <span class="selection-corner corner-bottom-left"></span>
+                                <span class="selection-corner corner-bottom-right"></span>
+                            </div>
+                            <div class="layer-controls" aria-label="圖層控制">
+                                <button id="layer-front-button" class="layer-button" type="button" aria-label="上移一層（↑）" title="上移一層（↑）" disabled>
+                                    <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
+                                    <span class="icon-tooltip" aria-hidden="true">上層</span>
+                                </button>
+                                <button id="layer-back-button" class="layer-button" type="button" aria-label="下移一層（↓）" title="下移一層（↓）" disabled>
+                                    <i class="fa-solid fa-arrow-down" aria-hidden="true"></i>
+                                    <span class="icon-tooltip" aria-hidden="true">下層</span>
+                                </button>
+                            </div>
+                            <button id="trash-zone" class="trash-zone" type="button" aria-label="長按三秒清空主畫面">
+                                <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+                            </button>
                         </div>
                     </div>
                 </section>
                 <aside class="side-panel" aria-label="單位與物品面板">
                     <div class="unit-panel">
-                        <label for="unit-input">角色編號</label>
-                        <div class="unit-picker">
-                            <input id="unit-input" type="text" inputmode="numeric" maxlength="3" value="001" aria-describedby="unit-status">
-                            <button id="load-unit-button" type="button">載入</button>
-                        </div>
-                        <p id="unit-status" class="unit-status" role="status">正在載入角色 001…</p>
+                        <label for="unit-select">角色</label>
+                        <select id="unit-select" aria-describedby="unit-status"></select>
+                        <label for="rank-select">階級</label>
+                        <select id="rank-select" aria-describedby="unit-status">
+                            <option value="f">1 階</option>
+                            <option value="c">2 階</option>
+                            <option value="s">3 階</option>
+                            <option value="u">4 階</option>
+                        </select>
+                        <p id="unit-status" class="sr-only" role="status"></p>
                         <div id="parts-list" class="parts-list" aria-label="可拖曳部件"></div>
                     </div>
                 </aside>
             </div>
         </section>
     </main>
+    <audio id="background-music" loop preload="metadata">
+        <source src="Battle Cats Lo-fi.mp3" type="audio/mpeg">
+    </audio>
 
     <dialog id="help-dialog" class="help-dialog" aria-labelledby="help-title">
-        <h2 id="help-title">遊戲說明</h2>
-        <p>這裡可以放入遊戲規則與操作說明。</p>
-        <button id="close-help-button" type="button">關閉</button>
+        <header class="help-header">
+            <div>
+                <h2 id="help-title">How to Play</h2>
+                <p class="help-lead">利用記憶, 拼出八親不認的貓咪吧！</p>
+            </div>
+            <button id="close-help-button" class="help-close" type="button" aria-label="關閉說明">×</button>
+        </header>
+
+        <section class="help-guide" aria-label="操作說明">
+            <div class="help-step">
+                <span class="help-visual"><i class="fa-solid fa-arrow-pointer"></i></span>
+                <p><strong>選角</strong><br>點一下 or 拖移右側貓咪</p>
+            </div>
+            <div class="help-step">
+                <span class="help-visual help-frame" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+                <p><strong>調整</strong><br>左鍵拖移, 滾輪縮放, 圓點旋轉</p>
+            </div>
+            <div class="help-step">
+                <span class="help-visual"><i class="fa-solid fa-layer-group"></i></span>
+                <p><strong>調整圖層</strong><br><kbd>↑</kbd><kbd>↓</kbd> or 上下按鈕</p>
+            </div>
+            <div class="help-step">
+                <span class="help-visual"><i class="fa-solid fa-copy"></i></span>
+                <p><strong>複製</strong><br><kbd>Ctrl</kbd> + <kbd>C</kbd>, <kbd>V</kbd></p>
+                <p> / </p>
+                <p><strong>返回</strong><br><kbd>Ctrl</kbd> + <kbd>Z</kbd> or 返回鈕</p>
+            </div>
+            <div class="help-step">
+                <span class="help-visual"><i class="fa-solid fa-trash-can"></i></span>
+                <p><strong>刪除</strong><br><kbd>Delete</kbd> or 雙擊 or 拖到垃圾桶</p>
+                <p> / </p>
+                <p><strong>清空全部</strong><br>長按垃圾桶</p>
+            </div>
+            <div class="help-step">
+                <span class="help-visual"><i class="fa-solid fa-wrench"></i></span>
+                <p><strong>右上工具</strong><br>說明, 亮暗模式, 音樂開關與音量</p>
+            </div>
+        </section>
+
+        <footer class="help-footer">
+            <div class="social-row"><i class="fa-brands fa-youtube" aria-hidden="true"></i><a class="social-link" href="https://www.youtube.com/@%E9%98%BF%E5%B2%A9Magma" target="_blank" rel="noreferrer">YouTube 阿岩Magma</a></div>
+            <div class="social-row"><i class="fa-brands fa-instagram" aria-hidden="true"></i><a class="social-link" href="https://www.instagram.com/magma_0716/" target="_blank" rel="noreferrer">Instagram 阿岩Magma</a></div>
+            <p class="copyright"><i class="fa-regular fa-copyright" aria-hidden="true"></i><span>2026 阿岩 All rights reserved.</span></p>
+        </footer>
     </dialog>
+    <script src="assets/units/catalog.js"></script>
     <script src="index.js"></script>
 </body>
 </html>

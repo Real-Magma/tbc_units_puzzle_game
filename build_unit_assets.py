@@ -103,6 +103,11 @@ def main() -> None:
         print(f"已處理角色 {unit_id}：{len(catalog[unit_id]['parts'])} 個部件")
 
     catalog_path.write_text(json.dumps(catalog, ensure_ascii=False, indent=2), encoding="utf-8")
+    catalog_script_path = ASSET_ROOT / "catalog.js"
+    catalog_script_path.write_text(
+        f"window.UNIT_CATALOG = {json.dumps(catalog, ensure_ascii=False)};\n",
+        encoding="utf-8",
+    )
 
 
 if __name__ == "__main__":
