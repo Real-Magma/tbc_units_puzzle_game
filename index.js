@@ -1,11 +1,16 @@
 const root = document.documentElement;
 const themeButton = document.querySelector("#theme-button");
 const soundButton = document.querySelector("#sound-button");
+const effectsButton = document.querySelector("#effects-button");
 const themeIcon = themeButton.querySelector("i");
 const soundIcon = soundButton.querySelector("i");
+const effectsIcon = effectsButton.querySelector("i");
 const themeTooltip = document.querySelector("#theme-tooltip");
 const soundTooltip = document.querySelector("#sound-tooltip");
+const effectsTooltip = document.querySelector("#effects-tooltip");
 const backgroundMusic = document.querySelector("#background-music");
+const bowlingSound = document.querySelector("#bowling-sound");
+const popSound = document.querySelector("#pop-sound");
 const volumeSlider = document.querySelector("#volume-slider");
 const helpButton = document.querySelector("#help-button");
 const helpDialog = document.querySelector("#help-dialog");
@@ -42,8 +47,10 @@ const savedTheme = localStorage.getItem("theme");
 const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
 const initialTheme = savedTheme ?? (systemPrefersDark ? "dark" : "light");
 const initialMuted = localStorage.getItem("muted") === "true";
+const initialEffectsMuted = localStorage.getItem("effects-muted") === "true";
 const savedVolume = Number.parseFloat(localStorage.getItem("music-volume") ?? "0.5");
 const initialVolume = Number.isFinite(savedVolume) ? clamp(savedVolume, 0, 1) : 0.5;
+const effectsVolume = 0.6;
 
 function setTheme(theme) {
     const isDark = theme === "dark";
@@ -58,9 +65,18 @@ function setMuted(muted) {
     backgroundMusic.muted = muted;
     soundIcon.className = muted ? "fa-solid fa-volume-xmark" : "fa-solid fa-volume-high";
     soundButton.setAttribute("aria-pressed", String(muted));
-    const label = muted ? "開聲音" : "關聲音";
+    const label = muted ? "開音樂" : "關音樂";
     soundButton.setAttribute("aria-label", label);
     soundTooltip.textContent = label;
+}
+
+function setEffectsMuted(muted) {
+    [bowlingSound, popSound].forEach((sound) => { sound.muted = muted; });
+    effectsIcon.className = muted ? "fa-solid fa-music" : "fa-solid fa-music";
+    effectsButton.setAttribute("aria-pressed", String(muted));
+    const label = muted ? "開音效" : "關音效";
+    effectsButton.setAttribute("aria-label", label);
+    effectsTooltip.textContent = label;
 }
 
 function setVolume(volume) {
@@ -72,6 +88,18 @@ function setVolume(volume) {
 
 function tryPlayMusic() {
     if (!backgroundMusic.muted) backgroundMusic.play().catch(() => {});
+}
+
+function playBowlingSound() {
+    bowlingSound.volume = effectsVolume;
+    bowlingSound.currentTime = 0;
+    bowlingSound.play().catch(() => {});
+}
+
+function playPopSound() {
+    popSound.volume = effectsVolume;
+    popSound.currentTime = 0;
+    popSound.play().catch(() => {});
 }
 
 function clamp(value, minimum, maximum) {
@@ -106,9 +134,10 @@ function positionOf(image) {
 }
 
 function setPartScale(image, scale) {
-    const nextScale = clamp(Number.parseFloat(scale), 0.4, 3.5);
+    const nextScale = clamp(Number.parseFloat(scale), 0.5, 8);
     image.style.setProperty("--scale", nextScale.toFixed(2));
     image.style.setProperty("--handle-scale", (1 / nextScale).toFixed(4));
+    image.style.setProperty("--handle-offset", `${(-42 / nextScale).toFixed(3)}px`);
 }
 
 function snapAngle(angle) {
@@ -214,18 +243,31 @@ function moveSelectedLayer(direction, toEdge = false) {
     const targetIndex = toEdge ? (direction > 0 ? before.length - 1 : 0) : clamp(index + direction, 0, before.length - 1);
     if (index === -1 || index === targetIndex) return;
 
-    const after = [...before];
-    [after[index], after[targetIndex]] = [after[targetIndex], after[index]];
-    setLayerOrder(after);
-    remember({ type: "layers", order: before });
+    const from = selectedPart.style.zIndex;
+    let nextZIndex;
+    if (toEdge) {
+        const edgeZIndex = Number(before[targetIndex].style.zIndex);
+        nextZIndex = edgeZIndex + (direction > 0 ? 1 : -1);
+    } else if (direction > 0) {
+        const next = Number(before[index + 1].style.zIndex);
+        const afterNext = before[index + 2] ? Number(before[index + 2].style.zIndex) : null;
+        nextZIndex = afterNext === null ? next + 1 : (next + afterNext) / 2;
+    } else {
+        const previous = Number(before[index - 1].style.zIndex);
+        const beforePrevious = before[index - 2] ? Number(before[index - 2].style.zIndex) : null;
+        nextZIndex = beforePrevious === null ? previous - 1 : (beforePrevious + previous) / 2;
+    }
+
+    selectedPart.style.zIndex = String(nextZIndex);
+    remember({ type: "layer", image: selectedPart, from, to: selectedPart.style.zIndex });
     updateLayerButtons();
     if (toEdge) flashLayerButton(direction > 0 ? layerFrontButton : layerBackButton);
 }
 
 function resetCanvasView() {
     viewScale = 1;
-    viewX = 0;
-    viewY = 0;
+    viewX = canvas.clientWidth / 2;
+    viewY = canvas.clientHeight / 2;
     updateViewTransform();
     updateSelectionFrame();
 }
@@ -256,6 +298,7 @@ function undo() {
     if (action.type === "scale-group") action.changes.forEach(({ image, from }) => restoreImage(image, from));
     if (action.type === "remove") restoreImage(action.image, action.position);
     if (action.type === "layers") setLayerOrder(action.order);
+    if (action.type === "layer") action.image.style.zIndex = action.from;
     if (action.type === "clear") {
         action.parts.forEach(({ image, position }) => restoreImage(image, position));
         setLayerOrder(action.parts.map(({ image }) => image));
@@ -318,6 +361,7 @@ function startClearHold(event) {
         trashZone.style.setProperty("--clear-progress", `${progress * 100}%`);
         if (progress >= 1) {
             if (clearCanvas()) {
+                playBowlingSound();
                 trashZone.classList.remove("is-cleared");
                 void trashZone.offsetWidth;
                 trashZone.classList.add("is-cleared");
@@ -398,9 +442,10 @@ function makePlacedPartDraggable(image) {
 }
 
 function startMarqueeSelection(event) {
-    if (event.button !== 0 || event.target !== canvasWorld) return;
+    if (isInRotationZone(event)) return;
+    if (event.button !== 0 || (event.target !== canvasWorld && event.target !== canvas)) return;
     event.preventDefault();
-    selectionFrame.classList.remove("is-visible");
+    selectPlacedPart(null);
 
     const canvasBounds = canvas.getBoundingClientRect();
     const start = {
@@ -409,7 +454,6 @@ function startMarqueeSelection(event) {
     };
     let hasDragged = false;
     canvas.setPointerCapture(event.pointerId);
-    marqueeSelection.classList.add("is-visible");
 
     const drawMarquee = (pointerEvent) => {
         const endX = clamp(pointerEvent.clientX - canvasBounds.left, 0, canvasBounds.width);
@@ -422,7 +466,10 @@ function startMarqueeSelection(event) {
         marqueeSelection.style.top = `${top}px`;
         marqueeSelection.style.width = `${width}px`;
         marqueeSelection.style.height = `${height}px`;
-        hasDragged ||= width > 4 || height > 4;
+        if (width > 4 || height > 4) {
+            hasDragged = true;
+            marqueeSelection.classList.add("is-visible");
+        }
     };
 
     const finish = (pointerEvent) => {
@@ -458,6 +505,68 @@ function startMarqueeSelection(event) {
     canvas.addEventListener("pointermove", drawMarquee);
     canvas.addEventListener("pointerup", finish);
     canvas.addEventListener("pointercancel", cancel);
+}
+
+function isInRotationZone(event, requirePrimaryButton = true) {
+    if ((requirePrimaryButton && event.button !== 0) || !selectedParts.size || !selectionFrame.classList.contains("is-visible")) return false;
+    const bounds = selectionFrame.getBoundingClientRect();
+    const outerPadding = 28;
+    const innerPadding = 7;
+    const insideOuter = event.clientX >= bounds.left - outerPadding && event.clientX <= bounds.right + outerPadding
+        && event.clientY >= bounds.top - outerPadding && event.clientY <= bounds.bottom + outerPadding;
+    const insideInner = event.clientX >= bounds.left - innerPadding && event.clientX <= bounds.right + innerPadding
+        && event.clientY >= bounds.top - innerPadding && event.clientY <= bounds.bottom + innerPadding;
+    return insideOuter && !insideInner;
+}
+
+function startSelectionRotation(event) {
+    if (!isInRotationZone(event)) return;
+    event.preventDefault();
+    canvas.classList.add("is-rotating");
+    const parts = [...selectedParts].filter((part) => part.isConnected);
+    const frameBounds = selectionFrame.getBoundingClientRect();
+    const centerClientX = frameBounds.left + frameBounds.width / 2;
+    const centerClientY = frameBounds.top + frameBounds.height / 2;
+    const center = clientToWorld(centerClientX, centerClientY);
+    const startAngle = Math.atan2(event.clientY - centerClientY, event.clientX - centerClientX) * 180 / Math.PI;
+    const from = parts.map((image) => ({ image, position: positionOf(image) }));
+    canvas.setPointerCapture(event.pointerId);
+
+    const rotate = (pointerEvent) => {
+        const currentAngle = Math.atan2(pointerEvent.clientY - centerClientY, pointerEvent.clientX - centerClientX) * 180 / Math.PI;
+        const delta = snapAngle(currentAngle - startAngle);
+        const radians = delta * Math.PI / 180;
+        const cosine = Math.cos(radians);
+        const sine = Math.sin(radians);
+        from.forEach(({ image, position }) => {
+            if (parts.length > 1) {
+                const x = Number.parseFloat(position.left) - center.x;
+                const y = Number.parseFloat(position.top) - center.y;
+                image.style.left = `${center.x + x * cosine - y * sine}px`;
+                image.style.top = `${center.y + x * sine + y * cosine}px`;
+            }
+            image.style.setProperty("--rotation", `${Number.parseFloat(position.rotation) + delta}deg`);
+        });
+        updateSelectionFrame();
+    };
+    const stop = () => {
+        canvas.removeEventListener("pointermove", rotate);
+        canvas.removeEventListener("pointerup", stop);
+        canvas.removeEventListener("pointercancel", stop);
+        canvas.classList.remove("is-rotating");
+        const changes = from.map(({ image, position }) => ({ image, from: position, to: positionOf(image) }))
+            .filter(({ from: before, to }) => before.left !== to.left || before.top !== to.top || before.rotation !== to.rotation);
+        if (!changes.length) {
+            selectPlacedPart(null);
+            return;
+        }
+        if (changes.length === 1) remember({ type: "rotate", image: changes[0].image, from: changes[0].from, to: changes[0].to });
+        else remember({ type: "rotate-group", changes });
+    };
+
+    canvas.addEventListener("pointermove", rotate);
+    canvas.addEventListener("pointerup", stop);
+    canvas.addEventListener("pointercancel", stop);
 }
 
 function zoomCanvas(event) {
@@ -585,13 +694,18 @@ function makeSelectionScalable() {
             const centerClientX = bounds.left + bounds.width / 2;
             const centerClientY = bounds.top + bounds.height / 2;
             const center = clientToWorld(centerClientX, centerClientY);
-            const startDistance = Math.max(1, Math.hypot(event.clientX - centerClientX, event.clientY - centerClientY));
+            const startVectorX = event.clientX - centerClientX;
+            const startVectorY = event.clientY - centerClientY;
+            const startLengthSquared = Math.max(1, startVectorX ** 2 + startVectorY ** 2);
             const from = parts.map((image) => ({ image, position: positionOf(image) }));
             corner.setPointerCapture(event.pointerId);
 
             const scale = (pointerEvent) => {
-                const distance = Math.hypot(pointerEvent.clientX - centerClientX, pointerEvent.clientY - centerClientY);
-                const factor = clamp(distance / startDistance, 0.2, 5);
+                const currentVectorX = pointerEvent.clientX - centerClientX;
+                const currentVectorY = pointerEvent.clientY - centerClientY;
+                // Projection prevents a corner from crossing the centre and growing again.
+                const projection = (currentVectorX * startVectorX + currentVectorY * startVectorY) / startLengthSquared;
+                const factor = clamp(projection, 0.04, 12);
                 from.forEach(({ image, position }) => {
                     if (parts.length > 1) {
                         image.style.left = `${center.x + (Number.parseFloat(position.left) - center.x) * factor}px`;
@@ -620,7 +734,7 @@ function makeSelectionScalable() {
 }
 
 function addPartToCanvas(part, clientX, clientY, options = {}) {
-    const point = clientToWorld(clientX, clientY);
+    const point = options.worldPoint ?? clientToWorld(clientX, clientY);
     const placedPart = document.createElement("div");
     const image = document.createElement("img");
     const rotateHandle = document.createElement("button");
@@ -633,7 +747,8 @@ function addPartToCanvas(part, clientX, clientY, options = {}) {
     rotateHandle.className = "rotate-handle";
     rotateHandle.type = "button";
     rotateHandle.setAttribute("aria-label", "拖曳旋轉物件");
-    placedPart.style.zIndex = String(orderedParts().length + 1);
+    const highestLayer = Math.max(0, ...orderedParts().map((placedPart) => Number(placedPart.style.zIndex)));
+    placedPart.style.zIndex = String(highestLayer + 1);
     placedPart.style.left = `${point.x}px`;
     placedPart.style.top = `${point.y}px`;
     placedPart.style.setProperty("--rotation", options.rotation ?? "0deg");
@@ -689,8 +804,14 @@ function renderParts() {
             event.dataTransfer.setData("text/plain", part.id);
         });
         card.addEventListener("click", () => {
-            const bounds = canvas.getBoundingClientRect();
-            addPartToCanvas(part, bounds.left + bounds.width / 2, bounds.top + bounds.height / 2);
+            const spread = 180;
+            addPartToCanvas(part, 0, 0, {
+                worldPoint: {
+                    x: (Math.random() - 0.5) * spread,
+                    y: (Math.random() - 0.5) * spread,
+                },
+            });
+            playPopSound();
         });
         card.append(image);
         partsList.append(card);
@@ -781,6 +902,7 @@ function populateUnitSelect() {
 setTheme(initialTheme);
 setVolume(initialVolume);
 setMuted(initialMuted);
+setEffectsMuted(initialEffectsMuted);
 populateUnitSelect();
 renderParts();
 updateUndoButton();
@@ -797,6 +919,11 @@ soundButton.addEventListener("click", () => {
     localStorage.setItem("muted", String(nextMuted));
     setMuted(nextMuted);
     tryPlayMusic();
+});
+effectsButton.addEventListener("click", () => {
+    const nextMuted = effectsButton.getAttribute("aria-pressed") !== "true";
+    localStorage.setItem("effects-muted", String(nextMuted));
+    setEffectsMuted(nextMuted);
 });
 volumeSlider.addEventListener("input", () => {
     const volume = Number.parseFloat(volumeSlider.value);
@@ -839,8 +966,21 @@ document.addEventListener("pointerdown", (event) => {
     if (!event.target.closest(".unit-search")) closeUnitResults();
 });
 rankSelect.addEventListener("change", renderParts);
+canvas.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0 || isInRotationZone(event)) return;
+    const target = event.target;
+    if (target.closest(".placed-part, .selection-corner, .layer-controls, .trash-zone")) return;
+    if (target === canvas || target === canvasWorld) selectPlacedPart(null);
+}, true);
+canvas.addEventListener("pointerdown", startSelectionRotation);
 canvas.addEventListener("pointerdown", startMarqueeSelection);
 canvas.addEventListener("pointerdown", startCanvasPan);
+canvas.addEventListener("pointermove", (event) => {
+    if (!canvas.classList.contains("is-rotating")) {
+        canvas.classList.toggle("is-rotation-ready", isInRotationZone(event, false));
+    }
+});
+canvas.addEventListener("pointerleave", () => canvas.classList.remove("is-rotation-ready"));
 canvas.addEventListener("wheel", zoomCanvas, { passive: false });
 canvas.addEventListener("contextmenu", (event) => event.preventDefault());
 canvas.addEventListener("dragover", (event) => event.preventDefault());
@@ -859,6 +999,12 @@ window.addEventListener("keydown", (event) => {
     const target = event.target;
     const isTyping = target instanceof HTMLInputElement || target instanceof HTMLSelectElement || target instanceof HTMLTextAreaElement || target?.isContentEditable;
     if (isTyping || helpDialog.open) return;
+
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "a") {
+        event.preventDefault();
+        setSelectedParts(orderedParts());
+        return;
+    }
 
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "c" && selectedPart) {
         event.preventDefault();

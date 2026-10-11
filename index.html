@@ -19,8 +19,9 @@
                 <nav class="top-actions" aria-label="工具">
                     <button id="help-button" class="icon-button" type="button" aria-label="遊戲說明"><i class="fa-solid fa-circle-info" aria-hidden="true"></i><span class="icon-tooltip" aria-hidden="true">說明</span></button>
                     <button id="theme-button" class="icon-button" type="button" aria-label="切換深色模式"><i class="fa-regular fa-moon" aria-hidden="true"></i><span id="theme-tooltip" class="icon-tooltip" aria-hidden="true">關燈</span></button>
+                    <button id="effects-button" class="icon-button" type="button" aria-label="關閉音效" aria-pressed="false"><i class="fa-solid fa-music" aria-hidden="true"></i><span id="effects-tooltip" class="icon-tooltip" aria-hidden="true">關音效</span></button>
                     <div class="sound-controls">
-                        <button id="sound-button" class="icon-button" type="button" aria-label="關閉音效" aria-pressed="false"><i class="fa-solid fa-volume-high" aria-hidden="true"></i><span id="sound-tooltip" class="icon-tooltip" aria-hidden="true">關聲音</span></button>
+                        <button id="sound-button" class="icon-button" type="button" aria-label="關閉音樂" aria-pressed="false"><i class="fa-solid fa-volume-high" aria-hidden="true"></i><span id="sound-tooltip" class="icon-tooltip" aria-hidden="true">關音樂</span></button>
                         <input id="volume-slider" type="range" min="0" max="1" step="0.01" value="0.5" aria-label="音樂音量">
                     </div>
                 </nav>
@@ -84,6 +85,12 @@
     </main>
     <audio id="background-music" loop preload="metadata">
         <source src="Battle Cats Lo-fi.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="bowling-sound" preload="auto">
+        <source src="bowling-sound.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="pop-sound" preload="auto">
+        <source src="pop.wav" type="audio/wav">
     </audio>
 
     <dialog id="help-dialog" class="help-dialog" aria-labelledby="help-title">

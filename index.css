@@ -95,6 +95,8 @@ html, body, .app-frame, .rounded-box, .side-panel, .help-dialog, .icon-button, .
 
 .top-actions { display: flex; align-items: center; gap: 12px; }
 
+#effects-button[aria-pressed="true"] { opacity: 0.42; }
+
 .sound-controls {
     display: flex;
     align-items: center;
@@ -264,6 +266,16 @@ html, body, .app-frame, .rounded-box, .side-panel, .help-dialog, .icon-button, .
 
 .rounded-box.is-panning { cursor: grabbing; }
 
+.rounded-box.is-rotation-ready,
+.rounded-box.is-rotating {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M7 10c5-6 15-4 18 4M25 14l1-6-6 1M25 22c-5 6-15 4-18-4M7 18l-1 6 6-1' fill='none' stroke='%231c1c1c' stroke-linecap='round' stroke-linejoin='round' stroke-width='2.8'/%3E%3C/svg%3E") 16 16, grab;
+}
+
+html[data-theme="dark"] .rounded-box.is-rotation-ready,
+html[data-theme="dark"] .rounded-box.is-rotating {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M7 10c5-6 15-4 18 4M25 14l1-6-6 1M25 22c-5 6-15 4-18-4M7 18l-1 6 6-1' fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2.8'/%3E%3C/svg%3E") 16 16, grab;
+}
+
 .placed-part {
     position: absolute;
     transform: translate(-50%, -50%) scale(var(--scale, 1.6)) rotate(var(--rotation, 0deg));
@@ -299,8 +311,8 @@ html, body, .app-frame, .rounded-box, .side-panel, .help-dialog, .icon-button, .
     z-index: 1001;
     display: none;
     box-sizing: border-box;
-    border: 1px solid rgba(255, 255, 255, 0.9);
-    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--selection-color);
+    background: color-mix(in srgb, var(--selection-color) 10%, transparent);
     pointer-events: none;
 }
 
@@ -337,8 +349,8 @@ html, body, .app-frame, .rounded-box, .side-panel, .help-dialog, .icon-button, .
     pointer-events: auto;
 }
 
-.selection-frame.is-group-selection .selection-rotate-handle { display: block; }
-.canvas-world.has-group-selection .placed-part.is-primary .rotate-handle { display: none; }
+.selection-rotate-handle,
+.canvas-world .placed-part.is-primary .rotate-handle { display: none; }
 
 .corner-top-left {
     top: 0;
@@ -374,21 +386,21 @@ html, body, .app-frame, .rounded-box, .side-panel, .help-dialog, .icon-button, .
 
 .rotate-handle {
     position: absolute;
-    top: -26px;
+    top: var(--handle-offset, -42px);
     left: 50%;
     display: none;
     width: 12px;
     height: 12px;
     padding: 0;
     transform: translateX(-50%) scale(var(--handle-scale, 0.625));
-    border: 2px solid #fff;
+    border: 2px solid var(--selection-color);
     border-radius: 50%;
     background: var(--play-bg);
     cursor: grab;
 }
 
 .placed-part.is-primary .rotate-handle {
-    display: block;
+    display: none;
 }
 
 .layer-controls {
