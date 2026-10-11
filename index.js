@@ -29,6 +29,7 @@ const marqueeSelection = document.querySelector("#marquee-selection");
 const layersPanel = document.querySelector("#layers-panel");
 const layerContextMenu = document.querySelector("#layer-context-menu");
 const flipHorizontalButton = document.querySelector("#flip-horizontal-button");
+const lockLayerButton = document.querySelector("#lock-layer-button");
 const importProjectButton = document.querySelector("#import-project-button");
 const importProjectInput = document.querySelector("#import-project-input");
 const saveProjectButton = document.querySelector("#save-project-button");
@@ -242,7 +243,7 @@ function setSelectedParts(parts, primary = parts.at(-1) ?? null) {
         part.classList.remove("is-selected", "is-primary");
     });
     selectedParts.clear();
-    parts.filter((part) => part.isConnected).forEach((part) => {
+    parts.filter((part) => part.isConnected && !part.classList.contains("is-layer-locked")).forEach((part) => {
         selectedParts.add(part);
         part.classList.add("is-selected");
     });
@@ -278,6 +279,10 @@ function showLayerContextMenu(event, part) {
     event.stopPropagation();
     selectPlacedPart(part);
     contextLayerPart = part;
+    const locked = part.classList.contains("is-layer-locked");
+    flipHorizontalButton.disabled = locked;
+    lockLayerButton.querySelector("i").className = `fa-solid ${locked ? "fa-lock-open" : "fa-lock"}`;
+    lockLayerButton.querySelector("span").textContent = locked ? "解除鎖定" : "鎖定物件";
     layerContextMenu.hidden = false;
     const margin = 8;
     const menuWidth = layerContextMenu.offsetWidth;
@@ -292,6 +297,49 @@ function flipPartHorizontally(part) {
     setPartFlip(part, from.flipX === "-1" ? "1" : "-1");
     remember({ type: "flip", image: part, from, to: positionOf(part) });
     updateSelectionFrame();
+    renderLayersPanel();
+}
+
+function setPartLocked(part, locked) {
+    if (!part?.isConnected) return;
+    if (locked) updateLockStripeOverlay(part);
+    part.classList.toggle("is-layer-locked", locked);
+    if (locked && selectedParts.has(part)) {
+        setSelectedParts([...selectedParts].filter((selected) => selected !== part));
+        return;
+    }
+    renderLayersPanel();
+}
+
+function updateLockStripeOverlay(part) {
+    const image = part.querySelector("img");
+    const overlay = part.querySelector(".lock-stripe-overlay");
+    if (!image?.naturalWidth || !image.naturalHeight || !overlay) return;
+
+    overlay.width = image.naturalWidth;
+    overlay.height = image.naturalHeight;
+    const context = overlay.getContext("2d");
+    context.clearRect(0, 0, overlay.width, overlay.height);
+    context.strokeStyle = "rgba(220, 38, 38, 0.25)";
+    context.lineWidth = Math.max(2, Math.round(Math.min(overlay.width, overlay.height) / 24));
+    const spacing = Math.max(7, Math.round(Math.min(overlay.width, overlay.height) / 9));
+
+    for (let offset = -overlay.height; offset < overlay.width + overlay.height; offset += spacing) {
+        context.beginPath();
+        context.moveTo(offset, overlay.height);
+        context.lineTo(offset + overlay.height, 0);
+        context.stroke();
+    }
+
+    context.globalCompositeOperation = "destination-in";
+    context.drawImage(image, 0, 0, overlay.width, overlay.height);
+    context.globalCompositeOperation = "source-over";
+}
+
+function unlockAllLayers() {
+    const lockedParts = orderedParts().filter((part) => part.classList.contains("is-layer-locked"));
+    if (!lockedParts.length) return;
+    lockedParts.forEach((part) => part.classList.remove("is-layer-locked"));
     renderLayersPanel();
 }
 
@@ -413,6 +461,7 @@ async function saveLayerProject() {
             name: part.dataset.name,
             zIndex: Number(part.style.zIndex),
             hidden: part.classList.contains("is-layer-hidden"),
+            locked: part.classList.contains("is-layer-locked"),
             ...positionOf(part),
         })),
     };
@@ -460,6 +509,7 @@ async function importLayerProject(event) {
             const zIndex = Number(layer.zIndex);
             part.style.zIndex = String(Number.isFinite(zIndex) ? zIndex : index + 1);
             part.classList.toggle("is-layer-hidden", Boolean(layer.hidden));
+            part.classList.toggle("is-layer-locked", Boolean(layer.locked));
             return part;
         });
 
@@ -494,14 +544,16 @@ function renderLayersPanel() {
         const row = document.createElement("div");
         const thumbnail = document.createElement("img");
         const visibility = document.createElement("button");
+        const lock = document.createElement("button");
         row.className = "layer-row";
-        row.draggable = true;
+        row.draggable = !part.classList.contains("is-layer-locked");
         row.title = part.dataset.name;
         row.tabIndex = 0;
         row.setAttribute("role", "button");
         row.setAttribute("aria-label", `選取圖層：${part.dataset.name}`);
         row.classList.toggle("is-selected", selectedParts.has(part));
         row.classList.toggle("is-hidden", part.classList.contains("is-layer-hidden"));
+        row.classList.toggle("is-locked", part.classList.contains("is-layer-locked"));
         row.classList.toggle("is-flipped", part.dataset.flipX === "-1");
 
         thumbnail.src = part.dataset.src;
@@ -511,6 +563,10 @@ function renderLayersPanel() {
         visibility.type = "button";
         visibility.setAttribute("aria-label", part.classList.contains("is-layer-hidden") ? `顯示 ${part.dataset.name}` : `隱藏 ${part.dataset.name}`);
         visibility.innerHTML = `<i class="fa-solid ${part.classList.contains("is-layer-hidden") ? "fa-eye-slash" : "fa-eye"}" aria-hidden="true"></i>`;
+        lock.className = "layer-lock";
+        lock.type = "button";
+        lock.setAttribute("aria-label", part.classList.contains("is-layer-locked") ? `解除鎖定 ${part.dataset.name}` : `鎖定 ${part.dataset.name}`);
+        lock.innerHTML = `<i class="fa-solid ${part.classList.contains("is-layer-locked") ? "fa-lock" : "fa-lock-open"}" aria-hidden="true"></i>`;
 
         row.addEventListener("click", () => selectPlacedPart(part));
         row.addEventListener("contextmenu", (event) => showLayerContextMenu(event, part));
@@ -530,7 +586,15 @@ function renderLayersPanel() {
                 renderLayersPanel();
             }
         });
+        lock.addEventListener("click", (event) => {
+            event.stopPropagation();
+            setPartLocked(part, !part.classList.contains("is-layer-locked"));
+        });
         row.addEventListener("dragstart", (event) => {
+            if (part.classList.contains("is-layer-locked")) {
+                event.preventDefault();
+                return;
+            }
             row.classList.add("is-dragging");
             event.dataTransfer.effectAllowed = "move";
             event.dataTransfer.setData("text/plain", "layer");
@@ -559,9 +623,17 @@ function renderLayersPanel() {
             renderLayersPanel();
         });
 
-        row.append(thumbnail, visibility);
+        row.append(thumbnail, visibility, lock);
         layersPanel.append(row);
     });
+
+    const unlockAll = document.createElement("button");
+    unlockAll.className = "unlock-all-layers";
+    unlockAll.type = "button";
+    unlockAll.disabled = !parts.some((part) => part.classList.contains("is-layer-locked"));
+    unlockAll.innerHTML = '<i class="fa-solid fa-lock-open" aria-hidden="true"></i><span>全部解鎖</span>';
+    unlockAll.addEventListener("click", unlockAllLayers);
+    layersPanel.append(unlockAll);
 }
 
 function flashLayerButton(button) {
@@ -638,7 +710,11 @@ function undo() {
 
 function isOverTrash(clientX, clientY) {
     const bounds = trashZone.getBoundingClientRect();
-    return clientX >= bounds.left && clientX <= bounds.right && clientY >= bounds.top && clientY <= bounds.bottom;
+    const hitPadding = 40;
+    return clientX >= bounds.left - hitPadding
+        && clientX <= bounds.right + hitPadding
+        && clientY >= bounds.top - hitPadding
+        && clientY <= bounds.bottom + hitPadding;
 }
 
 function removePlacedPart(image) {
@@ -677,6 +753,13 @@ function clearCanvas() {
     return true;
 }
 
+function playTrashClearAnimation() {
+    trashZone.classList.remove("is-cleared");
+    void trashZone.offsetWidth;
+    trashZone.classList.add("is-cleared");
+    trashZone.addEventListener("animationend", () => trashZone.classList.remove("is-cleared"), { once: true });
+}
+
 function startClearHold(event) {
     event.preventDefault();
     const holdDuration = 800;
@@ -700,10 +783,7 @@ function startClearHold(event) {
         if (progress >= 1) {
             if (clearCanvas()) {
                 playBowlingSound();
-                trashZone.classList.remove("is-cleared");
-                void trashZone.offsetWidth;
-                trashZone.classList.add("is-cleared");
-                trashZone.addEventListener("animationend", () => trashZone.classList.remove("is-cleared"), { once: true });
+                playTrashClearAnimation();
             }
             stop();
             return;
@@ -721,7 +801,17 @@ function makePlacedPartDraggable(image) {
     image.addEventListener("contextmenu", (event) => showLayerContextMenu(event, image));
     image.addEventListener("pointerdown", (event) => {
         if (event.button !== 0) return;
+        if (image.classList.contains("is-layer-locked")) return;
         if (event.target.closest(".rotate-handle")) return;
+        if (event.ctrlKey || event.metaKey) {
+            event.preventDefault();
+            const nextSelection = new Set(selectedParts);
+            if (nextSelection.has(image)) nextSelection.delete(image);
+            else nextSelection.add(image);
+            const selected = [...nextSelection];
+            setSelectedParts(selected, nextSelection.has(image) ? image : selected.at(-1));
+            return;
+        }
         event.preventDefault();
         const dragParts = selectedParts.has(image) && selectedParts.size > 1
             ? [...selectedParts].filter((part) => part.isConnected)
@@ -767,6 +857,10 @@ function makePlacedPartDraggable(image) {
                     part.style.top = position.top;
                 });
                 removePlacedGroup(dragParts, from);
+                if (dragParts.length > 1) {
+                    playBowlingSound();
+                    playTrashClearAnimation();
+                }
             } else if (moved && dragParts.length === 1 && (image.style.left !== from[0].position.left || image.style.top !== from[0].position.top)) {
                 remember({ type: "move", image, from: from[0].position, to: positionOf(image) });
             } else if (moved && dragParts.length > 1) {
@@ -891,6 +985,7 @@ function startCanvasPan(event) {
 function makePlacedPartRotatable(image) {
     const handle = image.querySelector(".rotate-handle");
     handle.addEventListener("pointerdown", (event) => {
+        if (image.classList.contains("is-layer-locked")) return;
         event.preventDefault();
         event.stopPropagation();
         selectPlacedPart(image);
@@ -1019,13 +1114,19 @@ function addPartToCanvas(part, clientX, clientY, options = {}) {
     const point = options.worldPoint ?? clientToWorld(clientX, clientY);
     const placedPart = document.createElement("div");
     const image = document.createElement("img");
+    const lockStripeOverlay = document.createElement("canvas");
     const rotateHandle = document.createElement("button");
     placedPart.className = "placed-part";
     placedPart.dataset.src = part.src;
     placedPart.dataset.name = part.name;
     image.src = part.src;
     image.alt = part.name;
-    image.addEventListener("load", updateSelectionFrame);
+    lockStripeOverlay.className = "lock-stripe-overlay";
+    lockStripeOverlay.setAttribute("aria-hidden", "true");
+    image.addEventListener("load", () => {
+        updateLockStripeOverlay(placedPart);
+        updateSelectionFrame();
+    });
     rotateHandle.className = "rotate-handle";
     rotateHandle.type = "button";
     rotateHandle.setAttribute("aria-label", "拖曳旋轉物件");
@@ -1036,7 +1137,7 @@ function addPartToCanvas(part, clientX, clientY, options = {}) {
     placedPart.style.setProperty("--rotation", options.rotation ?? "0deg");
     setPartScale(placedPart, options.scale ?? "1.6");
     setPartFlip(placedPart, options.flipX ?? "1");
-    placedPart.append(image, rotateHandle);
+    placedPart.append(image, lockStripeOverlay, rotateHandle);
     makePlacedPartDraggable(placedPart);
     makePlacedPartRotatable(placedPart);
     canvasWorld.append(placedPart);
@@ -1266,6 +1367,10 @@ document.addEventListener("pointerdown", (event) => {
 });
 flipHorizontalButton.addEventListener("click", () => {
     flipPartHorizontally(contextLayerPart);
+    closeLayerContextMenu();
+});
+lockLayerButton.addEventListener("click", () => {
+    setPartLocked(contextLayerPart, !contextLayerPart?.classList.contains("is-layer-locked"));
     closeLayerContextMenu();
 });
 importProjectButton.addEventListener("click", () => importProjectInput.click());
