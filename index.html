@@ -42,6 +42,14 @@
                             </div>
                             <div id="marquee-selection" class="marquee-selection" aria-hidden="true"></div>
                             <div class="layer-controls" aria-label="圖層控制">
+                                <button id="import-project-button" class="layer-button" type="button" aria-label="匯入圖層專案">
+                                    <i class="fa-solid fa-folder-open" aria-hidden="true"></i>
+                                    <span class="icon-tooltip" aria-hidden="true">匯入圖層</span>
+                                </button>
+                                <button id="save-project-button" class="layer-button" type="button" aria-label="儲存圖層專案">
+                                    <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+                                    <span class="icon-tooltip" aria-hidden="true">儲存圖層</span>
+                                </button>
                                 <button id="view-home-button" class="layer-button" type="button" aria-label="回到畫布原點" title="回到原點">
                                     <i class="fa-solid fa-house" aria-hidden="true"></i>
                                     <span class="icon-tooltip" aria-hidden="true">回到原點</span>
@@ -54,6 +62,11 @@
                                     <i class="fa-solid fa-arrow-down" aria-hidden="true"></i>
                                     <span class="icon-tooltip" aria-hidden="true">下層</span>
                                 </button>
+                            </div>
+                            <input id="import-project-input" type="file" accept=".tbc-puzzle,application/json" hidden>
+                            <aside id="layers-panel" class="layers-panel" aria-label="圖層面板"></aside>
+                            <div id="layer-context-menu" class="layer-context-menu" role="menu" hidden>
+                                <button id="flip-horizontal-button" type="button" role="menuitem"><i class="fa-solid fa-right-left" aria-hidden="true"></i><span>左右反轉</span></button>
                             </div>
                             <button id="trash-zone" class="trash-zone" type="button" aria-label="長按三秒清空主畫面">
                                 <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
@@ -91,6 +104,12 @@
     </audio>
     <audio id="pop-sound" preload="auto">
         <source src="pop.wav" type="audio/wav">
+    </audio>
+    <audio id="secret-area-sound" preload="auto">
+        <source src="Secret Area Discovered.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="button-sound" preload="auto">
+        <source src="MC Button.mp3" type="audio/mpeg">
     </audio>
 
     <dialog id="help-dialog" class="help-dialog" aria-labelledby="help-title">
@@ -133,13 +152,14 @@
             </div>
             <div class="help-step">
                 <span class="help-visual"><i class="fa-solid fa-wrench"></i></span>
-                <p><strong>右上工具</strong><br>說明, 亮暗模式, 音效與音量</p>
+                <p><strong>工具</strong><br>說明, 亮暗模式, 音效與音量</p>
             </div>
         </section>
 
         <footer class="help-footer">
             <div class="social-row"><i class="fa-brands fa-youtube" aria-hidden="true"></i><a class="social-link" href="https://www.youtube.com/@%E9%98%BF%E5%B2%A9Magma" target="_blank" rel="noreferrer">阿岩Magma</a></div>
             <div class="social-row"><i class="fa-brands fa-instagram" aria-hidden="true"></i><a class="social-link" href="https://www.instagram.com/magma_0716/" target="_blank" rel="noreferrer">阿岩Magma</a></div>
+            <p class="audio-credit">Credit: <a href="https://youtu.be/lIZoygCLOHU?si=cV1AcwTdlWQsxv2i" target="_blank" rel="noreferrer">Battle Cats Lofi BGM</a></p>
             <p class="copyright"><i class="fa-regular fa-copyright" aria-hidden="true"></i><span>2026 阿岩 All rights reserved.</span></p>
         </footer>
     </dialog>

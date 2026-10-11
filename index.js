@@ -11,6 +11,8 @@ const effectsTooltip = document.querySelector("#effects-tooltip");
 const backgroundMusic = document.querySelector("#background-music");
 const bowlingSound = document.querySelector("#bowling-sound");
 const popSound = document.querySelector("#pop-sound");
+const secretAreaSound = document.querySelector("#secret-area-sound");
+const buttonSound = document.querySelector("#button-sound");
 const volumeSlider = document.querySelector("#volume-slider");
 const helpButton = document.querySelector("#help-button");
 const helpDialog = document.querySelector("#help-dialog");
@@ -24,6 +26,12 @@ const canvasWorld = document.querySelector("#canvas-world");
 const selectionFrame = document.querySelector("#selection-frame");
 const selectionRotateHandle = document.querySelector("#selection-rotate-handle");
 const marqueeSelection = document.querySelector("#marquee-selection");
+const layersPanel = document.querySelector("#layers-panel");
+const layerContextMenu = document.querySelector("#layer-context-menu");
+const flipHorizontalButton = document.querySelector("#flip-horizontal-button");
+const importProjectButton = document.querySelector("#import-project-button");
+const importProjectInput = document.querySelector("#import-project-input");
+const saveProjectButton = document.querySelector("#save-project-button");
 const trashZone = document.querySelector("#trash-zone");
 const unitSelect = document.querySelector("#unit-select");
 const unitSearch = document.querySelector("#unit-search");
@@ -36,7 +44,8 @@ const history = [];
 let activeParts = new Map();
 let selectedPart = null;
 const selectedParts = new Set();
-let copiedPart = null;
+let copiedParts = [];
+let contextLayerPart = null;
 let matchingUnitIds = [];
 let activeUnitResultIndex = -1;
 let viewScale = 1;
@@ -50,7 +59,12 @@ const initialMuted = localStorage.getItem("muted") === "true";
 const initialEffectsMuted = localStorage.getItem("effects-muted") === "true";
 const savedVolume = Number.parseFloat(localStorage.getItem("music-volume") ?? "0.5");
 const initialVolume = Number.isFinite(savedVolume) ? clamp(savedVolume, 0, 1) : 0.5;
-const effectsVolume = 0.6;
+const effectsVolume = Object.freeze({
+    pop: 0.38,
+    bowling: 0.48,
+    secretArea: 0.32,
+    button: 0.3,
+});
 
 function setTheme(theme) {
     const isDark = theme === "dark";
@@ -71,7 +85,7 @@ function setMuted(muted) {
 }
 
 function setEffectsMuted(muted) {
-    [bowlingSound, popSound].forEach((sound) => { sound.muted = muted; });
+    [bowlingSound, popSound, secretAreaSound, buttonSound].forEach((sound) => { sound.muted = muted; });
     effectsIcon.className = muted ? "fa-solid fa-music" : "fa-solid fa-music";
     effectsButton.setAttribute("aria-pressed", String(muted));
     const label = muted ? "開音效" : "關音效";
@@ -91,15 +105,27 @@ function tryPlayMusic() {
 }
 
 function playBowlingSound() {
-    bowlingSound.volume = effectsVolume;
+    bowlingSound.volume = effectsVolume.bowling;
     bowlingSound.currentTime = 0;
     bowlingSound.play().catch(() => {});
 }
 
 function playPopSound() {
-    popSound.volume = effectsVolume;
+    popSound.volume = effectsVolume.pop;
     popSound.currentTime = 0;
     popSound.play().catch(() => {});
+}
+
+function playSecretAreaSound() {
+    secretAreaSound.volume = effectsVolume.secretArea;
+    secretAreaSound.currentTime = 0;
+    secretAreaSound.play().catch(() => {});
+}
+
+function playButtonSound() {
+    buttonSound.volume = effectsVolume.button;
+    buttonSound.currentTime = 0;
+    buttonSound.play().catch(() => {});
 }
 
 function clamp(value, minimum, maximum) {
@@ -130,6 +156,7 @@ function positionOf(image) {
         top: image.style.top,
         rotation: image.style.getPropertyValue("--rotation") || "0deg",
         scale: image.style.getPropertyValue("--scale") || "1.6",
+        flipX: image.dataset.flipX ?? "1",
     };
 }
 
@@ -138,6 +165,12 @@ function setPartScale(image, scale) {
     image.style.setProperty("--scale", nextScale.toFixed(2));
     image.style.setProperty("--handle-scale", (1 / nextScale).toFixed(4));
     image.style.setProperty("--handle-offset", `${(-42 / nextScale).toFixed(3)}px`);
+}
+
+function setPartFlip(image, flipX) {
+    const value = String(flipX);
+    image.dataset.flipX = value;
+    image.style.setProperty("--flip-x", value);
 }
 
 function snapAngle(angle) {
@@ -166,6 +199,10 @@ function updateSelectionFrame() {
         canvasWorld.classList.remove("has-group-selection");
         return;
     }
+
+    const largestPartScale = Math.max(...parts.map((part) => Number.parseFloat(positionOf(part).scale)));
+    const selectionUiScale = clamp(largestPartScale / 1.6, 0.5, 5);
+    selectionFrame.style.setProperty("--selection-ui-scale", selectionUiScale.toFixed(3));
 
     if (parts.length > 1) {
         const bounds = parts.map((part) => part.getBoundingClientRect());
@@ -213,6 +250,7 @@ function setSelectedParts(parts, primary = parts.at(-1) ?? null) {
     selectedPart?.classList.add("is-primary");
     updateLayerButtons();
     updateSelectionFrame();
+    renderLayersPanel();
 }
 
 function selectPlacedPart(image) {
@@ -230,6 +268,302 @@ function setLayerOrder(parts) {
     });
 }
 
+function closeLayerContextMenu() {
+    contextLayerPart = null;
+    layerContextMenu.hidden = true;
+}
+
+function showLayerContextMenu(event, part) {
+    event.preventDefault();
+    event.stopPropagation();
+    selectPlacedPart(part);
+    contextLayerPart = part;
+    layerContextMenu.hidden = false;
+    const margin = 8;
+    const menuWidth = layerContextMenu.offsetWidth;
+    const menuHeight = layerContextMenu.offsetHeight;
+    layerContextMenu.style.left = `${Math.min(event.clientX, window.innerWidth - menuWidth - margin)}px`;
+    layerContextMenu.style.top = `${Math.min(event.clientY, window.innerHeight - menuHeight - margin)}px`;
+}
+
+function flipPartHorizontally(part) {
+    if (!part?.isConnected) return;
+    const from = positionOf(part);
+    setPartFlip(part, from.flipX === "-1" ? "1" : "-1");
+    remember({ type: "flip", image: part, from, to: positionOf(part) });
+    updateSelectionFrame();
+    renderLayersPanel();
+}
+
+function timestampedFileName(extension) {
+    const timestamp = new Date().toISOString().replace(/\D/g, "").slice(0, 14);
+    return `tbc-${timestamp}.${extension}`;
+}
+
+function downloadBlob(blob, fileName) {
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.href = url;
+    link.download = fileName;
+    link.style.display = "none";
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function createPngExport() {
+    const scale = Math.max(1, window.devicePixelRatio || 1);
+    const output = document.createElement("canvas");
+    output.width = Math.round(canvas.clientWidth * scale);
+    output.height = Math.round(canvas.clientHeight * scale);
+    const context = output.getContext("2d");
+    if (!context) throw new Error("無法建立 PNG 繪圖區");
+    context.scale(scale, scale);
+
+    orderedParts().filter((part) => !part.classList.contains("is-layer-hidden")).forEach((part) => {
+        const image = part.querySelector("img");
+        if (!image.complete || !image.naturalWidth || !image.naturalHeight) return;
+        const state = positionOf(part);
+        const partScale = Number.parseFloat(state.scale);
+        const angle = Number.parseFloat(state.rotation) * Math.PI / 180;
+        context.save();
+        context.translate(viewX + Number.parseFloat(state.left) * viewScale, viewY + Number.parseFloat(state.top) * viewScale);
+        context.scale(partScale * viewScale, partScale * viewScale);
+        context.rotate(angle);
+        context.scale(Number.parseFloat(state.flipX), 1);
+        context.drawImage(image, -image.naturalWidth / 2, -image.naturalHeight / 2);
+        context.restore();
+    });
+
+    const dataUrl = output.toDataURL("image/png");
+    const encodedData = dataUrl.slice(dataUrl.indexOf(",") + 1);
+    const binaryData = atob(encodedData);
+    const bytes = Uint8Array.from(binaryData, (character) => character.charCodeAt(0));
+    return { dataUrl, blob: new Blob([bytes], { type: "image/png" }) };
+}
+
+async function exportTransparentPng() {
+    let png;
+    try {
+        png = createPngExport();
+    } catch (error) {
+        console.error("PNG 匯出失敗", error);
+        window.alert("PNG 圖片建立失敗，請確認所有角色圖片都已載入完成後再試一次。");
+        return;
+    }
+
+    const fileName = timestampedFileName("png");
+    try {
+        if ("showSaveFilePicker" in window) {
+            try {
+                const handle = await window.showSaveFilePicker({
+                    suggestedName: fileName,
+                    types: [{ description: "PNG 圖片", accept: { "image/png": [".png"] } }],
+                });
+                const writable = await handle.createWritable();
+                await writable.write(png.blob);
+                await writable.close();
+                return;
+            } catch (error) {
+                if (error?.name === "AbortError") return;
+                console.warn("系統另存視窗失敗，改用瀏覽器下載", error);
+            }
+        }
+
+        const link = document.createElement("a");
+        link.href = png.dataUrl;
+        link.download = fileName;
+        link.style.display = "none";
+        document.body.append(link);
+        link.click();
+        link.remove();
+    } catch (error) {
+        console.error("PNG 匯出失敗", error);
+        window.alert("PNG 匯出失敗，請確認所有角色圖片都已載入完成後再試一次。");
+    }
+}
+
+async function copyPngToClipboard() {
+    try {
+        if (!navigator.clipboard?.write || !window.ClipboardItem) throw new Error("瀏覽器不支援圖片剪貼簿");
+        const png = createPngExport();
+        await navigator.clipboard.write([new ClipboardItem({ "image/png": png.blob })]);
+        const tooltip = copyPngButton.querySelector(".icon-tooltip");
+        copyPngButton.classList.add("is-copied");
+        tooltip.textContent = "已複製！";
+        window.setTimeout(() => {
+            copyPngButton.classList.remove("is-copied");
+            tooltip.textContent = "複製 PNG";
+        }, 1400);
+    } catch (error) {
+        console.error("複製 PNG 失敗", error);
+        window.alert("無法複製 PNG。請使用 Chrome 或 Edge，並允許網站存取剪貼簿。");
+    }
+}
+
+async function saveLayerProject() {
+    const project = {
+        format: "tbc-units-puzzle",
+        version: 1,
+        savedAt: new Date().toISOString(),
+        view: { scale: viewScale, x: viewX, y: viewY },
+        layers: orderedParts().map((part) => ({
+            src: part.dataset.src,
+            name: part.dataset.name,
+            zIndex: Number(part.style.zIndex),
+            hidden: part.classList.contains("is-layer-hidden"),
+            ...positionOf(part),
+        })),
+    };
+    const blob = new Blob([JSON.stringify(project, null, 2)], { type: "application/json" });
+    const fileName = timestampedFileName("tbc-puzzle");
+    if ("showSaveFilePicker" in window) {
+        try {
+            const handle = await window.showSaveFilePicker({
+                suggestedName: fileName,
+                types: [{ description: "TBC Puzzle 圖層專案", accept: { "application/json": [".tbc-puzzle"] } }],
+            });
+            const writable = await handle.createWritable();
+            await writable.write(blob);
+            await writable.close();
+            return;
+        } catch (error) {
+            if (error?.name === "AbortError") return;
+        }
+    }
+    downloadBlob(blob, fileName);
+}
+
+async function importLayerProject(event) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    try {
+        const project = JSON.parse(await file.text());
+        if (project?.format !== "tbc-units-puzzle" || !Array.isArray(project.layers)) throw new Error("檔案格式不正確");
+        const layers = project.layers.filter((layer) => typeof layer?.src === "string" && layer.src.length > 0);
+
+        orderedParts().forEach((part) => part.remove());
+        history.length = 0;
+
+        const importedParts = layers.map((layer, index) => {
+            const left = Number.parseFloat(layer.left);
+            const top = Number.parseFloat(layer.top);
+            const part = addPartToCanvas({ src: layer.src, name: layer.name || `圖層 ${index + 1}` }, 0, 0, {
+                worldPoint: { x: Number.isFinite(left) ? left : 0, y: Number.isFinite(top) ? top : 0 },
+                rotation: layer.rotation,
+                scale: layer.scale,
+                flipX: layer.flipX,
+            });
+            const zIndex = Number(layer.zIndex);
+            part.style.zIndex = String(Number.isFinite(zIndex) ? zIndex : index + 1);
+            part.classList.toggle("is-layer-hidden", Boolean(layer.hidden));
+            return part;
+        });
+
+        history.length = 0;
+        viewScale = clamp(Number(project.view?.scale) || 1, 0.5, 2.5);
+        viewX = Number.isFinite(Number(project.view?.x)) ? Number(project.view.x) : canvas.clientWidth / 2;
+        viewY = Number.isFinite(Number(project.view?.y)) ? Number(project.view.y) : canvas.clientHeight / 2;
+        updateViewTransform();
+        setSelectedParts([], null);
+        updateUndoButton();
+        renderLayersPanel();
+        updateSelectionFrame();
+        importedParts.forEach((part) => part.querySelector("img")?.addEventListener("error", () => renderLayersPanel(), { once: true }));
+    } catch (error) {
+        console.error("匯入圖層專案失敗", error);
+        window.alert("無法匯入此檔案。請選擇由本遊戲儲存的 .tbc-puzzle 檔案。");
+    }
+}
+
+function renderLayersPanel() {
+    const parts = orderedParts();
+    layersPanel.hidden = parts.length === 0;
+    layersPanel.replaceChildren();
+    if (!parts.length) return;
+
+    const title = document.createElement("p");
+    title.className = "layers-panel-title";
+    title.textContent = "";
+    layersPanel.append(title);
+
+    [...parts].reverse().forEach((part) => {
+        const row = document.createElement("div");
+        const thumbnail = document.createElement("img");
+        const visibility = document.createElement("button");
+        row.className = "layer-row";
+        row.draggable = true;
+        row.title = part.dataset.name;
+        row.tabIndex = 0;
+        row.setAttribute("role", "button");
+        row.setAttribute("aria-label", `選取圖層：${part.dataset.name}`);
+        row.classList.toggle("is-selected", selectedParts.has(part));
+        row.classList.toggle("is-hidden", part.classList.contains("is-layer-hidden"));
+        row.classList.toggle("is-flipped", part.dataset.flipX === "-1");
+
+        thumbnail.src = part.dataset.src;
+        thumbnail.alt = "";
+        thumbnail.draggable = false;
+        visibility.className = "layer-visibility";
+        visibility.type = "button";
+        visibility.setAttribute("aria-label", part.classList.contains("is-layer-hidden") ? `顯示 ${part.dataset.name}` : `隱藏 ${part.dataset.name}`);
+        visibility.innerHTML = `<i class="fa-solid ${part.classList.contains("is-layer-hidden") ? "fa-eye-slash" : "fa-eye"}" aria-hidden="true"></i>`;
+
+        row.addEventListener("click", () => selectPlacedPart(part));
+        row.addEventListener("contextmenu", (event) => showLayerContextMenu(event, part));
+        row.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                selectPlacedPart(part);
+            }
+        });
+        visibility.addEventListener("click", (event) => {
+            event.stopPropagation();
+            const hidden = part.classList.toggle("is-layer-hidden");
+            if (hidden && selectedParts.has(part)) {
+                const remaining = [...selectedParts].filter((selected) => selected !== part && selected.isConnected);
+                setSelectedParts(remaining, selectedPart === part ? remaining.at(-1) : selectedPart);
+            } else {
+                renderLayersPanel();
+            }
+        });
+        row.addEventListener("dragstart", (event) => {
+            row.classList.add("is-dragging");
+            event.dataTransfer.effectAllowed = "move";
+            event.dataTransfer.setData("text/plain", "layer");
+            layersPanel.dataset.draggingLayer = String(parts.indexOf(part));
+        });
+        row.addEventListener("dragend", () => {
+            delete layersPanel.dataset.draggingLayer;
+            layersPanel.querySelectorAll(".layer-row").forEach((item) => item.classList.remove("is-dragging", "is-drop-target"));
+        });
+        row.addEventListener("dragover", (event) => {
+            event.preventDefault();
+            row.classList.add("is-drop-target");
+        });
+        row.addEventListener("dragleave", () => row.classList.remove("is-drop-target"));
+        row.addEventListener("drop", (event) => {
+            event.preventDefault();
+            const sourceIndex = Number.parseInt(layersPanel.dataset.draggingLayer, 10);
+            const before = orderedParts();
+            const source = before[sourceIndex];
+            if (!source || source === part) return;
+            const after = before.filter((item) => item !== source);
+            const targetIndex = after.indexOf(part) + (event.clientY <= row.getBoundingClientRect().top + row.getBoundingClientRect().height / 2 ? 1 : 0);
+            after.splice(targetIndex, 0, source);
+            setLayerOrder(after);
+            remember({ type: "layers", order: before });
+            renderLayersPanel();
+        });
+
+        row.append(thumbnail, visibility);
+        layersPanel.append(row);
+    });
+}
+
 function flashLayerButton(button) {
     button.classList.remove("is-layer-jump");
     void button.offsetWidth;
@@ -243,24 +577,13 @@ function moveSelectedLayer(direction, toEdge = false) {
     const targetIndex = toEdge ? (direction > 0 ? before.length - 1 : 0) : clamp(index + direction, 0, before.length - 1);
     if (index === -1 || index === targetIndex) return;
 
-    const from = selectedPart.style.zIndex;
-    let nextZIndex;
-    if (toEdge) {
-        const edgeZIndex = Number(before[targetIndex].style.zIndex);
-        nextZIndex = edgeZIndex + (direction > 0 ? 1 : -1);
-    } else if (direction > 0) {
-        const next = Number(before[index + 1].style.zIndex);
-        const afterNext = before[index + 2] ? Number(before[index + 2].style.zIndex) : null;
-        nextZIndex = afterNext === null ? next + 1 : (next + afterNext) / 2;
-    } else {
-        const previous = Number(before[index - 1].style.zIndex);
-        const beforePrevious = before[index - 2] ? Number(before[index - 2].style.zIndex) : null;
-        nextZIndex = beforePrevious === null ? previous - 1 : (beforePrevious + previous) / 2;
-    }
-
-    selectedPart.style.zIndex = String(nextZIndex);
-    remember({ type: "layer", image: selectedPart, from, to: selectedPart.style.zIndex });
+    const after = [...before];
+    after.splice(index, 1);
+    after.splice(targetIndex, 0, selectedPart);
+    setLayerOrder(after);
+    remember({ type: "layers", order: before });
     updateLayerButtons();
+    renderLayersPanel();
     if (toEdge) flashLayerButton(direction > 0 ? layerFrontButton : layerBackButton);
 }
 
@@ -282,6 +605,7 @@ function restoreImage(image, position) {
     image.style.top = position.top;
     image.style.setProperty("--rotation", position.rotation ?? "0deg");
     setPartScale(image, position.scale ?? "1.6");
+    setPartFlip(image, position.flipX ?? "1");
     canvasWorld.append(image);
 }
 
@@ -296,7 +620,9 @@ function undo() {
     if (action.type === "rotate-group") action.changes.forEach(({ image, from }) => restoreImage(image, from));
     if (action.type === "scale") restoreImage(action.image, action.from);
     if (action.type === "scale-group") action.changes.forEach(({ image, from }) => restoreImage(image, from));
+    if (action.type === "flip") restoreImage(action.image, action.from);
     if (action.type === "remove") restoreImage(action.image, action.position);
+    if (action.type === "remove-group") action.parts.forEach(({ image, position }) => restoreImage(image, position));
     if (action.type === "layers") setLayerOrder(action.order);
     if (action.type === "layer") action.image.style.zIndex = action.from;
     if (action.type === "clear") {
@@ -307,6 +633,7 @@ function undo() {
     updateUndoButton();
     updateLayerButtons();
     updateSelectionFrame();
+    renderLayersPanel();
 }
 
 function isOverTrash(clientX, clientY) {
@@ -326,7 +653,18 @@ function removePlacedPart(image) {
 }
 
 function removeSelectedParts() {
-    [...selectedParts].filter((part) => part.isConnected).forEach(removePlacedPart);
+    const parts = [...selectedParts].filter((part) => part.isConnected);
+    if (!parts.length && selectedPart?.isConnected) parts.push(selectedPart);
+    removePlacedGroup(parts);
+}
+
+function removePlacedGroup(parts, snapshot = null) {
+    const connectedParts = parts.filter((part) => part.isConnected);
+    if (!connectedParts.length) return;
+    const partsSnapshot = snapshot ?? connectedParts.map((image) => ({ image, position: positionOf(image) }));
+    connectedParts.forEach((part) => part.remove());
+    selectPlacedPart(null);
+    remember({ type: "remove-group", parts: partsSnapshot });
 }
 
 function clearCanvas() {
@@ -380,6 +718,7 @@ function startClearHold(event) {
 }
 
 function makePlacedPartDraggable(image) {
+    image.addEventListener("contextmenu", (event) => showLayerContextMenu(event, image));
     image.addEventListener("pointerdown", (event) => {
         if (event.button !== 0) return;
         if (event.target.closest(".rotate-handle")) return;
@@ -412,7 +751,7 @@ function makePlacedPartDraggable(image) {
                 image.style.top = `${point.y - grabOffsetY}px`;
             }
             updateSelectionFrame();
-            overTrash = dragParts.length === 1 && isOverTrash(pointerEvent.clientX, pointerEvent.clientY);
+            overTrash = isOverTrash(pointerEvent.clientX, pointerEvent.clientY);
             trashZone.classList.toggle("is-ready", overTrash);
             moved = true;
         };
@@ -423,9 +762,11 @@ function makePlacedPartDraggable(image) {
             trashZone.classList.remove("is-ready");
 
             if (overTrash) {
-                image.style.left = from[0].position.left;
-                image.style.top = from[0].position.top;
-                removePlacedPart(image);
+                from.forEach(({ image: part, position }) => {
+                    part.style.left = position.left;
+                    part.style.top = position.top;
+                });
+                removePlacedGroup(dragParts, from);
             } else if (moved && dragParts.length === 1 && (image.style.left !== from[0].position.left || image.style.top !== from[0].position.top)) {
                 remember({ type: "move", image, from: from[0].position, to: positionOf(image) });
             } else if (moved && dragParts.length > 1) {
@@ -442,7 +783,6 @@ function makePlacedPartDraggable(image) {
 }
 
 function startMarqueeSelection(event) {
-    if (isInRotationZone(event)) return;
     if (event.button !== 0 || (event.target !== canvasWorld && event.target !== canvas)) return;
     event.preventDefault();
     selectPlacedPart(null);
@@ -507,70 +847,8 @@ function startMarqueeSelection(event) {
     canvas.addEventListener("pointercancel", cancel);
 }
 
-function isInRotationZone(event, requirePrimaryButton = true) {
-    if ((requirePrimaryButton && event.button !== 0) || !selectedParts.size || !selectionFrame.classList.contains("is-visible")) return false;
-    const bounds = selectionFrame.getBoundingClientRect();
-    const outerPadding = 28;
-    const innerPadding = 7;
-    const insideOuter = event.clientX >= bounds.left - outerPadding && event.clientX <= bounds.right + outerPadding
-        && event.clientY >= bounds.top - outerPadding && event.clientY <= bounds.bottom + outerPadding;
-    const insideInner = event.clientX >= bounds.left - innerPadding && event.clientX <= bounds.right + innerPadding
-        && event.clientY >= bounds.top - innerPadding && event.clientY <= bounds.bottom + innerPadding;
-    return insideOuter && !insideInner;
-}
-
-function startSelectionRotation(event) {
-    if (!isInRotationZone(event)) return;
-    event.preventDefault();
-    canvas.classList.add("is-rotating");
-    const parts = [...selectedParts].filter((part) => part.isConnected);
-    const frameBounds = selectionFrame.getBoundingClientRect();
-    const centerClientX = frameBounds.left + frameBounds.width / 2;
-    const centerClientY = frameBounds.top + frameBounds.height / 2;
-    const center = clientToWorld(centerClientX, centerClientY);
-    const startAngle = Math.atan2(event.clientY - centerClientY, event.clientX - centerClientX) * 180 / Math.PI;
-    const from = parts.map((image) => ({ image, position: positionOf(image) }));
-    canvas.setPointerCapture(event.pointerId);
-
-    const rotate = (pointerEvent) => {
-        const currentAngle = Math.atan2(pointerEvent.clientY - centerClientY, pointerEvent.clientX - centerClientX) * 180 / Math.PI;
-        const delta = snapAngle(currentAngle - startAngle);
-        const radians = delta * Math.PI / 180;
-        const cosine = Math.cos(radians);
-        const sine = Math.sin(radians);
-        from.forEach(({ image, position }) => {
-            if (parts.length > 1) {
-                const x = Number.parseFloat(position.left) - center.x;
-                const y = Number.parseFloat(position.top) - center.y;
-                image.style.left = `${center.x + x * cosine - y * sine}px`;
-                image.style.top = `${center.y + x * sine + y * cosine}px`;
-            }
-            image.style.setProperty("--rotation", `${Number.parseFloat(position.rotation) + delta}deg`);
-        });
-        updateSelectionFrame();
-    };
-    const stop = () => {
-        canvas.removeEventListener("pointermove", rotate);
-        canvas.removeEventListener("pointerup", stop);
-        canvas.removeEventListener("pointercancel", stop);
-        canvas.classList.remove("is-rotating");
-        const changes = from.map(({ image, position }) => ({ image, from: position, to: positionOf(image) }))
-            .filter(({ from: before, to }) => before.left !== to.left || before.top !== to.top || before.rotation !== to.rotation);
-        if (!changes.length) {
-            selectPlacedPart(null);
-            return;
-        }
-        if (changes.length === 1) remember({ type: "rotate", image: changes[0].image, from: changes[0].from, to: changes[0].to });
-        else remember({ type: "rotate-group", changes });
-    };
-
-    canvas.addEventListener("pointermove", rotate);
-    canvas.addEventListener("pointerup", stop);
-    canvas.addEventListener("pointercancel", stop);
-}
-
 function zoomCanvas(event) {
-    if (event.target.closest("button, input, select")) return;
+    if (event.target.closest("button, input, select, .layers-panel")) return;
     event.preventDefault();
     const bounds = canvas.getBoundingClientRect();
     const worldPoint = clientToWorld(event.clientX, event.clientY);
@@ -643,7 +921,7 @@ function makePlacedPartRotatable(image) {
 function makeSelectedGroupRotatable() {
     selectionRotateHandle.addEventListener("pointerdown", (event) => {
         const parts = [...selectedParts].filter((part) => part.isConnected);
-        if (parts.length < 2) return;
+        if (!parts.length) return;
         event.preventDefault();
         event.stopPropagation();
         const frameBounds = selectionFrame.getBoundingClientRect();
@@ -654,15 +932,19 @@ function makeSelectedGroupRotatable() {
 
         const rotate = (pointerEvent) => {
             const currentAngle = Math.atan2(pointerEvent.clientY - (frameBounds.top + frameBounds.height / 2), pointerEvent.clientX - (frameBounds.left + frameBounds.width / 2)) * 180 / Math.PI;
-            const delta = snapAngle(currentAngle - startAngle);
+            const rawDelta = currentAngle - startAngle;
+            const primaryStartAngle = Number.parseFloat(from[0].position.rotation);
+            const delta = snapAngle(primaryStartAngle + rawDelta) - primaryStartAngle;
             const radians = delta * Math.PI / 180;
             const cosine = Math.cos(radians);
             const sine = Math.sin(radians);
             from.forEach(({ image, position }) => {
-                const x = Number.parseFloat(position.left) - center.x;
-                const y = Number.parseFloat(position.top) - center.y;
-                image.style.left = `${center.x + x * cosine - y * sine}px`;
-                image.style.top = `${center.y + x * sine + y * cosine}px`;
+                if (parts.length > 1) {
+                    const x = Number.parseFloat(position.left) - center.x;
+                    const y = Number.parseFloat(position.top) - center.y;
+                    image.style.left = `${center.x + x * cosine - y * sine}px`;
+                    image.style.top = `${center.y + x * sine + y * cosine}px`;
+                }
                 const rotation = Number.parseFloat(position.rotation) + delta;
                 image.style.setProperty("--rotation", `${rotation}deg`);
             });
@@ -753,32 +1035,38 @@ function addPartToCanvas(part, clientX, clientY, options = {}) {
     placedPart.style.top = `${point.y}px`;
     placedPart.style.setProperty("--rotation", options.rotation ?? "0deg");
     setPartScale(placedPart, options.scale ?? "1.6");
+    setPartFlip(placedPart, options.flipX ?? "1");
     placedPart.append(image, rotateHandle);
     makePlacedPartDraggable(placedPart);
     makePlacedPartRotatable(placedPart);
     canvasWorld.append(placedPart);
     selectPlacedPart(placedPart);
     remember({ type: "add", image: placedPart });
+    return placedPart;
 }
 
-function copySelectedPart() {
-    if (!selectedPart) return;
-    copiedPart = {
-        src: selectedPart.dataset.src,
-        name: selectedPart.dataset.name,
-        rotation: positionOf(selectedPart).rotation,
-        scale: positionOf(selectedPart).scale,
-    };
+function copySelectedParts() {
+    copiedParts = [...selectedParts]
+        .filter((part) => part.isConnected)
+        .map((part) => ({
+            src: part.dataset.src,
+            name: part.dataset.name,
+            ...positionOf(part),
+        }));
 }
 
-function pasteCopiedPart() {
-    if (!copiedPart) return;
-    const bounds = canvas.getBoundingClientRect();
-    const size = worldSize();
-    const selectedPosition = selectedPart ? positionOf(selectedPart) : null;
-    const offsetX = selectedPosition ? Number.parseFloat(selectedPosition.left) + 24 : size.width / 2;
-    const offsetY = selectedPosition ? Number.parseFloat(selectedPosition.top) + 24 : size.height / 2;
-    addPartToCanvas(copiedPart, bounds.left + viewX + offsetX * viewScale, bounds.top + viewY + offsetY * viewScale, { rotation: copiedPart.rotation, scale: copiedPart.scale });
+function pasteCopiedParts() {
+    if (!copiedParts.length) return;
+    const pasteOffset = 24;
+    const pastedParts = copiedParts.map((part) => addPartToCanvas(part, 0, 0, {
+        worldPoint: {
+            x: Number.parseFloat(part.left) + pasteOffset,
+            y: Number.parseFloat(part.top) + pasteOffset,
+        },
+        rotation: part.rotation,
+        scale: part.scale,
+    }));
+    setSelectedParts(pastedParts, pastedParts.at(-1));
 }
 
 function renderParts() {
@@ -935,7 +1223,16 @@ volumeSlider.addEventListener("input", () => {
     tryPlayMusic();
 });
 document.addEventListener("pointerdown", tryPlayMusic, { once: true });
-helpButton.addEventListener("click", () => helpDialog.showModal());
+document.addEventListener("click", (event) => {
+    if (!(event.target instanceof Element)) return;
+    const button = event.target.closest("button");
+    const isExcluded = event.target.closest("#trash-zone, #help-button, .part-card, .unit-result");
+    if (button && !button.disabled && !isExcluded) playButtonSound();
+});
+helpButton.addEventListener("click", () => {
+    playSecretAreaSound();
+    helpDialog.showModal();
+});
 closeHelpButton.addEventListener("click", () => helpDialog.close());
 undoButton.addEventListener("click", undo);
 viewHomeButton.addEventListener("click", resetCanvasView);
@@ -965,23 +1262,24 @@ unitSearch.addEventListener("keydown", (event) => {
 });
 document.addEventListener("pointerdown", (event) => {
     if (!event.target.closest(".unit-search")) closeUnitResults();
+    if (!event.target.closest("#layer-context-menu")) closeLayerContextMenu();
 });
+flipHorizontalButton.addEventListener("click", () => {
+    flipPartHorizontally(contextLayerPart);
+    closeLayerContextMenu();
+});
+importProjectButton.addEventListener("click", () => importProjectInput.click());
+importProjectInput.addEventListener("change", importLayerProject);
+saveProjectButton.addEventListener("click", saveLayerProject);
 rankSelect.addEventListener("change", renderParts);
 canvas.addEventListener("pointerdown", (event) => {
-    if (event.button !== 0 || isInRotationZone(event)) return;
+    if (event.button !== 0) return;
     const target = event.target;
     if (target.closest(".placed-part, .selection-corner, .layer-controls, .trash-zone")) return;
     if (target === canvas || target === canvasWorld) selectPlacedPart(null);
 }, true);
-canvas.addEventListener("pointerdown", startSelectionRotation);
 canvas.addEventListener("pointerdown", startMarqueeSelection);
 canvas.addEventListener("pointerdown", startCanvasPan);
-canvas.addEventListener("pointermove", (event) => {
-    if (!canvas.classList.contains("is-rotating")) {
-        canvas.classList.toggle("is-rotation-ready", isInRotationZone(event, false));
-    }
-});
-canvas.addEventListener("pointerleave", () => canvas.classList.remove("is-rotation-ready"));
 canvas.addEventListener("wheel", zoomCanvas, { passive: false });
 canvas.addEventListener("contextmenu", (event) => event.preventDefault());
 canvas.addEventListener("dragover", (event) => event.preventDefault());
@@ -990,6 +1288,15 @@ canvas.addEventListener("drop", (event) => {
     const part = activeParts.get(event.dataTransfer.getData("text/plain"));
     if (part) addPartToCanvas(part, event.clientX, event.clientY);
 });
+document.addEventListener("keydown", (event) => {
+    const target = event.target;
+    const isTyping = target instanceof HTMLInputElement || target instanceof HTMLSelectElement || target instanceof HTMLTextAreaElement || target?.isContentEditable;
+    const isDeleteKey = event.key === "Delete" || event.key === "Del" || event.key === "Backspace" || event.code === "Delete" || event.code === "Backspace";
+    if (!isDeleteKey || isTyping || helpDialog.open || (!selectedParts.size && !selectedPart?.isConnected)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    removeSelectedParts();
+}, true);
 window.addEventListener("keydown", (event) => {
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
         event.preventDefault();
@@ -1009,20 +1316,13 @@ window.addEventListener("keydown", (event) => {
 
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "c" && selectedPart) {
         event.preventDefault();
-        copySelectedPart();
+        copySelectedParts();
         return;
     }
 
-    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "v" && copiedPart) {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "v" && copiedParts.length) {
         event.preventDefault();
-        pasteCopiedPart();
-        return;
-    }
-
-    if (event.key === "Delete" || event.key === "Backspace") {
-        if (!selectedParts.size) return;
-        event.preventDefault();
-        removeSelectedParts();
+        pasteCopiedParts();
         return;
     }
 
