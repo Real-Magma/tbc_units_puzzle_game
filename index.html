@@ -10,6 +10,9 @@
 <body>
     <main id="game" aria-label="TBC Units Puzzle Game">
         <section class="app-frame">
+            <a class="github-logo-link" href="https://github.com/Real-Magma/tbc_units_puzzle_game" target="_blank" rel="noopener noreferrer" aria-label="前往 TBC Units Puzzle Game GitHub 專案">
+                <img src="battle cats puzzle.png" alt="Battle Cats Puzzle">
+            </a>
             <button id="undo-button" class="icon-button undo-button" type="button" aria-label="返回上一步" disabled>
                 <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
                 <span class="icon-tooltip" aria-hidden="true">返回</span>
@@ -66,8 +69,10 @@
                             <input id="import-project-input" type="file" accept=".tbc-puzzle,application/json" hidden>
                             <aside id="layers-panel" class="layers-panel" aria-label="圖層面板"></aside>
                             <div id="layer-context-menu" class="layer-context-menu" role="menu" hidden>
+                                <button id="merge-layers-button" type="button" role="menuitem"><i class="fa-solid fa-object-group" aria-hidden="true"></i><span>群組</span></button>
+                                <button id="ungroup-layers-button" type="button" role="menuitem"><i class="fa-solid fa-object-ungroup" aria-hidden="true"></i><span>解散</span></button>
                                 <button id="flip-horizontal-button" type="button" role="menuitem"><i class="fa-solid fa-right-left" aria-hidden="true"></i><span>左右反轉</span></button>
-                                <button id="lock-layer-button" type="button" role="menuitem"><i class="fa-solid fa-lock" aria-hidden="true"></i><span>鎖定物件</span></button>
+                                <button id="lock-layer-button" type="button" role="menuitem"><i class="fa-solid fa-lock" aria-hidden="true"></i><span>鎖定</span></button>
                             </div>
                             <button id="trash-zone" class="trash-zone" type="button" aria-label="長按三秒清空主畫面">
                                 <i class="fa-solid fa-trash-can" aria-hidden="true"></i>

@@ -99,6 +99,27 @@ html, body, .app-frame, .rounded-box, .side-panel, .help-dialog, .icon-button, .
     padding: 0;
 }
 
+.github-logo-link {
+    position: absolute;
+    top: 12px;
+    left: clamp(18px, 2vw, 34px);
+    z-index: 3;
+    display: block;
+    height: 58px;
+    border-radius: 8px;
+    transition: transform 160ms ease, filter 160ms ease;
+}
+
+.github-logo-link:hover { filter: drop-shadow(0 3px 6px color-mix(in srgb, #000 28%, transparent)); transform: translateY(-2px); }
+.github-logo-link:focus-visible { outline: 3px solid #4c8dff; outline-offset: 3px; }
+
+.github-logo-link img {
+    display: block;
+    width: auto;
+    height: 100%;
+    object-fit: contain;
+}
+
 .top-actions { display: flex; align-items: center; gap: 12px; }
 
 #effects-button[aria-pressed="true"] { opacity: 0.42; }
@@ -471,11 +492,13 @@ html[data-theme="dark"] .rounded-box.is-rotating {
     gap: 7px;
     padding: 8px 6px;
     overflow-y: auto;
-    border: 1px solid color-mix(in srgb, var(--border) 35%, transparent);
-    border-radius: 12px;
-    background: color-mix(in srgb, var(--panel-bg) 88%, transparent);
-    box-shadow: 0 6px 18px color-mix(in srgb, #000 14%, transparent);
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
     scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 18px, #000 calc(100% - 18px), transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 18px, #000 calc(100% - 18px), transparent 100%);
 }
 
 .layers-panel::-webkit-scrollbar { display: none; }
@@ -509,6 +532,27 @@ html[data-theme="dark"] .rounded-box.is-rotating {
 }
 
 .layer-row.is-flipped img { transform: scaleX(-1); }
+
+.layer-group {
+    display: grid;
+    gap: 4px;
+    padding: 5px;
+    border: 1px solid color-mix(in srgb, var(--border) 48%, transparent);
+    border-radius: 10px;
+    background: var(--group-color);
+    cursor: grab;
+}
+
+.layer-group-label {
+    margin: 0 3px;
+    color: var(--text);
+    font-family: "GenJyuuGothic", sans-serif;
+    font-size: 0.68rem;
+}
+
+.layer-group.is-dragging { opacity: 0.4; }
+.layer-group.is-drop-target { border-color: #4c8dff; box-shadow: 0 0 0 2px color-mix(in srgb, #4c8dff 35%, transparent); }
+.layer-group.is-selected { border-color: var(--selection-color); box-shadow: inset 3px 0 var(--selection-color), 0 0 0 1px var(--selection-color); }
 
 .layer-context-menu {
     position: fixed;

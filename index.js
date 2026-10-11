@@ -28,6 +28,8 @@ const selectionRotateHandle = document.querySelector("#selection-rotate-handle")
 const marqueeSelection = document.querySelector("#marquee-selection");
 const layersPanel = document.querySelector("#layers-panel");
 const layerContextMenu = document.querySelector("#layer-context-menu");
+const mergeLayersButton = document.querySelector("#merge-layers-button");
+const ungroupLayersButton = document.querySelector("#ungroup-layers-button");
 const flipHorizontalButton = document.querySelector("#flip-horizontal-button");
 const lockLayerButton = document.querySelector("#lock-layer-button");
 const importProjectButton = document.querySelector("#import-project-button");
@@ -243,7 +245,8 @@ function setSelectedParts(parts, primary = parts.at(-1) ?? null) {
         part.classList.remove("is-selected", "is-primary");
     });
     selectedParts.clear();
-    parts.filter((part) => part.isConnected && !part.classList.contains("is-layer-locked")).forEach((part) => {
+    const groupedParts = expandGroupedParts(parts);
+    groupedParts.forEach((part) => {
         selectedParts.add(part);
         part.classList.add("is-selected");
     });
@@ -252,6 +255,14 @@ function setSelectedParts(parts, primary = parts.at(-1) ?? null) {
     updateLayerButtons();
     updateSelectionFrame();
     renderLayersPanel();
+}
+
+function expandGroupedParts(parts) {
+    const available = parts.filter((part) => part.isConnected && !part.classList.contains("is-layer-locked"));
+    const groupIds = new Set(available.map((part) => part.dataset.groupId).filter(Boolean));
+    if (!groupIds.size) return available;
+    return orderedParts().filter((part) => available.includes(part)
+        || (groupIds.has(part.dataset.groupId) && !part.classList.contains("is-layer-locked")));
 }
 
 function selectPlacedPart(image) {
@@ -269,6 +280,34 @@ function setLayerOrder(parts) {
     });
 }
 
+function draggedLayerParts() {
+    const parts = orderedParts();
+    const groupId = layersPanel.dataset.draggingGroupId;
+    if (groupId) return parts.filter((part) => part.dataset.groupId === groupId);
+    const index = Number.parseInt(layersPanel.dataset.draggingLayer, 10);
+    return Number.isInteger(index) && parts[index] ? [parts[index]] : [];
+}
+
+function clearLayerDragState() {
+    delete layersPanel.dataset.draggingLayer;
+    delete layersPanel.dataset.draggingGroupId;
+    layersPanel.querySelectorAll(".layer-row, .layer-group").forEach((item) => item.classList.remove("is-dragging", "is-drop-target"));
+}
+
+function moveLayerBlock(sourceParts, targetParts, insertAbove) {
+    const before = orderedParts();
+    const sourceSet = new Set(sourceParts);
+    if (!sourceParts.length || targetParts.some((part) => sourceSet.has(part))) return;
+    const after = before.filter((part) => !sourceSet.has(part));
+    const targetIndexes = targetParts.map((part) => after.indexOf(part)).filter((index) => index !== -1);
+    if (!targetIndexes.length) return;
+    const targetIndex = insertAbove ? Math.max(...targetIndexes) + 1 : Math.min(...targetIndexes);
+    after.splice(targetIndex, 0, ...sourceParts);
+    setLayerOrder(after);
+    remember({ type: "layers", order: before });
+    renderLayersPanel();
+}
+
 function closeLayerContextMenu() {
     contextLayerPart = null;
     layerContextMenu.hidden = true;
@@ -277,12 +316,17 @@ function closeLayerContextMenu() {
 function showLayerContextMenu(event, part) {
     event.preventDefault();
     event.stopPropagation();
-    selectPlacedPart(part);
+    if (!selectedParts.has(part)) selectPlacedPart(part);
     contextLayerPart = part;
-    const locked = part.classList.contains("is-layer-locked");
-    flipHorizontalButton.disabled = locked;
-    lockLayerButton.querySelector("i").className = `fa-solid ${locked ? "fa-lock-open" : "fa-lock"}`;
-    lockLayerButton.querySelector("span").textContent = locked ? "解除鎖定" : "鎖定物件";
+    const contextParts = selectedParts.has(part) ? [...selectedParts] : [part];
+    const allLocked = contextParts.every((item) => item.classList.contains("is-layer-locked"));
+    const groupIds = new Set(contextParts.map((item) => item.dataset.groupId).filter(Boolean));
+    const canGroup = contextParts.length > 1 && !(groupIds.size === 1 && contextParts.every((item) => item.dataset.groupId));
+    mergeLayersButton.hidden = !canGroup;
+    ungroupLayersButton.hidden = groupIds.size === 0;
+    flipHorizontalButton.disabled = contextParts.some((item) => item.classList.contains("is-layer-locked"));
+    lockLayerButton.querySelector("i").className = `fa-solid ${allLocked ? "fa-lock-open" : "fa-lock"}`;
+    lockLayerButton.querySelector("span").textContent = allLocked ? "解除鎖定" : "鎖定";
     layerContextMenu.hidden = false;
     const margin = 8;
     const menuWidth = layerContextMenu.offsetWidth;
@@ -298,6 +342,69 @@ function flipPartHorizontally(part) {
     remember({ type: "flip", image: part, from, to: positionOf(part) });
     updateSelectionFrame();
     renderLayersPanel();
+}
+
+function flipSelectedParts() {
+    const parts = selectedParts.has(contextLayerPart) ? [...selectedParts] : [contextLayerPart];
+    const changes = parts.filter((part) => part?.isConnected && !part.classList.contains("is-layer-locked"))
+        .map((part) => ({ image: part, from: positionOf(part) }));
+    if (!changes.length) return;
+    if (changes.length === 1) {
+        const [{ image, from }] = changes;
+        setPartFlip(image, from.flipX === "-1" ? "1" : "-1");
+    } else {
+        const bounds = changes.map(({ image }) => image.getBoundingClientRect());
+        const left = Math.min(...bounds.map((bound) => clientToWorld(bound.left, bound.top).x));
+        const right = Math.max(...bounds.map((bound) => clientToWorld(bound.right, bound.top).x));
+        const centerX = (left + right) / 2;
+        changes.forEach(({ image, from }) => {
+            image.style.left = `${2 * centerX - Number.parseFloat(from.left)}px`;
+            image.style.setProperty("--rotation", `${-Number.parseFloat(from.rotation)}deg`);
+            setPartFlip(image, from.flipX === "-1" ? "1" : "-1");
+        });
+    }
+    remember({ type: "flip-group", changes });
+    updateSelectionFrame();
+    renderLayersPanel();
+}
+
+function mergeSelectedParts() {
+    const parts = orderedParts().filter((part) => selectedParts.has(part) && part.isConnected);
+    if (parts.length < 2) return;
+    const previousGroups = parts.map((part) => ({ image: part, groupId: part.dataset.groupId ?? "", groupColor: part.dataset.groupColor ?? "" }));
+    const groupId = globalThis.crypto?.randomUUID?.() ?? `group-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const groupColor = `hsl(${Math.floor(Math.random() * 360)} 70% 52% / 0.18)`;
+    parts.forEach((part) => {
+        part.dataset.groupId = groupId;
+        part.dataset.groupColor = groupColor;
+    });
+    setSelectedParts(parts, parts.at(-1));
+    remember({ type: "group", parts: previousGroups });
+}
+
+function ungroupContextParts() {
+    const contextParts = selectedParts.has(contextLayerPart) ? [...selectedParts] : [contextLayerPart];
+    const groupIds = new Set(contextParts.map((part) => part?.dataset.groupId).filter(Boolean));
+    if (!groupIds.size) return;
+    const parts = orderedParts().filter((part) => groupIds.has(part.dataset.groupId));
+    const previousGroups = parts.map((part) => ({ image: part, groupId: part.dataset.groupId, groupColor: part.dataset.groupColor ?? "" }));
+    parts.forEach((part) => {
+        delete part.dataset.groupId;
+        delete part.dataset.groupColor;
+    });
+    setSelectedParts(parts, contextLayerPart);
+    remember({ type: "ungroup", parts: previousGroups });
+}
+
+function setSelectedPartsLocked(locked) {
+    const parts = selectedParts.has(contextLayerPart) ? [...selectedParts] : [contextLayerPart];
+    const targetParts = parts.filter((part) => part?.isConnected);
+    if (!targetParts.length) return;
+    targetParts.forEach((part) => {
+        if (locked) updateLockStripeOverlay(part);
+        part.classList.toggle("is-layer-locked", locked);
+    });
+    setSelectedParts(locked ? [] : targetParts, targetParts.at(-1));
 }
 
 function setPartLocked(part, locked) {
@@ -462,6 +569,8 @@ async function saveLayerProject() {
             zIndex: Number(part.style.zIndex),
             hidden: part.classList.contains("is-layer-hidden"),
             locked: part.classList.contains("is-layer-locked"),
+            groupId: part.dataset.groupId ?? "",
+            groupColor: part.dataset.groupColor ?? "",
             ...positionOf(part),
         })),
     };
@@ -510,6 +619,8 @@ async function importLayerProject(event) {
             part.style.zIndex = String(Number.isFinite(zIndex) ? zIndex : index + 1);
             part.classList.toggle("is-layer-hidden", Boolean(layer.hidden));
             part.classList.toggle("is-layer-locked", Boolean(layer.locked));
+            if (typeof layer.groupId === "string" && layer.groupId) part.dataset.groupId = layer.groupId;
+            if (typeof layer.groupColor === "string" && layer.groupColor) part.dataset.groupColor = layer.groupColor;
             return part;
         });
 
@@ -539,6 +650,7 @@ function renderLayersPanel() {
     title.className = "layers-panel-title";
     title.textContent = "";
     layersPanel.append(title);
+    const groupContainers = new Map();
 
     [...parts].reverse().forEach((part) => {
         const row = document.createElement("div");
@@ -546,7 +658,7 @@ function renderLayersPanel() {
         const visibility = document.createElement("button");
         const lock = document.createElement("button");
         row.className = "layer-row";
-        row.draggable = !part.classList.contains("is-layer-locked");
+        row.draggable = !part.classList.contains("is-layer-locked") && !part.dataset.groupId;
         row.title = part.dataset.name;
         row.tabIndex = 0;
         row.setAttribute("role", "button");
@@ -568,7 +680,23 @@ function renderLayersPanel() {
         lock.setAttribute("aria-label", part.classList.contains("is-layer-locked") ? `解除鎖定 ${part.dataset.name}` : `鎖定 ${part.dataset.name}`);
         lock.innerHTML = `<i class="fa-solid ${part.classList.contains("is-layer-locked") ? "fa-lock" : "fa-lock-open"}" aria-hidden="true"></i>`;
 
-        row.addEventListener("click", () => selectPlacedPart(part));
+        row.addEventListener("click", (event) => {
+            if (!event.ctrlKey && !event.metaKey) {
+                selectPlacedPart(part);
+                return;
+            }
+            const nextSelection = new Set(selectedParts);
+            const members = part.dataset.groupId
+                ? orderedParts().filter((item) => item.dataset.groupId === part.dataset.groupId)
+                : [part];
+            const isGroupSelected = members.every((member) => nextSelection.has(member));
+            members.forEach((member) => {
+                if (isGroupSelected) nextSelection.delete(member);
+                else nextSelection.add(member);
+            });
+            const nextParts = [...nextSelection];
+            setSelectedParts(nextParts, nextSelection.has(part) ? part : nextParts.at(-1));
+        });
         row.addEventListener("contextmenu", (event) => showLayerContextMenu(event, part));
         row.addEventListener("keydown", (event) => {
             if (event.key === "Enter" || event.key === " ") {
@@ -601,30 +729,79 @@ function renderLayersPanel() {
             layersPanel.dataset.draggingLayer = String(parts.indexOf(part));
         });
         row.addEventListener("dragend", () => {
-            delete layersPanel.dataset.draggingLayer;
-            layersPanel.querySelectorAll(".layer-row").forEach((item) => item.classList.remove("is-dragging", "is-drop-target"));
+            clearLayerDragState();
         });
         row.addEventListener("dragover", (event) => {
+            if (part.dataset.groupId || !draggedLayerParts().length) return;
             event.preventDefault();
             row.classList.add("is-drop-target");
         });
         row.addEventListener("dragleave", () => row.classList.remove("is-drop-target"));
         row.addEventListener("drop", (event) => {
             event.preventDefault();
-            const sourceIndex = Number.parseInt(layersPanel.dataset.draggingLayer, 10);
-            const before = orderedParts();
-            const source = before[sourceIndex];
-            if (!source || source === part) return;
-            const after = before.filter((item) => item !== source);
-            const targetIndex = after.indexOf(part) + (event.clientY <= row.getBoundingClientRect().top + row.getBoundingClientRect().height / 2 ? 1 : 0);
-            after.splice(targetIndex, 0, source);
-            setLayerOrder(after);
-            remember({ type: "layers", order: before });
-            renderLayersPanel();
+            if (part.dataset.groupId) return;
+            const bounds = row.getBoundingClientRect();
+            moveLayerBlock(draggedLayerParts(), [part], event.clientY <= bounds.top + bounds.height / 2);
+            clearLayerDragState();
         });
 
         row.append(thumbnail, visibility, lock);
-        layersPanel.append(row);
+        if (!part.dataset.groupId) {
+            layersPanel.append(row);
+            return;
+        }
+
+        let groupContainer = groupContainers.get(part.dataset.groupId);
+        if (!groupContainer) {
+            groupContainer = document.createElement("section");
+            groupContainer.className = "layer-group";
+            const groupParts = orderedParts().filter((item) => item.dataset.groupId === part.dataset.groupId);
+            groupContainer.classList.toggle("is-selected", groupParts.length > 0 && groupParts.every((item) => selectedParts.has(item)));
+            groupContainer.draggable = !orderedParts().some((item) => item.dataset.groupId === part.dataset.groupId && item.classList.contains("is-layer-locked"));
+            groupContainer.style.setProperty("--group-color", part.dataset.groupColor || "color-mix(in srgb, var(--button-hover-bg) 65%, transparent)");
+            const label = document.createElement("p");
+            label.className = "layer-group-label";
+            label.innerHTML = '<i class="fa-solid fa-object-group" aria-hidden="true"></i> 群組';
+            groupContainer.append(label);
+            groupContainer.addEventListener("pointerdown", (event) => {
+                if (event.button !== 0 || event.target.closest(".layer-row, button")) return;
+                setSelectedParts(groupParts, groupParts.at(-1));
+            });
+            groupContainer.addEventListener("contextmenu", (event) => {
+                if (event.target.closest(".layer-row")) return;
+                const currentGroupParts = orderedParts().filter((item) => item.dataset.groupId === part.dataset.groupId);
+                setSelectedParts(currentGroupParts, currentGroupParts.at(-1));
+                showLayerContextMenu(event, currentGroupParts.at(-1));
+            });
+            groupContainer.addEventListener("dragstart", (event) => {
+                if (event.target.closest("button")) {
+                    event.preventDefault();
+                    return;
+                }
+                groupContainer.classList.add("is-dragging");
+                event.dataTransfer.effectAllowed = "move";
+                event.dataTransfer.setData("text/plain", "layer-group");
+                layersPanel.dataset.draggingGroupId = part.dataset.groupId;
+            });
+            groupContainer.addEventListener("dragend", clearLayerDragState);
+            groupContainer.addEventListener("dragover", (event) => {
+                const sourceParts = draggedLayerParts();
+                if (!sourceParts.length || sourceParts.every((item) => item.dataset.groupId === part.dataset.groupId)) return;
+                event.preventDefault();
+                groupContainer.classList.add("is-drop-target");
+            });
+            groupContainer.addEventListener("dragleave", () => groupContainer.classList.remove("is-drop-target"));
+            groupContainer.addEventListener("drop", (event) => {
+                event.preventDefault();
+                const targetParts = orderedParts().filter((item) => item.dataset.groupId === part.dataset.groupId);
+                const bounds = groupContainer.getBoundingClientRect();
+                moveLayerBlock(draggedLayerParts(), targetParts, event.clientY <= bounds.top + bounds.height / 2);
+                clearLayerDragState();
+            });
+            groupContainers.set(part.dataset.groupId, groupContainer);
+            layersPanel.append(groupContainer);
+        }
+        groupContainer.append(row);
     });
 
     const unlockAll = document.createElement("button");
@@ -695,6 +872,17 @@ function undo() {
     if (action.type === "flip") restoreImage(action.image, action.from);
     if (action.type === "remove") restoreImage(action.image, action.position);
     if (action.type === "remove-group") action.parts.forEach(({ image, position }) => restoreImage(image, position));
+    if (action.type === "flip-group") action.changes.forEach(({ image, from }) => restoreImage(image, from));
+    if (action.type === "group") action.parts.forEach(({ image, groupId, groupColor }) => {
+        if (groupId) image.dataset.groupId = groupId;
+        else delete image.dataset.groupId;
+        if (groupColor) image.dataset.groupColor = groupColor;
+        else delete image.dataset.groupColor;
+    });
+    if (action.type === "ungroup") action.parts.forEach(({ image, groupId, groupColor }) => {
+        image.dataset.groupId = groupId;
+        if (groupColor) image.dataset.groupColor = groupColor;
+    });
     if (action.type === "layers") setLayerOrder(action.order);
     if (action.type === "layer") action.image.style.zIndex = action.from;
     if (action.type === "clear") {
@@ -806,16 +994,28 @@ function makePlacedPartDraggable(image) {
         if (event.ctrlKey || event.metaKey) {
             event.preventDefault();
             const nextSelection = new Set(selectedParts);
-            if (nextSelection.has(image)) nextSelection.delete(image);
-            else nextSelection.add(image);
+            const members = image.dataset.groupId
+                ? orderedParts().filter((part) => part.dataset.groupId === image.dataset.groupId)
+                : [image];
+            const isGroupSelected = members.every((member) => nextSelection.has(member));
+            members.forEach((member) => {
+                if (isGroupSelected) nextSelection.delete(member);
+                else nextSelection.add(member);
+            });
             const selected = [...nextSelection];
             setSelectedParts(selected, nextSelection.has(image) ? image : selected.at(-1));
             return;
         }
         event.preventDefault();
-        const dragParts = selectedParts.has(image) && selectedParts.size > 1
-            ? [...selectedParts].filter((part) => part.isConnected)
-            : [image];
+        const groupedParts = image.dataset.groupId
+            ? orderedParts().filter((part) => part.dataset.groupId === image.dataset.groupId && !part.classList.contains("is-layer-locked"))
+            : [];
+        const dragParts = groupedParts.length > 1
+            ? groupedParts
+            : (selectedParts.has(image) && selectedParts.size > 1
+                ? [...selectedParts].filter((part) => part.isConnected)
+                : [image]);
+        if (groupedParts.length > 1) setSelectedParts(groupedParts, image);
         if (dragParts.length === 1) selectPlacedPart(image);
 
         const from = dragParts.map((part) => ({ image: part, position: positionOf(part) }));
@@ -1142,7 +1342,7 @@ function addPartToCanvas(part, clientX, clientY, options = {}) {
     makePlacedPartRotatable(placedPart);
     canvasWorld.append(placedPart);
     selectPlacedPart(placedPart);
-    remember({ type: "add", image: placedPart });
+    if (options.remember !== false) remember({ type: "add", image: placedPart });
     return placedPart;
 }
 
@@ -1365,12 +1565,21 @@ document.addEventListener("pointerdown", (event) => {
     if (!event.target.closest(".unit-search")) closeUnitResults();
     if (!event.target.closest("#layer-context-menu")) closeLayerContextMenu();
 });
+mergeLayersButton.addEventListener("click", () => {
+    mergeSelectedParts();
+    closeLayerContextMenu();
+});
+ungroupLayersButton.addEventListener("click", () => {
+    ungroupContextParts();
+    closeLayerContextMenu();
+});
 flipHorizontalButton.addEventListener("click", () => {
-    flipPartHorizontally(contextLayerPart);
+    flipSelectedParts();
     closeLayerContextMenu();
 });
 lockLayerButton.addEventListener("click", () => {
-    setPartLocked(contextLayerPart, !contextLayerPart?.classList.contains("is-layer-locked"));
+    const parts = selectedParts.has(contextLayerPart) ? [...selectedParts] : [contextLayerPart];
+    setSelectedPartsLocked(!parts.every((part) => part?.classList.contains("is-layer-locked")));
     closeLayerContextMenu();
 });
 importProjectButton.addEventListener("click", () => importProjectInput.click());
