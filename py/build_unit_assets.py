@@ -18,14 +18,17 @@ from urllib.parse import quote
 from PIL import Image
 
 
-PROJECT_ROOT = Path(__file__).resolve().parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_SOURCE_ROOT = PROJECT_ROOT / "assets" / "units_original"
 ASSET_ROOT = PROJECT_ROOT / "assets" / "units"
-UNIT_NAME_PATH = PROJECT_ROOT / "assets" / "UnitName.txt"
+UNIT_NAME_PATHS = (
+    PROJECT_ROOT / "assets" / "UnitName_jp.txt",
+    PROJECT_ROOT / "assets" / "UnitName_kr.txt",
+)
 INVALID_FOLDER_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 
 
-def read_unit_names(path: Path = UNIT_NAME_PATH) -> dict[str, str]:
+def read_unit_names(path: Path) -> dict[str, str]:
     """Read the base-form unit names from the tab-separated UnitName.txt."""
     if not path.is_file():
         return {}
@@ -38,6 +41,19 @@ def read_unit_names(path: Path = UNIT_NAME_PATH) -> dict[str, str]:
         if len(columns) > 1 and columns[1].strip():
             names[columns[0].strip()] = columns[1].strip()
     return names
+
+
+def read_preferred_unit_names() -> dict[str, str]:
+    """Use Japanese names first, then use Korean names only for missing IDs."""
+    names: dict[str, str] = {}
+    for path in UNIT_NAME_PATHS:
+        for unit_id, unit_name in read_unit_names(path).items():
+            names.setdefault(unit_id, unit_name)
+    return names
+
+
+def is_placeholder_name(unit_id: str, unit_name: object) -> bool:
+    return not isinstance(unit_name, str) or not unit_name.strip() or unit_name.strip() == unit_id
 
 
 def output_folder_name(unit_id: str, unit_name: str | None) -> str:
@@ -198,9 +214,9 @@ def main() -> None:
     catalog_path = ASSET_ROOT / "catalog.json"
     catalog = json.loads(catalog_path.read_text(encoding="utf-8")) if catalog_path.exists() else {}
 
-    unit_names = read_unit_names()
+    unit_names = read_preferred_unit_names()
     for unit_id, entry in catalog.items():
-        if unit_id in unit_names:
+        if is_placeholder_name(unit_id, entry.get("name")) and unit_id in unit_names:
             entry["name"] = unit_names[unit_id]
 
     try:

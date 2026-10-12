@@ -11,7 +11,7 @@
     <main id="game" aria-label="TBC Units Puzzle Game">
         <section class="app-frame">
             <a class="github-logo-link" href="https://github.com/Real-Magma/tbc_units_puzzle_game" target="_blank" rel="noopener noreferrer" aria-label="前往 TBC Units Puzzle Game GitHub 專案">
-                <img src="battle cats puzzle.png" alt="Battle Cats Puzzle">
+                <img src="image/battle cats puzzle.png" alt="Battle Cats Puzzle">
             </a>
             <button id="undo-button" class="icon-button undo-button" type="button" aria-label="返回上一步" disabled>
                 <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
@@ -73,6 +73,8 @@
                                 <button id="ungroup-layers-button" type="button" role="menuitem"><i class="fa-solid fa-object-ungroup" aria-hidden="true"></i><span>解散</span></button>
                                 <button id="flip-horizontal-button" type="button" role="menuitem"><i class="fa-solid fa-right-left" aria-hidden="true"></i><span>左右反轉</span></button>
                                 <button id="lock-layer-button" type="button" role="menuitem"><i class="fa-solid fa-lock" aria-hidden="true"></i><span>鎖定</span></button>
+                                <button id="hide-layers-button" type="button" role="menuitem"><i class="fa-solid fa-eye-slash" aria-hidden="true"></i><span>消失</span></button>
+                                <button id="show-layers-button" type="button" role="menuitem"><i class="fa-solid fa-eye" aria-hidden="true"></i><span>出現</span></button>
                             </div>
                             <button id="trash-zone" class="trash-zone" type="button" aria-label="長按三秒清空主畫面">
                                 <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
@@ -103,19 +105,19 @@
         </section>
     </main>
     <audio id="background-music" loop preload="metadata">
-        <source src="Battle Cats Lo-fi.mp3" type="audio/mpeg">
+        <source src="bgm/Battle Cats Lo-fi.mp3" type="audio/mpeg">
     </audio>
     <audio id="bowling-sound" preload="auto">
-        <source src="bowling-sound.mp3" type="audio/mpeg">
+        <source src="sfx/bowling-sound.mp3" type="audio/mpeg">
     </audio>
     <audio id="pop-sound" preload="auto">
-        <source src="pop.wav" type="audio/wav">
+        <source src="sfx/pop.wav" type="audio/wav">
     </audio>
     <audio id="secret-area-sound" preload="auto">
-        <source src="Secret Area Discovered.mp3" type="audio/mpeg">
+        <source src="sfx/Secret Area Discovered.mp3" type="audio/mpeg">
     </audio>
     <audio id="button-sound" preload="auto">
-        <source src="MC Button.mp3" type="audio/mpeg">
+        <source src="sfx/MC Button.mp3" type="audio/mpeg">
     </audio>
 
     <dialog id="help-dialog" class="help-dialog" aria-labelledby="help-title">

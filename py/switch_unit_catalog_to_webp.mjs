@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const projectRoot = path.resolve(import.meta.dirname);
+const projectRoot = path.resolve(import.meta.dirname, "..");
 const unitsRoot = path.join(projectRoot, "assets", "units");
 const catalogPath = path.join(unitsRoot, "catalog.json");
 const manifestsRoot = path.join(unitsRoot, "manifests");

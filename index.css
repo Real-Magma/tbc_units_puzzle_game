@@ -17,7 +17,7 @@
 
 @font-face {
     font-family: "GenJyuuGothic";
-    src: url("GENJYUUGOTHIC-BOLD.TTF") format("truetype");
+    src: url("image/fonts/GENJYUUGOTHIC-BOLD.TTF") format("truetype");
     font-weight: 700;
     font-style: normal;
     font-display: swap;
@@ -543,16 +543,64 @@ html[data-theme="dark"] .rounded-box.is-rotating {
     cursor: grab;
 }
 
-.layer-group-label {
+.layer-group-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
     margin: 0 3px;
-    color: var(--text);
-    font-family: "GenJyuuGothic", sans-serif;
-    font-size: 0.68rem;
 }
+
+.layer-group-collapse {
+    display: grid;
+    width: 22px;
+    height: 22px;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.7rem;
+}
+
+.layer-group-collapse:hover { background: var(--button-hover-bg); }
+
+.layer-group-controls {
+    display: flex;
+    gap: 3px;
+    margin-left: auto;
+}
+
+.layer-group-control {
+    display: grid;
+    width: 22px;
+    height: 22px;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.7rem;
+}
+
+.layer-group-control:hover { background: var(--button-hover-bg); }
+.layer-group.is-collapsed .layer-row { display: none; }
 
 .layer-group.is-dragging { opacity: 0.4; }
 .layer-group.is-drop-target { border-color: #4c8dff; box-shadow: 0 0 0 2px color-mix(in srgb, #4c8dff 35%, transparent); }
 .layer-group.is-selected { border-color: var(--selection-color); box-shadow: inset 3px 0 var(--selection-color), 0 0 0 1px var(--selection-color); }
+.layer-group-drag-preview {
+    position: fixed;
+    top: 0;
+    left: -10000px;
+    pointer-events: none;
+    opacity: 0.96;
+    z-index: -1;
+}
 
 .layer-context-menu {
     position: fixed;
@@ -580,6 +628,8 @@ html[data-theme="dark"] .rounded-box.is-rotating {
     font-size: 0.78rem;
     text-align: left;
 }
+
+.layer-context-menu button[hidden] { display: none; }
 
 .layer-context-menu button:hover { background: var(--button-hover-bg); }
 
@@ -763,6 +813,16 @@ html[data-theme="dark"] .rounded-box.is-rotating {
 .help-dialog::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
 
 .unit-results.is-open { display: block; }
+
+.unit-result-section {
+    margin: 0;
+    padding: 8px 10px 6px;
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 28%, transparent);
+    color: color-mix(in srgb, var(--text) 70%, transparent);
+    font-family: "GenJyuuGothic", sans-serif;
+    font-size: 0.68rem;
+    font-weight: 700;
+}
 
 .unit-result {
     display: flex;

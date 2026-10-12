@@ -3,7 +3,7 @@ param(
     [int]$Parallelism = 4
 )
 
-$projectRoot = $PSScriptRoot
+$projectRoot = Split-Path -Parent $PSScriptRoot
 $unitsRoot = Join-Path $projectRoot "assets\units"
 $folders = Get-ChildItem -LiteralPath $unitsRoot -Recurse -Directory |
     Where-Object { (Get-ChildItem -LiteralPath $_.FullName -Filter "*.png" -File).Count -gt 0 }
@@ -41,5 +41,5 @@ while (@($jobs | Where-Object State -eq "Running").Count -gt 0) {
 
 $jobs | Receive-Job
 $jobs | Remove-Job
-node (Join-Path $projectRoot "switch_unit_catalog_to_webp.mjs")
+node (Join-Path $projectRoot "py\switch_unit_catalog_to_webp.mjs")
 Write-Host "Done: website unit assets now use WebP."
