@@ -1,0 +1,218 @@
+/* Touch layout only. Desktop keeps using index.css without these overrides. */
+@media (max-width: 700px) and (pointer: coarse) {
+    html,
+    body {
+        min-width: 0;
+    }
+
+    .workspace {
+        display: block;
+    }
+
+    .game-column {
+        height: 100%;
+        padding: 62px 8px 66px;
+    }
+
+    .rounded-box {
+        min-height: 0;
+        padding: 0;
+        border-width: 2px;
+        border-radius: 14px;
+        touch-action: none;
+    }
+
+    .github-logo-link {
+        top: 8px;
+        left: 10px;
+        height: 40px;
+    }
+
+    .undo-button {
+        top: 8px;
+        left: 60px;
+        width: 36px;
+        height: 36px;
+        font-size: 1.25rem;
+    }
+
+    .top-bar {
+        top: 6px;
+        right: 6px;
+        height: 40px;
+    }
+
+    .top-actions { gap: 1px; }
+
+    .top-actions .icon-button {
+        width: 34px;
+        height: 36px;
+        font-size: 1.25rem;
+    }
+
+    #volume-slider {
+        width: 66px;
+        height: 36px;
+        padding: 0 6px;
+    }
+
+    .layer-controls {
+        top: 8px;
+        right: 8px;
+        gap: 4px;
+    }
+
+    .layer-controls button {
+        width: 32px;
+        height: 32px;
+        font-size: 0.75rem;
+    }
+
+    .layers-panel {
+        display: none;
+        top: 48px;
+        right: 6px;
+        bottom: 8px;
+        width: 104px;
+        padding: 7px 5px 56px;
+        border-radius: 10px;
+        background: color-mix(in srgb, var(--panel-bg) 94%, transparent);
+        box-shadow: var(--shadow);
+        -webkit-mask-image: none;
+        mask-image: none;
+    }
+
+    .rounded-box.is-mobile-layers-open .layers-panel {
+        display: flex;
+    }
+
+    .side-panel {
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 30;
+        width: auto;
+        height: min(62dvh, 540px);
+        min-height: 0;
+        padding-bottom: 60px;
+        border: 2px solid var(--border);
+        border-bottom: 0;
+        border-radius: 18px 18px 0 0;
+        box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.24);
+        transform: translateY(calc(100% + 12px));
+        transition: transform 220ms ease, background-color 280ms ease, border-color 280ms ease;
+    }
+
+    #game.is-mobile-panel-open .side-panel {
+        transform: translateY(0);
+    }
+
+    .unit-panel { padding: 18px 12px 14px; }
+
+    .unit-panel label {
+        margin-bottom: 6px;
+        font-size: 0.9rem;
+    }
+
+    .unit-panel select,
+    .unit-search input {
+        min-height: 44px;
+        margin-bottom: 13px;
+        font-size: 1rem;
+    }
+
+    .unit-results {
+        z-index: 4;
+        max-height: min(260px, 38dvh);
+    }
+
+    .parts-list {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .part-card {
+        min-height: 72px;
+        padding: 5px;
+        touch-action: manipulation;
+    }
+
+    .part-card img {
+        max-height: 58px;
+    }
+
+    .mobile-toolbar {
+        position: fixed;
+        right: 7px;
+        bottom: 7px;
+        left: 7px;
+        z-index: 40;
+        display: flex;
+        min-height: 48px;
+        align-items: center;
+        justify-content: space-around;
+        gap: 3px;
+        padding: 4px;
+        overflow-x: auto;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: color-mix(in srgb, var(--panel-bg) 94%, transparent);
+        box-shadow: var(--shadow);
+        scrollbar-width: none;
+    }
+
+    .mobile-toolbar::-webkit-scrollbar { display: none; }
+
+    .mobile-action {
+        display: grid;
+        width: 42px;
+        min-width: 42px;
+        height: 40px;
+        padding: 0;
+        place-items: center;
+        border: 0;
+        border-radius: 10px;
+        background: transparent;
+        color: var(--text);
+        cursor: pointer;
+        font-size: 1.1rem;
+    }
+
+    .mobile-action:active,
+    .mobile-action.is-active {
+        background: var(--button-hover-bg);
+        transform: scale(0.94);
+    }
+
+    .mobile-action:focus-visible {
+        outline: 3px solid #4c8dff;
+        outline-offset: 1px;
+    }
+
+    .rounded-box.is-mobile-pan-mode,
+    .rounded-box.is-mobile-pan-mode .placed-part {
+        cursor: grab;
+    }
+
+    .rounded-box.is-mobile-panning {
+        cursor: grabbing;
+    }
+
+    .help-dialog {
+        width: min(94vw, 560px);
+        max-height: 82dvh;
+        padding: 20px;
+    }
+}
+
+@media (max-width: 390px) and (pointer: coarse) {
+    .top-actions .icon-button { width: 31px; }
+    #volume-slider { width: 54px; }
+    .mobile-action { width: 39px; min-width: 39px; }
+    .parts-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .side-panel { transition: none; }
+}

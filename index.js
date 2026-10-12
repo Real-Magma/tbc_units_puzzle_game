@@ -1336,6 +1336,7 @@ function makePlacedPartDraggable(image) {
 }
 
 function startMarqueeSelection(event) {
+    if (canvas.classList.contains("is-mobile-pan-mode")) return;
     if (event.button !== 0 || (event.target !== canvasWorld && event.target !== canvas)) return;
     event.preventDefault();
     selectPlacedPart(null);
@@ -1951,6 +1952,7 @@ saveProjectButton.addEventListener("click", saveLayerProject);
 rankSelect.addEventListener("change", renderParts);
 canvas.addEventListener("pointerdown", (event) => {
     if (event.button !== 0) return;
+    if (canvas.classList.contains("is-mobile-pan-mode")) return;
     const target = event.target;
     if (target.closest(".placed-part, .selection-corner, .layer-controls, .trash-zone")) return;
     if (target === canvas || target === canvasWorld) selectPlacedPart(null);
@@ -2014,4 +2016,40 @@ window.addEventListener("keydown", (event) => {
         event.preventDefault();
         moveSelectedLayer(-1, event.shiftKey);
     }
+});
+
+// Kept deliberately small so the touch-only UI can live in mobile.js without
+// duplicating desktop canvas state or changing desktop pointer behavior.
+window.tbcPuzzleMobile = Object.freeze({
+    panCanvasBy(deltaX, deltaY) {
+        viewX += deltaX;
+        viewY += deltaY;
+        updateViewTransform();
+        updateSelectionFrame();
+    },
+    zoomCanvasAt(clientX, clientY, factor) {
+        const bounds = canvas.getBoundingClientRect();
+        const worldPoint = clientToWorld(clientX, clientY);
+        const nextScale = clamp(viewScale * factor, 0.5, 2.5);
+        viewX = clientX - bounds.left - worldPoint.x * nextScale;
+        viewY = clientY - bounds.top - worldPoint.y * nextScale;
+        viewScale = nextScale;
+        updateViewTransform();
+        updateSelectionFrame();
+    },
+    selectAll() {
+        setSelectedParts(orderedParts());
+    },
+    deleteSelected() {
+        removeSelectedParts();
+    },
+    showPartMenu(part, clientX, clientY) {
+        if (!part?.isConnected) return;
+        showLayerContextMenu(new MouseEvent("contextmenu", {
+            bubbles: true,
+            cancelable: true,
+            clientX,
+            clientY,
+        }), part);
+    },
 });
