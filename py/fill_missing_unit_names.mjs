@@ -17,25 +17,28 @@ function readNames(fileName) {
     return names;
 }
 
+const chineseNames = readNames("UnitName_tw.txt");
 const japaneseNames = readNames("UnitName_jp.txt");
 const koreanNames = readNames("UnitName_kr.txt");
 const catalog = JSON.parse(fs.readFileSync(catalogPath, "utf8"));
 const index = {};
-let japaneseFilled = 0;
-let koreanFilled = 0;
+let chineseApplied = 0;
+let japaneseApplied = 0;
+let koreanApplied = 0;
 let stillUnnamed = 0;
 
 for (const [unitId, unit] of Object.entries(catalog)) {
-    if (!unit.name?.trim() || unit.name.trim() === unitId) {
-        if (japaneseNames.has(unitId)) {
-            unit.name = japaneseNames.get(unitId);
-            japaneseFilled++;
-        } else if (koreanNames.has(unitId)) {
-            unit.name = koreanNames.get(unitId);
-            koreanFilled++;
-        } else {
-            stillUnnamed++;
-        }
+    if (chineseNames.has(unitId)) {
+        unit.name = chineseNames.get(unitId);
+        chineseApplied++;
+    } else if (japaneseNames.has(unitId)) {
+        unit.name = japaneseNames.get(unitId);
+        japaneseApplied++;
+    } else if (koreanNames.has(unitId)) {
+        unit.name = koreanNames.get(unitId);
+        koreanApplied++;
+    } else {
+        stillUnnamed++;
     }
 
     index[unitId] = {
@@ -54,4 +57,4 @@ for (const [unitId, unit] of Object.entries(catalog)) {
 fs.writeFileSync(catalogPath, JSON.stringify(catalog, null, 2));
 fs.writeFileSync(path.join(unitsRoot, "catalog.js"), `window.UNIT_CATALOG = ${JSON.stringify(catalog)};\n`);
 fs.writeFileSync(path.join(unitsRoot, "index.js"), `window.UNIT_INDEX = ${JSON.stringify(index)};\n`);
-console.log(`Filled Japanese: ${japaneseFilled}; Korean: ${koreanFilled}; still unnamed: ${stillUnnamed}.`);
+console.log(`Applied Chinese: ${chineseApplied}; Japanese fallback: ${japaneseApplied}; Korean fallback: ${koreanApplied}; still unnamed: ${stillUnnamed}.`);

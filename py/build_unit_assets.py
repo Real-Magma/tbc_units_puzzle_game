@@ -22,6 +22,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_SOURCE_ROOT = PROJECT_ROOT / "assets" / "units_original"
 ASSET_ROOT = PROJECT_ROOT / "assets" / "units"
 UNIT_NAME_PATHS = (
+    PROJECT_ROOT / "assets" / "UnitName_tw.txt",
     PROJECT_ROOT / "assets" / "UnitName_jp.txt",
     PROJECT_ROOT / "assets" / "UnitName_kr.txt",
 )
@@ -44,7 +45,7 @@ def read_unit_names(path: Path) -> dict[str, str]:
 
 
 def read_preferred_unit_names() -> dict[str, str]:
-    """Use Japanese names first, then use Korean names only for missing IDs."""
+    """Prefer Traditional Chinese names, then fall back to Japanese and Korean."""
     names: dict[str, str] = {}
     for path in UNIT_NAME_PATHS:
         for unit_id, unit_name in read_unit_names(path).items():
@@ -87,6 +88,17 @@ def safe_label(label: str) -> str:
     return re.sub(r"\s+", " ", label).strip()
 
 
+def is_placeholder_crop(rectangle: dict[str, object]) -> bool:
+    """Ignore editor-only dummy regions so they never become draggable parts."""
+    label = safe_label(str(rectangle["label"])).casefold()
+    width = int(rectangle["width"])
+    height = int(rectangle["height"])
+    return (
+        (width == 1 and height == 1)
+        or any(marker in label for marker in ("ダミー", "空っぽ", "dummy", "dmy"))
+    )
+
+
 def crop_unit(unit_id: str, source_root: Path, unit_names: dict[str, str]) -> dict[str, object]:
     source_unit = source_root / unit_id
     if not source_unit.is_dir():
@@ -115,11 +127,11 @@ def crop_unit(unit_id: str, source_root: Path, unit_names: dict[str, str]) -> di
 
             for index, rectangle in enumerate(rectangles):
                 label = safe_label(str(rectangle["label"]))
-                if "ダミー" in label or "空っぽ" in label:
-                    continue
-
                 x, y = int(rectangle["x"]), int(rectangle["y"])
                 width, height = int(rectangle["width"]), int(rectangle["height"])
+                if is_placeholder_crop(rectangle):
+                    continue
+
                 left = max(0, x)
                 top = max(0, y)
                 right = min(sheet_width, x + width)
@@ -216,7 +228,7 @@ def main() -> None:
 
     unit_names = read_preferred_unit_names()
     for unit_id, entry in catalog.items():
-        if is_placeholder_name(unit_id, entry.get("name")) and unit_id in unit_names:
+        if unit_id in unit_names:
             entry["name"] = unit_names[unit_id]
 
     try:
