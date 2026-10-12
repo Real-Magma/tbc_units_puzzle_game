@@ -2,7 +2,9 @@ from pathlib import Path
 from PIL import Image
 import re
 
-path = Path(r'C:\Users\a0919\OneDrive\桌面\貓戰BCU\org') #eeee
+# 預期來源資料夾與專案同在桌面下：../../../貓戰BCU/org
+project_root = Path(__file__).resolve().parents[1]
+path = project_root.parent.parent.parent / '貓戰BCU' / 'org'
 
 for i in path.rglob('*.imgcut'):
     phase = i.stem[-1]
