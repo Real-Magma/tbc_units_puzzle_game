@@ -24,17 +24,22 @@
 
     .github-logo-link {
         top: 8px;
-        left: 10px;
+        left: 58px;
         height: 40px;
     }
 
     .undo-button {
-        top: 8px;
-        left: 60px;
-        width: 36px;
-        height: 36px;
+        /* 與手機版畫布的上、左內距對齊，固定在主畫面框內。 */
+        top: 72px;
+        left: 18px;
+        z-index: 5;
+        width: 40px;
+        height: 40px;
         font-size: 1.25rem;
     }
+
+    /* 手機版以工具列刪除選取物件，主畫面不保留左下垃圾桶。 */
+    .trash-zone { display: none; }
 
     .top-bar {
         top: 6px;
