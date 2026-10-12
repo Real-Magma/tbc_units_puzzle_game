@@ -181,6 +181,14 @@ function setPartFlip(image, flipX) {
     image.style.setProperty("--flip-x", value);
 }
 
+function createGroupId() {
+    return globalThis.crypto?.randomUUID?.() ?? `group-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function createGroupColor() {
+    return `hsl(${Math.floor(Math.random() * 360)} 70% 52% / 0.18)`;
+}
+
 function snapAngle(angle) {
     const normalized = ((angle % 360) + 360) % 360;
     const nearest = Math.round(normalized / 90) * 90;
@@ -540,8 +548,8 @@ function mergeSelectedParts() {
     const parts = beforeOrder.filter((part) => selectedParts.has(part) && part.isConnected);
     if (parts.length < 2) return;
     const previousGroups = parts.map((part) => ({ image: part, groupId: part.dataset.groupId ?? "", groupColor: part.dataset.groupColor ?? "" }));
-    const groupId = globalThis.crypto?.randomUUID?.() ?? `group-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-    const groupColor = `hsl(${Math.floor(Math.random() * 360)} 70% 52% / 0.18)`;
+    const groupId = createGroupId();
+    const groupColor = createGroupColor();
     parts.forEach((part) => {
         part.dataset.groupId = groupId;
         part.dataset.groupColor = groupColor;
@@ -971,12 +979,12 @@ function renderLayersPanel() {
             const allLocked = groupParts.every((item) => item.classList.contains("is-layer-locked"));
             visibilityToggle.className = "layer-group-control";
             visibilityToggle.type = "button";
-            visibilityToggle.setAttribute("aria-label", allHidden ? "群組全部出現" : "群組全部消失");
-            visibilityToggle.innerHTML = `<i class="fa-solid ${allHidden ? "fa-eye" : "fa-eye-slash"}" aria-hidden="true"></i>`;
+            visibilityToggle.setAttribute("aria-label", allHidden ? "群組目前全部消失，點擊全部出現" : "群組目前全部出現，點擊全部消失");
+            visibilityToggle.innerHTML = `<i class="fa-solid ${allHidden ? "fa-eye-slash" : "fa-eye"}" aria-hidden="true"></i>`;
             lockToggle.className = "layer-group-control";
             lockToggle.type = "button";
-            lockToggle.setAttribute("aria-label", allLocked ? "群組全部解鎖" : "群組全部鎖定");
-            lockToggle.innerHTML = `<i class="fa-solid ${allLocked ? "fa-lock-open" : "fa-lock"}" aria-hidden="true"></i>`;
+            lockToggle.setAttribute("aria-label", allLocked ? "群組目前全部鎖定，點擊全部解鎖" : "群組目前全部解鎖，點擊全部鎖定");
+            lockToggle.innerHTML = `<i class="fa-solid ${allLocked ? "fa-lock" : "fa-lock-open"}" aria-hidden="true"></i>`;
             visibilityToggle.addEventListener("click", (event) => {
                 event.stopPropagation();
                 setLayerVisibility(groupParts, !allHidden);
@@ -1121,6 +1129,7 @@ function undo() {
     if (!action) return;
 
     if (action.type === "add") action.image.remove();
+    if (action.type === "paste-group") action.parts.forEach((image) => image.remove());
     if (action.type === "move") restoreImage(action.image, action.from);
     if (action.type === "move-group") action.changes.forEach(({ image, from }) => restoreImage(image, from));
     if (action.type === "rotate") restoreImage(action.image, action.from);
@@ -1269,12 +1278,13 @@ function makePlacedPartDraggable(image) {
         const groupedParts = image.dataset.groupId
             ? orderedParts().filter((part) => part.dataset.groupId === image.dataset.groupId && !part.classList.contains("is-layer-locked"))
             : [];
-        const dragParts = groupedParts.length > 1
-            ? groupedParts
-            : (selectedParts.has(image) && selectedParts.size > 1
-                ? [...selectedParts].filter((part) => part.isConnected)
-                : [image]);
-        if (groupedParts.length > 1) setSelectedParts(groupedParts, image);
+        const selectedDragParts = selectedParts.has(image)
+            ? [...selectedParts].filter((part) => part.isConnected && !part.classList.contains("is-layer-locked"))
+            : [];
+        const dragParts = selectedDragParts.length > 1
+            ? selectedDragParts
+            : (groupedParts.length > 1 ? groupedParts : [image]);
+        if (selectedDragParts.length <= 1 && dragParts.length > 1) setSelectedParts(dragParts, image);
         if (dragParts.length === 1) selectPlacedPart(image);
 
         const from = dragParts.map((part) => ({ image: part, position: positionOf(part) }));
@@ -1612,27 +1622,56 @@ function addPartToCanvas(part, clientX, clientY, options = {}) {
 }
 
 function copySelectedParts() {
-    copiedParts = [...selectedParts]
-        .filter((part) => part.isConnected)
-        .map((part) => ({
+    const parts = orderedParts().filter((part) => selectedParts.has(part) && part.isConnected);
+    const copiedSet = new Set(parts);
+    const copiedGroups = new Map();
+
+    parts.forEach((part) => {
+        const groupId = part.dataset.groupId;
+        if (!groupId || copiedGroups.has(groupId)) return;
+        const members = orderedParts().filter((item) => item.dataset.groupId === groupId);
+        if (members.every((member) => copiedSet.has(member))) copiedGroups.set(groupId, true);
+    });
+
+    copiedParts = parts.map((part) => ({
             src: part.dataset.src,
             name: part.dataset.name,
             ...positionOf(part),
+            groupKey: copiedGroups.has(part.dataset.groupId) ? part.dataset.groupId : "",
         }));
 }
 
 function pasteCopiedParts() {
     if (!copiedParts.length) return;
     const pasteOffset = 24;
-    const pastedParts = copiedParts.map((part) => addPartToCanvas(part, 0, 0, {
-        worldPoint: {
-            x: Number.parseFloat(part.left) + pasteOffset,
-            y: Number.parseFloat(part.top) + pasteOffset,
-        },
-        rotation: part.rotation,
-        scale: part.scale,
-    }));
+    const pastedGroups = new Map();
+    const pastedParts = copiedParts.map((part) => {
+        const pastedPart = addPartToCanvas(part, 0, 0, {
+            worldPoint: {
+                x: Number.parseFloat(part.left) + pasteOffset,
+                y: Number.parseFloat(part.top) + pasteOffset,
+            },
+            rotation: part.rotation,
+            scale: part.scale,
+            flipX: part.flipX,
+            remember: false,
+        });
+
+        if (part.groupKey) {
+            if (!pastedGroups.has(part.groupKey)) {
+                pastedGroups.set(part.groupKey, {
+                    id: createGroupId(),
+                    color: createGroupColor(),
+                });
+            }
+            const group = pastedGroups.get(part.groupKey);
+            pastedPart.dataset.groupId = group.id;
+            pastedPart.dataset.groupColor = group.color;
+        }
+        return pastedPart;
+    });
     setSelectedParts(pastedParts, pastedParts.at(-1));
+    remember({ type: "paste-group", parts: pastedParts });
 }
 
 function renderParts() {
@@ -2039,6 +2078,20 @@ window.tbcPuzzleMobile = Object.freeze({
     },
     selectAll() {
         setSelectedParts(orderedParts());
+    },
+    togglePartSelection(part) {
+        if (!part?.isConnected || part.classList.contains("is-layer-locked")) return;
+        const nextSelection = new Set(selectedParts);
+        const members = part.dataset.groupId
+            ? orderedParts().filter((item) => item.dataset.groupId === part.dataset.groupId && !item.classList.contains("is-layer-locked"))
+            : [part];
+        const isSelected = members.every((member) => nextSelection.has(member));
+        members.forEach((member) => {
+            if (isSelected) nextSelection.delete(member);
+            else nextSelection.add(member);
+        });
+        const nextParts = [...nextSelection];
+        setSelectedParts(nextParts, nextSelection.has(part) ? part : nextParts.at(-1));
     },
     deleteSelected() {
         removeSelectedParts();

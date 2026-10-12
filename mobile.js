@@ -19,13 +19,13 @@
 
         const game = document.querySelector("#game");
         const canvas = document.querySelector("#canvas");
-        const sidePanel = document.querySelector(".side-panel");
         const api = window.tbcPuzzleMobile;
         const toolbar = document.createElement("nav");
         toolbar.className = "mobile-toolbar";
         toolbar.setAttribute("aria-label", "手機版工具列");
 
         let panMode = false;
+        let multiSelectMode = false;
         let activePan = null;
         let longPress = null;
 
@@ -61,20 +61,22 @@
             layersButton.setAttribute("aria-label", willOpen ? "關閉圖層面板" : "開啟圖層面板");
         });
 
+        const multiSelectButton = makeAction("fa-object-group", "開啟多選物件", () => {
+            multiSelectMode = !multiSelectMode;
+            multiSelectButton.classList.toggle("is-active", multiSelectMode);
+            multiSelectButton.setAttribute("aria-label", multiSelectMode ? "結束多選物件" : "開啟多選物件");
+        });
+
         toolbar.append(
             drawerButton,
             panButton,
             makeAction("fa-minus", "縮小畫布", () => zoomAtCanvasCenter(0.82)),
             makeAction("fa-plus", "放大畫布", () => zoomAtCanvasCenter(1.22)),
             layersButton,
-            makeAction("fa-check-double", "全選所有物件", () => api.selectAll()),
+            multiSelectButton,
             makeAction("fa-trash-can", "刪除選取物件", () => api.deleteSelected()),
         );
         game.append(toolbar);
-
-        sidePanel.addEventListener("click", (event) => {
-            if (event.target.closest(".part-card")) closeDrawer();
-        });
 
         canvas.addEventListener("pointerdown", (event) => {
             if (event.pointerType !== "touch") return;
@@ -108,6 +110,12 @@
             if (event.pointerType !== "touch" || panMode) return;
             const part = event.target.closest?.(".placed-part");
             if (!part) return;
+            if (multiSelectMode) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                api.togglePartSelection(part);
+                return;
+            }
             const startX = event.clientX;
             const startY = event.clientY;
             const pointerId = event.pointerId;
