@@ -1,7 +1,7 @@
 """Crop BCU unit sprites into web assets and update the browser catalog.
 
 Usage:
-    py build_unit_assets.py 001
+    py build_unit_assets.py 083
     py build_unit_assets.py 001 002 003
     py build_unit_assets.py --all
     py build_unit_assets.py --refresh-names
@@ -25,10 +25,6 @@ UNIT_NAME_PATHS = (
     PROJECT_ROOT / "assets" / "UnitName_jp.txt",
     PROJECT_ROOT / "assets" / "UnitName_kr.txt",
 )
-# Keep confirmed Traditional Chinese names stable when rebuilding individual units.
-UNIT_NAME_OVERRIDES = {
-    "083": "地龍索多姆",
-}
 INVALID_FOLDER_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 
 
@@ -53,7 +49,6 @@ def read_preferred_unit_names() -> dict[str, str]:
     for path in UNIT_NAME_PATHS:
         for unit_id, unit_name in read_unit_names(path).items():
             names.setdefault(unit_id, unit_name)
-    names.update(UNIT_NAME_OVERRIDES)
     return names
 
 
