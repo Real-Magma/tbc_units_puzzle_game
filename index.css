@@ -954,12 +954,14 @@ html[data-theme="dark"] .rounded-box.is-rotating {
 .part-card {
     display: grid;
     min-width: 0;
+    min-height: 0;
     aspect-ratio: 1;
     padding: 4px;
     place-items: center;
     border: 0;
     background: transparent;
     cursor: grab;
+    overflow: hidden;
 }
 
 .part-card:active { cursor: grabbing; }
@@ -976,6 +978,16 @@ html[data-theme="dark"] .rounded-box.is-rotating {
 .part-card > .sprite-preview {
     max-width: 100%;
     max-height: 100%;
+    min-width: 0;
+    min-height: 0;
+}
+
+.native-drag-preview {
+    position: fixed;
+    top: 0;
+    left: -10000px;
+    pointer-events: none;
+    image-rendering: pixelated;
 }
 
 .help-dialog {

@@ -39,6 +39,7 @@ const importProjectInput = document.querySelector("#import-project-input");
 const saveProjectButton = document.querySelector("#save-project-button");
 const exportPngButton = document.querySelector("#export-png-button");
 const pngExportEnabled = window.TBC_PUZZLE_CONFIG?.showPngExport === true;
+const PART_DRAG_TYPE = "application/x-tbc-part";
 const trashZone = document.querySelector("#trash-zone");
 const unitSelect = document.querySelector("#unit-select");
 const unitSearch = document.querySelector("#unit-search");
@@ -67,6 +68,8 @@ let viewScale = 1;
 let viewX = 0;
 let viewY = 0;
 let partsRenderVersion = 0;
+let palettePartDrag = null;
+let palettePointerGrab = null;
 
 const savedTheme = localStorage.getItem("theme");
 const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -229,37 +232,36 @@ function createAssetPreview(asset, className, maximumWidth, maximumHeight) {
     return crop;
 }
 
-function setPartDragImage(dataTransfer, asset, image) {
-    if (!dataTransfer?.setDragImage) return;
+function isPalettePartDrag(dataTransfer) {
+    return [...(dataTransfer?.types ?? [])].includes(PART_DRAG_TYPE);
+}
 
-    const sprite = normalizeSprite(asset.sprite);
-    const sourceWidth = sprite?.width ?? image?.naturalWidth ?? 1;
-    const sourceHeight = sprite?.height ?? image?.naturalHeight ?? 1;
-    const scale = Math.min(1, 96 / Math.max(sourceWidth, sourceHeight));
+function beginPalettePartDrag(part, image, sourceBounds, clientX, clientY, dataTransfer) {
+    const sprite = normalizeSprite(part.sprite);
+    const partWidth = Number(part.width);
+    const partHeight = Number(part.height);
+    const width = sprite?.width ?? (Number.isFinite(partWidth) ? partWidth : image.naturalWidth);
+    const height = sprite?.height ?? (Number.isFinite(partHeight) ? partHeight : image.naturalHeight);
+    const offsetX = clamp((clientX - sourceBounds.left) / sourceBounds.width, 0, 1) * width;
+    const offsetY = clamp((clientY - sourceBounds.top) / sourceBounds.height, 0, 1) * height;
+    palettePartDrag = { id: part.id, width, height, offsetX, offsetY };
+
+    if (!dataTransfer?.setDragImage || !image?.naturalWidth || !image.naturalHeight) return;
+    const scale = Math.min(1, 96 / Math.max(width, height));
     const preview = document.createElement("canvas");
-    preview.width = Math.max(1, Math.round(sourceWidth * scale));
-    preview.height = Math.max(1, Math.round(sourceHeight * scale));
-
-    if (image?.naturalWidth && image.naturalHeight) {
-        const context = preview.getContext("2d");
-        context.imageSmoothingEnabled = false;
-        if (sprite) {
-            context.drawImage(
-                image,
-                sprite.x,
-                sprite.y,
-                sprite.width,
-                sprite.height,
-                0,
-                0,
-                preview.width,
-                preview.height,
-            );
-        } else {
-            context.drawImage(image, 0, 0, preview.width, preview.height);
-        }
+    preview.className = "native-drag-preview";
+    preview.width = Math.max(1, Math.round(width * scale));
+    preview.height = Math.max(1, Math.round(height * scale));
+    const context = preview.getContext("2d");
+    context.imageSmoothingEnabled = false;
+    if (sprite) {
+        context.drawImage(image, sprite.x, sprite.y, sprite.width, sprite.height, 0, 0, preview.width, preview.height);
+    } else {
+        context.drawImage(image, 0, 0, preview.width, preview.height);
     }
-    dataTransfer.setDragImage(preview, preview.width / 2, preview.height / 2);
+    document.body.append(preview);
+    dataTransfer.setDragImage(preview, Math.round(offsetX * scale), Math.round(offsetY * scale));
+    requestAnimationFrame(() => preview.remove());
 }
 
 function showPartsLoading() {
@@ -329,10 +331,8 @@ function updateLayerButtons() {
     const movesWithinGroup = groupId && !isWholeGroupSelected(selectedPart);
     const parts = movesWithinGroup
         ? orderedParts().filter((part) => part.dataset.groupId === groupId)
-        : groupId
-            ? layerBlocks()
-            : orderedParts();
-    const current = movesWithinGroup ? selectedPart : groupId ? layerBlockForPart(selectedPart, parts) : selectedPart;
+        : layerBlocks();
+    const current = movesWithinGroup ? selectedPart : layerBlockForPart(selectedPart, parts);
     const index = parts.indexOf(current);
     layerBackButton.disabled = index <= 0;
     layerFrontButton.disabled = index === -1 || index === parts.length - 1;
@@ -547,7 +547,7 @@ function placePartWithinGroup(part, targetPart, insertAbove) {
     return true;
 }
 
-function moveGroupLayer(part, direction, toEdge = false) {
+function moveCanvasLayerBlock(part, direction, toEdge = false) {
     const before = orderedParts();
     const blocks = layerBlocks(before);
     const block = layerBlockForPart(part, blocks);
@@ -1214,26 +1214,9 @@ function moveSelectedLayer(direction, toEdge = false) {
         return;
     }
 
-    if (selectedPart.dataset.groupId && isWholeGroupSelected(selectedPart)) {
-        if (moveGroupLayer(selectedPart, direction, toEdge) && toEdge) {
-            flashLayerButton(direction > 0 ? layerFrontButton : layerBackButton);
-        }
-        return;
+    if (moveCanvasLayerBlock(selectedPart, direction, toEdge) && toEdge) {
+        flashLayerButton(direction > 0 ? layerFrontButton : layerBackButton);
     }
-
-    const before = orderedParts();
-    const index = before.indexOf(selectedPart);
-    const targetIndex = toEdge ? (direction > 0 ? before.length - 1 : 0) : clamp(index + direction, 0, before.length - 1);
-    if (index === -1 || index === targetIndex) return;
-
-    const after = [...before];
-    after.splice(index, 1);
-    after.splice(targetIndex, 0, selectedPart);
-    setLayerOrder(after);
-    remember({ type: "layers", order: before });
-    updateLayerButtons();
-    renderLayersPanel();
-    if (toEdge) flashLayerButton(direction > 0 ? layerFrontButton : layerBackButton);
 }
 
 function resetCanvasView() {
@@ -1860,12 +1843,34 @@ async function renderParts() {
         const image = preview.querySelector?.("img") ?? preview;
         image.loading = "lazy";
         image.decoding = "async";
+        card.addEventListener("pointerdown", (event) => {
+            if (event.button !== 0) return;
+            palettePointerGrab = {
+                id: part.id,
+                clientX: event.clientX,
+                clientY: event.clientY,
+                sourceBounds: preview.getBoundingClientRect(),
+            };
+        });
         card.addEventListener("dragstart", (event) => {
             event.dataTransfer.effectAllowed = "copy";
-            event.dataTransfer.setData("text/plain", part.id);
-            setPartDragImage(event.dataTransfer, part, image);
+            event.dataTransfer.setData(PART_DRAG_TYPE, part.id);
+            const grab = palettePointerGrab?.id === part.id ? palettePointerGrab : null;
+            beginPalettePartDrag(
+                part,
+                image,
+                grab?.sourceBounds ?? preview.getBoundingClientRect(),
+                grab?.clientX ?? event.clientX,
+                grab?.clientY ?? event.clientY,
+                event.dataTransfer,
+            );
+        });
+        card.addEventListener("dragend", () => {
+            palettePartDrag = null;
+            palettePointerGrab = null;
         });
         card.addEventListener("click", () => {
+            palettePointerGrab = null;
             const spread = 180;
             addPartToCanvas(part, 0, 0, {
                 worldPoint: {
@@ -2197,11 +2202,34 @@ canvas.addEventListener("pointerdown", startMarqueeSelection);
 canvas.addEventListener("pointerdown", startCanvasPan);
 canvas.addEventListener("wheel", zoomCanvas, { passive: false });
 canvas.addEventListener("contextmenu", (event) => event.preventDefault());
-canvas.addEventListener("dragover", (event) => event.preventDefault());
-canvas.addEventListener("drop", (event) => {
+canvas.addEventListener("dragenter", (event) => {
+    if (!isPalettePartDrag(event.dataTransfer)) return;
     event.preventDefault();
-    const part = activeParts.get(event.dataTransfer.getData("text/plain"));
-    if (part) addPartToCanvas(part, event.clientX, event.clientY);
+    event.dataTransfer.dropEffect = "copy";
+});
+canvas.addEventListener("dragover", (event) => {
+    if (!isPalettePartDrag(event.dataTransfer)) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "copy";
+});
+canvas.addEventListener("drop", (event) => {
+    if (!isPalettePartDrag(event.dataTransfer)) return;
+    event.preventDefault();
+    const part = activeParts.get(event.dataTransfer.getData(PART_DRAG_TYPE));
+    const point = clientToWorld(event.clientX, event.clientY);
+    if (part) {
+        const drag = palettePartDrag?.id === part.id ? palettePartDrag : null;
+        const scale = 1.6;
+        addPartToCanvas(part, 0, 0, {
+            worldPoint: drag
+                ? {
+                    x: point.x + (drag.width / 2 - drag.offsetX) * scale,
+                    y: point.y + (drag.height / 2 - drag.offsetY) * scale,
+                }
+                : point,
+        });
+    }
+    palettePartDrag = null;
 });
 document.addEventListener("keydown", (event) => {
     const target = event.target;
