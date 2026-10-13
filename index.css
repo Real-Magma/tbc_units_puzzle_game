@@ -806,9 +806,37 @@ html[data-theme="dark"] .rounded-box.is-rotating {
 
 .unit-random-button:disabled { cursor: wait; opacity: 0.55; }
 
+.unit-random-button .icon-tooltip {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 50%;
+    z-index: 20;
+    padding: 5px 7px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    background: var(--panel-bg);
+    color: var(--text);
+    box-shadow: var(--shadow);
+    font-family: "GenJyuuGothic", sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1;
+    opacity: 0;
+    pointer-events: none;
+    white-space: nowrap;
+    transform: translate(-50%, -3px);
+    transition: opacity 150ms ease, transform 150ms ease;
+}
+
+.unit-random-button:hover .icon-tooltip,
+.unit-random-button:focus-visible .icon-tooltip {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
 .unit-results {
     position: absolute;
-    top: calc(100% - 8px);
+    top: calc(100% + 2px);
     right: 44px;
     left: 0;
     z-index: 10;
@@ -872,6 +900,29 @@ html[data-theme="dark"] .rounded-box.is-rotating {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px;
+}
+
+.parts-list.is-loading { min-height: clamp(180px, 45vh, 520px); grid-template-columns: 1fr; }
+
+.parts-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    align-self: stretch;
+    color: var(--text);
+    font-family: "GenJyuuGothic", sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.parts-loading-dots { display: inline-flex; width: 1.2em; }
+.parts-loading-dots span { animation: parts-loading-dot 1.2s infinite; opacity: 0; }
+.parts-loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.parts-loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes parts-loading-dot {
+    0%, 20%, 100% { opacity: 0; }
+    40%, 80% { opacity: 1; }
 }
 
 .part-card {
