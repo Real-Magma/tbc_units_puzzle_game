@@ -925,6 +925,32 @@ html[data-theme="dark"] .rounded-box.is-rotating {
     gap: 10px;
 }
 
+.parts-loading {
+    grid-column: 1 / -1;
+    display: inline-flex;
+    min-height: 120px;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    color: var(--text);
+    font-family: "GenJyuuGothic", sans-serif;
+    font-size: 0.9rem;
+}
+
+.parts-loading-dots::after {
+    display: inline-block;
+    width: 1.4em;
+    content: "";
+    animation: loading-dots 1s steps(4, end) infinite;
+}
+
+@keyframes loading-dots {
+    0% { content: ""; }
+    25% { content: "."; }
+    50% { content: ".."; }
+    75%, 100% { content: "..."; }
+}
+
 .part-card {
     display: grid;
     min-width: 0;

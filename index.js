@@ -53,6 +53,7 @@ exportPngButton.hidden = !pngExportEnabled;
 let unitCatalog = {};
 let unitIndex = globalThis.UNIT_INDEX ?? {};
 const loadingUnits = new Map();
+const loadingPartSources = new Map();
 const history = [];
 let activeParts = new Map();
 let selectedPart = null;
@@ -65,6 +66,7 @@ let activeUnitResultIndex = -1;
 let viewScale = 1;
 let viewX = 0;
 let viewY = 0;
+let partsRenderVersion = 0;
 
 const savedTheme = localStorage.getItem("theme");
 const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -258,6 +260,30 @@ function setPartDragImage(dataTransfer, asset, image) {
         }
     }
     dataTransfer.setDragImage(preview, preview.width / 2, preview.height / 2);
+}
+
+function showPartsLoading() {
+    activeParts = new Map();
+    partsList.replaceChildren();
+    const loading = document.createElement("p");
+    loading.className = "parts-loading";
+    loading.setAttribute("role", "status");
+    loading.setAttribute("aria-label", "載入中");
+    loading.innerHTML = '<span>載入中</span><span class="parts-loading-dots" aria-hidden="true"></span>';
+    partsList.append(loading);
+    unitStatus.textContent = "正在載入角色部件…";
+}
+
+function ensurePartSourceLoaded(source) {
+    if (loadingPartSources.has(source)) return loadingPartSources.get(source);
+    const request = new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = resolve;
+        image.onerror = () => reject(new Error(`無法載入角色圖片：${source}`));
+        image.src = source;
+    });
+    loadingPartSources.set(source, request);
+    return request;
 }
 
 function setPartScale(image, scale, { minScale = 0.5, maxScale = 8 } = {}) {
@@ -1800,15 +1826,26 @@ function pasteCopiedParts() {
     remember({ type: "paste-group", parts: pastedParts });
 }
 
-function renderParts() {
+async function renderParts() {
+    const renderVersion = ++partsRenderVersion;
     const unit = unitCatalog[unitSelect.value];
     if (!unit) {
-        activeParts = new Map();
-        partsList.replaceChildren();
-        unitStatus.textContent = "正在載入角色部件…";
+        showPartsLoading();
         return;
     }
     const parts = unit?.parts.filter((part) => part.form === rankSelect.value) ?? [];
+    showPartsLoading();
+    try {
+        await Promise.all([...new Set(parts.map((part) => part.src))].map(ensurePartSourceLoaded));
+    } catch (error) {
+        console.error(error);
+        if (renderVersion === partsRenderVersion) {
+            partsList.replaceChildren();
+            unitStatus.textContent = "角色圖片載入失敗，請再試一次。";
+        }
+        return;
+    }
+    if (renderVersion !== partsRenderVersion) return;
     activeParts = new Map(parts.map((part) => [part.id, part]));
     partsList.replaceChildren();
     unitStatus.textContent = parts.length ? `${parts.length} 個可拖曳部件` : "此階級沒有可用部件。";
@@ -1912,8 +1949,7 @@ async function chooseUnit(unitId, preferredRank = null) {
     unitSelect.value = unitId;
     unitSearch.value = unitLabel(unitId);
     closeUnitResults();
-    unitStatus.textContent = "正在載入角色部件…";
-    partsList.replaceChildren();
+    showPartsLoading();
 
     try {
         await ensureUnitLoaded(unitId);
@@ -1930,7 +1966,7 @@ async function chooseUnit(unitId, preferredRank = null) {
     if (preferredRank && [...rankSelect.options].some((option) => option.value === preferredRank && !option.disabled)) {
         rankSelect.value = preferredRank;
     }
-    renderParts();
+    await renderParts();
     return unitSelect.value === unitId;
 }
 
@@ -2018,12 +2054,12 @@ function initializeUnitIndex() {
     if (!Object.keys(unitIndex).length || unitSelect.options.length) return;
     populateUnitSelect();
     const initialUnitId = unitSelect.value;
-    unitStatus.textContent = "正在載入角色部件…";
+    showPartsLoading();
     ensureUnitLoaded(initialUnitId)
         .then(() => {
             if (unitSelect.value !== initialUnitId) return;
             updateRankOptions();
-            renderParts();
+            return renderParts();
         })
         .catch((error) => {
             console.error(error);
