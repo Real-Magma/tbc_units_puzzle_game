@@ -127,6 +127,9 @@
         font-size: 1rem;
     }
 
+    .unit-search input { margin-bottom: 0; }
+    .unit-random-button { min-height: 44px; }
+
     .unit-results {
         z-index: 4;
         max-height: min(260px, 38dvh);

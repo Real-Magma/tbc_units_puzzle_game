@@ -37,13 +37,19 @@ const showLayersButton = document.querySelector("#show-layers-button");
 const importProjectButton = document.querySelector("#import-project-button");
 const importProjectInput = document.querySelector("#import-project-input");
 const saveProjectButton = document.querySelector("#save-project-button");
+const exportPngButton = document.querySelector("#export-png-button");
+const pngExportEnabled = window.TBC_PUZZLE_CONFIG?.showPngExport === true;
 const trashZone = document.querySelector("#trash-zone");
 const unitSelect = document.querySelector("#unit-select");
 const unitSearch = document.querySelector("#unit-search");
 const unitResults = document.querySelector("#unit-results");
+const randomUnitButton = document.querySelector("#random-unit-button");
 const rankSelect = document.querySelector("#rank-select");
 const unitStatus = document.querySelector("#unit-status");
 const partsList = document.querySelector("#parts-list");
+
+exportPngButton.hidden = !pngExportEnabled;
+
 let unitCatalog = {};
 let unitIndex = globalThis.UNIT_INDEX ?? {};
 const loadingUnits = new Map();
@@ -659,11 +665,38 @@ function downloadBlob(blob, fileName) {
     document.body.append(link);
     link.click();
     link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
-function createPngExport() {
-    const scale = Math.max(1, window.devicePixelRatio || 1);
+function waitForExportImage(image) {
+    if (image.complete) {
+        return image.naturalWidth && image.naturalHeight
+            ? Promise.resolve()
+            : Promise.reject(new Error("角色圖片載入失敗"));
+    }
+    if (typeof image.decode === "function") return image.decode();
+    return new Promise((resolve, reject) => {
+        image.addEventListener("load", resolve, { once: true });
+        image.addEventListener("error", reject, { once: true });
+    });
+}
+
+function canvasToPngBlob(output) {
+    return new Promise((resolve, reject) => {
+        output.toBlob((blob) => {
+            if (blob) resolve(blob);
+            else reject(new Error("PNG 編碼失敗"));
+        }, "image/png");
+    });
+}
+
+async function createPngExport() {
+    const parts = orderedParts().filter((part) => !part.classList.contains("is-layer-hidden"));
+    const images = parts.map((part) => part.querySelector("img"));
+    if (images.some((image) => !image)) throw new Error("找不到圖層圖片");
+    await Promise.all(images.map((image) => waitForExportImage(image)));
+
+    const scale = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
     const output = document.createElement("canvas");
     output.width = Math.round(canvas.clientWidth * scale);
     output.height = Math.round(canvas.clientHeight * scale);
@@ -671,9 +704,9 @@ function createPngExport() {
     if (!context) throw new Error("無法建立 PNG 繪圖區");
     context.scale(scale, scale);
 
-    orderedParts().filter((part) => !part.classList.contains("is-layer-hidden")).forEach((part) => {
+    parts.forEach((part) => {
         const image = part.querySelector("img");
-        if (!image.complete || !image.naturalWidth || !image.naturalHeight) return;
+        if (!image?.naturalWidth || !image.naturalHeight) throw new Error("角色圖片尚未載入完成");
         const state = positionOf(part);
         const partScale = Number.parseFloat(state.scale);
         const angle = Number.parseFloat(state.rotation) * Math.PI / 180;
@@ -686,69 +719,27 @@ function createPngExport() {
         context.restore();
     });
 
-    const dataUrl = output.toDataURL("image/png");
-    const encodedData = dataUrl.slice(dataUrl.indexOf(",") + 1);
-    const binaryData = atob(encodedData);
-    const bytes = Uint8Array.from(binaryData, (character) => character.charCodeAt(0));
-    return { dataUrl, blob: new Blob([bytes], { type: "image/png" }) };
+    return canvasToPngBlob(output);
 }
 
 async function exportTransparentPng() {
-    let png;
-    try {
-        png = createPngExport();
-    } catch (error) {
-        console.error("PNG 匯出失敗", error);
-        window.alert("PNG 圖片建立失敗，請確認所有角色圖片都已載入完成後再試一次。");
+    if (window.location.protocol === "file:") {
+        window.alert("直接雙擊 index.html 的 file:// 模式無法安全匯出角色圖片。請雙擊「啟動本機網站.cmd」，並在開啟的 localhost 網頁中再匯出 PNG。");
         return;
     }
 
-    const fileName = timestampedFileName("png");
+    exportPngButton.disabled = true;
     try {
-        if ("showSaveFilePicker" in window) {
-            try {
-                const handle = await window.showSaveFilePicker({
-                    suggestedName: fileName,
-                    types: [{ description: "PNG 圖片", accept: { "image/png": [".png"] } }],
-                });
-                const writable = await handle.createWritable();
-                await writable.write(png.blob);
-                await writable.close();
-                return;
-            } catch (error) {
-                if (error?.name === "AbortError") return;
-                console.warn("系統另存視窗失敗，改用瀏覽器下載", error);
-            }
-        }
-
-        const link = document.createElement("a");
-        link.href = png.dataUrl;
-        link.download = fileName;
-        link.style.display = "none";
-        document.body.append(link);
-        link.click();
-        link.remove();
+        const png = await createPngExport();
+        downloadBlob(png, timestampedFileName("png"));
     } catch (error) {
         console.error("PNG 匯出失敗", error);
-        window.alert("PNG 匯出失敗，請確認所有角色圖片都已載入完成後再試一次。");
-    }
-}
-
-async function copyPngToClipboard() {
-    try {
-        if (!navigator.clipboard?.write || !window.ClipboardItem) throw new Error("瀏覽器不支援圖片剪貼簿");
-        const png = createPngExport();
-        await navigator.clipboard.write([new ClipboardItem({ "image/png": png.blob })]);
-        const tooltip = copyPngButton.querySelector(".icon-tooltip");
-        copyPngButton.classList.add("is-copied");
-        tooltip.textContent = "已複製！";
-        window.setTimeout(() => {
-            copyPngButton.classList.remove("is-copied");
-            tooltip.textContent = "複製 PNG";
-        }, 1400);
-    } catch (error) {
-        console.error("複製 PNG 失敗", error);
-        window.alert("無法複製 PNG。請使用 Chrome 或 Edge，並允許網站存取剪貼簿。");
+        const message = error?.name === "SecurityError"
+            ? "PNG 匯出被瀏覽器的圖片安全限制擋下。請用「啟動本機網站.cmd」開啟 localhost 網頁後再試。"
+            : "PNG 匯出失敗，請確認角色圖片已載入完成後再試一次。";
+        window.alert(message);
+    } finally {
+        exportPngButton.disabled = false;
     }
 }
 
@@ -1795,6 +1786,25 @@ async function chooseUnit(unitId) {
     renderParts();
 }
 
+async function chooseRandomUnitAndRank() {
+    const unitIds = Object.keys(unitIndex);
+    if (!unitIds.length) return;
+
+    randomUnitButton.disabled = true;
+    try {
+        const unitId = unitIds[Math.floor(Math.random() * unitIds.length)];
+        await chooseUnit(unitId);
+
+        if (!unitCatalog[unitId] || unitSelect.value !== unitId) return;
+        const availableRanks = [...rankSelect.options].filter((option) => !option.disabled);
+        if (!availableRanks.length) return;
+        rankSelect.value = availableRanks[Math.floor(Math.random() * availableRanks.length)].value;
+        renderParts();
+    } finally {
+        randomUnitButton.disabled = false;
+    }
+}
+
 function renderUnitResults() {
     const query = unitSearch.value.trim().toLocaleLowerCase();
     const allUnitIds = Object.keys(unitIndex).sort();
@@ -1927,8 +1937,7 @@ viewHomeButton.addEventListener("click", resetCanvasView);
 layerBackButton.addEventListener("click", (event) => moveSelectedLayer(-1, event.shiftKey));
 layerFrontButton.addEventListener("click", (event) => moveSelectedLayer(1, event.shiftKey));
 trashZone.addEventListener("pointerdown", startClearHold);
-unitSearch.closest(".unit-search")?.addEventListener("pointerdown", (event) => {
-    if (event.target.closest(".unit-results")) return;
+unitSearch.addEventListener("pointerdown", () => {
     // Restore focus before document-level canvas interactions can close the picker.
     requestAnimationFrame(() => {
         unitSearch.focus({ preventScroll: true });
@@ -1937,6 +1946,11 @@ unitSearch.closest(".unit-search")?.addEventListener("pointerdown", (event) => {
 });
 unitSearch.addEventListener("focus", renderUnitResults);
 unitSearch.addEventListener("input", renderUnitResults);
+randomUnitButton.addEventListener("click", chooseRandomUnitAndRank);
+randomUnitButton.addEventListener("pointerdown", () => {
+    closeUnitResults();
+    playButtonSound();
+});
 unitSearch.addEventListener("keydown", (event) => {
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {
         event.preventDefault();
@@ -1988,6 +2002,7 @@ showLayersButton.addEventListener("click", () => {
 importProjectButton.addEventListener("click", () => importProjectInput.click());
 importProjectInput.addEventListener("change", importLayerProject);
 saveProjectButton.addEventListener("click", saveLayerProject);
+if (pngExportEnabled) exportPngButton.addEventListener("click", exportTransparentPng);
 rankSelect.addEventListener("change", renderParts);
 canvas.addEventListener("pointerdown", (event) => {
     if (event.button !== 0) return;

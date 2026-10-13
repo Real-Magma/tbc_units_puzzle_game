@@ -465,6 +465,8 @@ html[data-theme="dark"] .rounded-box.is-rotating {
     transition: transform 150ms ease, background-color 150ms ease;
 }
 
+.layer-controls button[hidden] { display: none !important; }
+
 .layer-controls button:not(:disabled):hover {
     transform: translateY(-2px);
 }
@@ -781,12 +783,33 @@ html[data-theme="dark"] .rounded-box.is-rotating {
 }
 
 .unit-search { position: relative; }
-.unit-search input { margin-bottom: 16px; }
+.unit-search-row { display: grid; grid-template-columns: minmax(0, 1fr) 38px; gap: 6px; margin-bottom: 16px; }
+.unit-search input { margin: 0; }
+
+.unit-random-button {
+    display: grid;
+    width: 38px;
+    padding: 0;
+    place-items: center;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: var(--play-bg);
+    color: var(--text);
+    cursor: pointer;
+    transition: transform 150ms ease, background-color 150ms ease, color 150ms ease;
+}
+
+.unit-random-button:hover:not(:disabled), .unit-random-button:focus-visible:not(:disabled) {
+    background: var(--button-hover-bg);
+    transform: translateY(-1px);
+}
+
+.unit-random-button:disabled { cursor: wait; opacity: 0.55; }
 
 .unit-results {
     position: absolute;
-    top: calc(100% - 16px);
-    right: 0;
+    top: calc(100% - 8px);
+    right: 44px;
     left: 0;
     z-index: 10;
     display: none;

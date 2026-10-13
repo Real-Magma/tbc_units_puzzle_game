@@ -6,6 +6,10 @@
     <title>TBC Units Puzzle Game</title>
     <link rel="stylesheet" href="index.css">
     <link rel="stylesheet" href="mobile.css">
+    <script>
+        // 隱藏「匯出 PNG」按鈕
+        window.TBC_PUZZLE_CONFIG = { showPngExport: false };
+    </script>
     <script src="https://kit.fontawesome.com/9e790ea2d1.js" crossorigin="anonymous"></script>
 </head>
 <body>
@@ -54,6 +58,10 @@
                                     <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
                                     <span class="icon-tooltip" aria-hidden="true">儲存圖層</span>
                                 </button>
+                                <button id="export-png-button" class="layer-button" type="button" aria-label="下載透明 PNG">
+                                    <i class="fa-solid fa-file-export" aria-hidden="true"></i>
+                                    <span class="icon-tooltip" aria-hidden="true">下載透明 PNG</span>
+                                </button>
                                 <button id="view-home-button" class="layer-button" type="button" aria-label="回到畫布原點" title="回到原點">
                                     <i class="fa-solid fa-house" aria-hidden="true"></i>
                                     <span class="icon-tooltip" aria-hidden="true">回到原點</span>
@@ -87,7 +95,12 @@
                     <div class="unit-panel">
                         <label for="unit-search">角色</label>
                         <div class="unit-search">
-                            <input id="unit-search" type="search" autocomplete="off" placeholder="搜尋編號或名稱" aria-describedby="unit-status" aria-controls="unit-results" aria-expanded="false">
+                            <div class="unit-search-row">
+                                <input id="unit-search" type="search" autocomplete="off" placeholder="搜尋編號或名稱" aria-describedby="unit-status" aria-controls="unit-results" aria-expanded="false">
+                                <button id="random-unit-button" class="unit-random-button" type="button" aria-label="隨機角色與階級" title="隨機角色與階級">
+                                    <i class="fa-solid fa-shuffle" aria-hidden="true"></i>
+                                </button>
+                            </div>
                             <div id="unit-results" class="unit-results" role="listbox" aria-label="角色搜尋結果"></div>
                         </div>
                         <select id="unit-select" hidden></select>
