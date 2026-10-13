@@ -140,8 +140,6 @@
         gap: 8px;
     }
 
-    .parts-list.is-loading { min-height: 180px; grid-template-columns: 1fr; }
-
     .part-card {
         min-height: 72px;
         padding: 5px;

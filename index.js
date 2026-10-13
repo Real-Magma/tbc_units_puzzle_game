@@ -53,9 +53,6 @@ exportPngButton.hidden = !pngExportEnabled;
 let unitCatalog = {};
 let unitIndex = globalThis.UNIT_INDEX ?? {};
 const loadingUnits = new Map();
-const preloadedImageRequests = new Map();
-let nextRandomChoice = null;
-let nextRandomChoiceRequest = null;
 const history = [];
 let activeParts = new Map();
 let selectedPart = null;
@@ -1671,12 +1668,13 @@ function pasteCopiedParts() {
 function renderParts() {
     const unit = unitCatalog[unitSelect.value];
     if (!unit) {
-        showPartsLoading();
+        activeParts = new Map();
+        partsList.replaceChildren();
+        unitStatus.textContent = "正在載入角色部件…";
         return;
     }
     const parts = unit?.parts.filter((part) => part.form === rankSelect.value) ?? [];
     activeParts = new Map(parts.map((part) => [part.id, part]));
-    partsList.classList.remove("is-loading");
     partsList.replaceChildren();
     unitStatus.textContent = parts.length ? `${parts.length} 個可拖曳部件` : "此階級沒有可用部件。";
 
@@ -1710,28 +1708,6 @@ function renderParts() {
     }
 }
 
-function showPartsLoading() {
-    activeParts = new Map();
-    const loading = document.createElement("div");
-    const label = document.createElement("span");
-    const dots = document.createElement("span");
-    loading.className = "parts-loading";
-    loading.setAttribute("role", "status");
-    loading.setAttribute("aria-label", "角色部件載入中");
-    label.textContent = "載入中";
-    dots.className = "parts-loading-dots";
-    dots.setAttribute("aria-hidden", "true");
-    for (let index = 0; index < 3; index += 1) {
-        const dot = document.createElement("span");
-        dot.textContent = ".";
-        dots.append(dot);
-    }
-    loading.append(label, dots);
-    partsList.classList.add("is-loading");
-    partsList.replaceChildren(loading);
-    unitStatus.textContent = "正在載入角色部件…";
-}
-
 function updateRankOptions() {
     const unit = unitCatalog[unitSelect.value];
     if (!unit) return;
@@ -1745,26 +1721,6 @@ function availableRanksForUnit(unit) {
     return [...rankSelect.options]
         .map((option) => option.value)
         .filter((form) => forms.has(form));
-}
-
-function preloadImage(src) {
-    if (preloadedImageRequests.has(src)) return preloadedImageRequests.get(src);
-    const request = new Promise((resolve) => {
-        const image = new Image();
-        image.decoding = "async";
-        image.onload = image.onerror = () => resolve();
-        image.src = src;
-    });
-    preloadedImageRequests.set(src, request);
-    request.finally(() => {
-        window.setTimeout(() => preloadedImageRequests.delete(src), 60_000);
-    });
-    return request;
-}
-
-function preloadUnitRankImages(unitId, rank) {
-    const parts = unitCatalog[unitId]?.parts.filter((part) => part.form === rank) ?? [];
-    return Promise.all(parts.map((part) => preloadImage(part.src)));
 }
 
 function unitLabel(unitId) {
@@ -1821,15 +1777,14 @@ async function chooseUnit(unitId, preferredRank = null) {
     unitSelect.value = unitId;
     unitSearch.value = unitLabel(unitId);
     closeUnitResults();
-    showPartsLoading();
+    unitStatus.textContent = "正在載入角色部件…";
+    partsList.replaceChildren();
 
     try {
         await ensureUnitLoaded(unitId);
     } catch (error) {
         console.error(error);
         if (unitSelect.value === unitId) {
-            partsList.classList.remove("is-loading");
-            partsList.replaceChildren();
             unitStatus.textContent = "角色部件載入失敗，請再試一次。";
         }
         return false;
@@ -1840,75 +1795,24 @@ async function chooseUnit(unitId, preferredRank = null) {
     if (preferredRank && [...rankSelect.options].some((option) => option.value === preferredRank && !option.disabled)) {
         rankSelect.value = preferredRank;
     }
-    await renderSelectedRank();
+    renderParts();
     return unitSelect.value === unitId;
 }
 
-async function renderSelectedRank() {
-    const unitId = unitSelect.value;
-    const rank = rankSelect.value;
-    if (!unitCatalog[unitId]) {
-        showPartsLoading();
-        return;
-    }
-    showPartsLoading();
-    await preloadUnitRankImages(unitId, rank);
-    if (unitSelect.value === unitId && rankSelect.value === rank) renderParts();
-}
-
-async function createRandomChoice() {
-    const candidateIds = Object.keys(unitIndex);
-    while (candidateIds.length) {
-        const index = Math.floor(Math.random() * candidateIds.length);
-        const unitId = candidateIds.splice(index, 1)[0];
-        try {
-            const unit = await ensureUnitLoaded(unitId);
-            const ranks = availableRanksForUnit(unit);
-            if (ranks.length) {
-                return {
-                    unitId,
-                    rank: ranks[Math.floor(Math.random() * ranks.length)],
-                };
-            }
-        } catch (error) {
-            console.warn(`略過無法預載的角色 ${unitId}`, error);
-        }
-    }
-    return null;
-}
-
-function scheduleNextRandomChoice() {
-    if (nextRandomChoice || nextRandomChoiceRequest) return nextRandomChoiceRequest;
-    const runWhenIdle = globalThis.requestIdleCallback
-        ? (callback) => globalThis.requestIdleCallback(callback, { timeout: 800 })
-        : (callback) => globalThis.setTimeout(callback, 120);
-    nextRandomChoiceRequest = new Promise((resolve) => {
-        runWhenIdle(() => resolve(createRandomChoice()));
-    })
-        .then(async (choice) => {
-            if (choice) await preloadUnitRankImages(choice.unitId, choice.rank);
-            nextRandomChoice = choice;
-            return choice;
-        })
-        .finally(() => {
-            nextRandomChoiceRequest = null;
-        });
-    return nextRandomChoiceRequest;
-}
-
 async function chooseRandomUnitAndRank() {
-    if (!Object.keys(unitIndex).length) return;
+    const unitIds = Object.keys(unitIndex);
+    if (!unitIds.length) return;
 
     randomUnitButton.disabled = true;
-    showPartsLoading();
     try {
-        const choice = nextRandomChoice ?? await scheduleNextRandomChoice();
-        nextRandomChoice = null;
-        if (!choice) return;
-        await chooseUnit(choice.unitId, choice.rank);
+        const unitId = unitIds[Math.floor(Math.random() * unitIds.length)];
+        const unit = await ensureUnitLoaded(unitId);
+        const ranks = availableRanksForUnit(unit);
+        if (!ranks.length) return;
+        const rank = ranks[Math.floor(Math.random() * ranks.length)];
+        await chooseUnit(unitId, rank);
     } finally {
         randomUnitButton.disabled = false;
-        scheduleNextRandomChoice();
     }
 }
 
@@ -1984,9 +1888,8 @@ function initializeUnitIndex() {
         .then(() => {
             if (unitSelect.value !== initialUnitId) return;
             updateRankOptions();
-            return renderSelectedRank();
+            renderParts();
         })
-        .then(() => scheduleNextRandomChoice())
         .catch((error) => {
             console.error(error);
             unitStatus.textContent = "角色部件載入失敗，請重新選擇角色。";
@@ -2111,7 +2014,7 @@ importProjectButton.addEventListener("click", () => importProjectInput.click());
 importProjectInput.addEventListener("change", importLayerProject);
 saveProjectButton.addEventListener("click", saveLayerProject);
 if (pngExportEnabled) exportPngButton.addEventListener("click", exportTransparentPng);
-rankSelect.addEventListener("change", renderSelectedRank);
+rankSelect.addEventListener("change", renderParts);
 canvas.addEventListener("pointerdown", (event) => {
     if (event.button !== 0) return;
     if (canvas.classList.contains("is-mobile-pan-mode")) return;
