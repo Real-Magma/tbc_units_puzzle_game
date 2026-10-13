@@ -4,6 +4,8 @@ Usage:
     py build_unit_assets.py 083
     py build_unit_assets.py 001 002 003
     py build_unit_assets.py --all
+    py build_unit_assets.py 000 --sprite-sheets
+    py build_unit_assets.py --all --sprite-sheets
     py build_unit_assets.py --refresh-names
 """
 
@@ -21,6 +23,7 @@ from PIL import Image
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_SOURCE_ROOT = PROJECT_ROOT / "assets" / "units_original"
 ASSET_ROOT = PROJECT_ROOT / "assets" / "units"
+SPRITE_ROOT = PROJECT_ROOT / "assets" / "unit_sprites"
 UNIT_NAME_PATHS = (
     PROJECT_ROOT / "assets" / "UnitName_tw.txt",
     PROJECT_ROOT / "assets" / "UnitName_jp.txt",
@@ -99,7 +102,13 @@ def is_placeholder_crop(rectangle: dict[str, object]) -> bool:
     )
 
 
-def crop_unit(unit_id: str, source_root: Path, unit_names: dict[str, str]) -> dict[str, object]:
+def crop_unit(
+    unit_id: str,
+    source_root: Path,
+    unit_names: dict[str, str],
+    *,
+    sprite_sheets: bool = False,
+) -> dict[str, object]:
     source_unit = source_root / unit_id
     if not source_unit.is_dir():
         raise FileNotFoundError(f"找不到角色資料夾：{source_unit}")
@@ -121,9 +130,25 @@ def crop_unit(unit_id: str, source_root: Path, unit_names: dict[str, str]) -> di
             continue
 
         with Image.open(sheet_path) as sheet:
-            output_form = unit_output / form_dir.name
-            output_form.mkdir(parents=True, exist_ok=True)
             sheet_width, sheet_height = sheet.size
+            sprite_source: str | None = None
+
+            if sprite_sheets:
+                sprite_output = SPRITE_ROOT / folder_name / f"{form_dir.name}.webp"
+                sprite_output.parent.mkdir(parents=True, exist_ok=True)
+                # Keep the original sheet dimensions: browser-side crop coordinates
+                # can then use the imgcut values without any conversion.
+                sheet.convert("RGBA").save(
+                    sprite_output,
+                    "WEBP",
+                    lossless=True,
+                    quality=100,
+                    method=4,
+                )
+                sprite_source = f"assets/unit_sprites/{quote(folder_name)}/{form_dir.name}.webp"
+            else:
+                output_form = unit_output / form_dir.name
+                output_form.mkdir(parents=True, exist_ok=True)
 
             for index, rectangle in enumerate(rectangles):
                 label = safe_label(str(rectangle["label"]))
@@ -142,24 +167,38 @@ def crop_unit(unit_id: str, source_root: Path, unit_names: dict[str, str]) -> di
                     )
                     continue
 
-                filename = f"{index:02d}.webp"
-                output_path = output_form / filename
-                sheet.crop((left, top, right, bottom)).save(
-                    output_path,
-                    "WEBP",
-                    lossless=True,
-                    quality=100,
-                    method=4,
-                )
+                if sprite_sheets:
+                    source = sprite_source
+                else:
+                    filename = f"{index:02d}.webp"
+                    output_path = output_form / filename
+                    sheet.crop((left, top, right, bottom)).save(
+                        output_path,
+                        "WEBP",
+                        lossless=True,
+                        quality=100,
+                        method=4,
+                    )
+                    source = f"assets/units/{quote(folder_name)}/{form_dir.name}/{filename}"
 
-                parts.append({
+                part: dict[str, object] = {
                     "id": f"{form_dir.name}-{index:02d}",
                     "name": label or f"部件 {index + 1:02d}",
                     "form": form_dir.name,
-                    "src": f"assets/units/{quote(folder_name)}/{form_dir.name}/{filename}",
+                    "src": source,
                     "width": right - left,
                     "height": bottom - top,
-                })
+                }
+                if sprite_sheets:
+                    part["sprite"] = {
+                        "x": left,
+                        "y": top,
+                        "width": right - left,
+                        "height": bottom - top,
+                        "sheetWidth": sheet_width,
+                        "sheetHeight": sheet_height,
+                    }
+                parts.append(part)
 
     if not parts:
         raise RuntimeError(f"{unit_id} 沒有可用的裁切部件")
@@ -210,6 +249,7 @@ def main() -> None:
     arguments = sys.argv[1:]
     refresh_names_only = "--refresh-names" in arguments
     build_all = "--all" in arguments
+    sprite_sheets = "--sprite-sheets" in arguments
     if build_all:
         unit_ids = sorted(
             path.name
@@ -220,7 +260,7 @@ def main() -> None:
         unit_ids = [
             value.zfill(3)
             for value in arguments
-            if value not in {"--refresh-names", "--all"}
+            if value not in {"--refresh-names", "--all", "--sprite-sheets"}
         ] or ([] if refresh_names_only else ["001"])
     ASSET_ROOT.mkdir(parents=True, exist_ok=True)
     catalog_path = ASSET_ROOT / "catalog.json"
@@ -234,7 +274,12 @@ def main() -> None:
     try:
         for unit_id in unit_ids:
             try:
-                catalog[unit_id] = crop_unit(unit_id, DEFAULT_SOURCE_ROOT, unit_names)
+                catalog[unit_id] = crop_unit(
+                    unit_id,
+                    DEFAULT_SOURCE_ROOT,
+                    unit_names,
+                    sprite_sheets=sprite_sheets,
+                )
             except (FileNotFoundError, RuntimeError, OSError) as error:
                 print(f"略過角色 {unit_id}：{error}")
                 continue

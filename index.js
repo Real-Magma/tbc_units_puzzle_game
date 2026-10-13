@@ -174,6 +174,92 @@ function positionOf(image) {
     };
 }
 
+function normalizeSprite(sprite) {
+    if (!sprite || typeof sprite !== "object") return null;
+    const values = ["x", "y", "width", "height", "sheetWidth", "sheetHeight"]
+        .map((key) => Number(sprite[key]));
+    if (!values.every(Number.isFinite)) return null;
+    const [x, y, width, height, sheetWidth, sheetHeight] = values;
+    if (x < 0 || y < 0 || width <= 0 || height <= 0 || sheetWidth <= 0 || sheetHeight <= 0) return null;
+    if (x + width > sheetWidth || y + height > sheetHeight) return null;
+    return { x, y, width, height, sheetWidth, sheetHeight };
+}
+
+function spriteFromElement(part) {
+    try {
+        return normalizeSprite(JSON.parse(part.dataset.sprite ?? ""));
+    } catch {
+        return null;
+    }
+}
+
+function assetFromElement(part) {
+    return {
+        src: part.dataset.src,
+        name: part.dataset.name,
+        sprite: spriteFromElement(part),
+    };
+}
+
+function createAssetPreview(asset, className, maximumWidth, maximumHeight) {
+    const image = document.createElement("img");
+    const sprite = normalizeSprite(asset.sprite);
+    image.src = asset.src;
+    image.alt = "";
+    image.draggable = false;
+
+    if (!sprite) {
+        image.className = `${className} asset-preview`;
+        return image;
+    }
+
+    const scale = Math.min(maximumWidth / sprite.width, maximumHeight / sprite.height, 1);
+    const crop = document.createElement("span");
+    crop.className = `${className} asset-preview sprite-preview`;
+    crop.style.width = `${sprite.width * scale}px`;
+    crop.style.height = `${sprite.height * scale}px`;
+    image.className = "sprite-sheet-image";
+    image.style.width = `${sprite.sheetWidth * scale}px`;
+    image.style.height = `${sprite.sheetHeight * scale}px`;
+    image.style.left = `${-sprite.x * scale}px`;
+    image.style.top = `${-sprite.y * scale}px`;
+    crop.append(image);
+    return crop;
+}
+
+function setPartDragImage(dataTransfer, asset, image) {
+    if (!dataTransfer?.setDragImage) return;
+
+    const sprite = normalizeSprite(asset.sprite);
+    const sourceWidth = sprite?.width ?? image?.naturalWidth ?? 1;
+    const sourceHeight = sprite?.height ?? image?.naturalHeight ?? 1;
+    const scale = Math.min(1, 96 / Math.max(sourceWidth, sourceHeight));
+    const preview = document.createElement("canvas");
+    preview.width = Math.max(1, Math.round(sourceWidth * scale));
+    preview.height = Math.max(1, Math.round(sourceHeight * scale));
+
+    if (image?.naturalWidth && image.naturalHeight) {
+        const context = preview.getContext("2d");
+        context.imageSmoothingEnabled = false;
+        if (sprite) {
+            context.drawImage(
+                image,
+                sprite.x,
+                sprite.y,
+                sprite.width,
+                sprite.height,
+                0,
+                0,
+                preview.width,
+                preview.height,
+            );
+        } else {
+            context.drawImage(image, 0, 0, preview.width, preview.height);
+        }
+    }
+    dataTransfer.setDragImage(preview, preview.width / 2, preview.height / 2);
+}
+
 function setPartScale(image, scale, { minScale = 0.5, maxScale = 8 } = {}) {
     const nextScale = clamp(Number.parseFloat(scale), minScale, maxScale);
     image.style.setProperty("--scale", nextScale.toFixed(2));
@@ -258,14 +344,13 @@ function updateSelectionFrame() {
         return;
     }
 
-    const image = selectedPart.querySelector("img");
     const state = positionOf(selectedPart);
     const scale = Number.parseFloat(state.scale);
     const padding = 14;
     selectionFrame.style.left = state.left;
     selectionFrame.style.top = state.top;
-    selectionFrame.style.width = `${image.offsetWidth * scale + padding}px`;
-    selectionFrame.style.height = `${image.offsetHeight * scale + padding}px`;
+    selectionFrame.style.width = `${selectedPart.offsetWidth * scale + padding}px`;
+    selectionFrame.style.height = `${selectedPart.offsetHeight * scale + padding}px`;
     selectionFrame.style.setProperty("--rotation", state.rotation);
     selectionFrame.classList.remove("is-group-selection");
     canvasWorld.classList.remove("has-group-selection");
@@ -623,9 +708,10 @@ function updateLockStripeOverlay(part) {
     const image = part.querySelector("img");
     const overlay = part.querySelector(".lock-stripe-overlay");
     if (!image?.naturalWidth || !image.naturalHeight || !overlay) return;
+    const sprite = spriteFromElement(part);
 
-    overlay.width = image.naturalWidth;
-    overlay.height = image.naturalHeight;
+    overlay.width = sprite?.width ?? image.naturalWidth;
+    overlay.height = sprite?.height ?? image.naturalHeight;
     const context = overlay.getContext("2d");
     context.clearRect(0, 0, overlay.width, overlay.height);
     context.strokeStyle = "rgba(220, 38, 38, 0.25)";
@@ -640,7 +726,21 @@ function updateLockStripeOverlay(part) {
     }
 
     context.globalCompositeOperation = "destination-in";
-    context.drawImage(image, 0, 0, overlay.width, overlay.height);
+    if (sprite) {
+        context.drawImage(
+            image,
+            sprite.x,
+            sprite.y,
+            sprite.width,
+            sprite.height,
+            0,
+            0,
+            overlay.width,
+            overlay.height,
+        );
+    } else {
+        context.drawImage(image, 0, 0, overlay.width, overlay.height);
+    }
     context.globalCompositeOperation = "source-over";
 }
 
@@ -715,7 +815,22 @@ async function createPngExport() {
         context.scale(partScale * viewScale, partScale * viewScale);
         context.rotate(angle);
         context.scale(Number.parseFloat(state.flipX), 1);
-        context.drawImage(image, -image.naturalWidth / 2, -image.naturalHeight / 2);
+        const sprite = spriteFromElement(part);
+        if (sprite) {
+            context.drawImage(
+                image,
+                sprite.x,
+                sprite.y,
+                sprite.width,
+                sprite.height,
+                -sprite.width / 2,
+                -sprite.height / 2,
+                sprite.width,
+                sprite.height,
+            );
+        } else {
+            context.drawImage(image, -image.naturalWidth / 2, -image.naturalHeight / 2);
+        }
         context.restore();
     });
 
@@ -752,6 +867,7 @@ async function saveLayerProject() {
         layers: orderedParts().map((part) => ({
             src: part.dataset.src,
             name: part.dataset.name,
+            sprite: spriteFromElement(part),
             zIndex: Number(part.style.zIndex),
             hidden: part.classList.contains("is-layer-hidden"),
             locked: part.classList.contains("is-layer-locked"),
@@ -795,7 +911,11 @@ async function importLayerProject(event) {
         const importedParts = layers.map((layer, index) => {
             const left = Number.parseFloat(layer.left);
             const top = Number.parseFloat(layer.top);
-            const part = addPartToCanvas({ src: layer.src, name: layer.name || `圖層 ${index + 1}` }, 0, 0, {
+            const part = addPartToCanvas({
+                src: layer.src,
+                name: layer.name || `圖層 ${index + 1}`,
+                sprite: normalizeSprite(layer.sprite),
+            }, 0, 0, {
                 worldPoint: { x: Number.isFinite(left) ? left : 0, y: Number.isFinite(top) ? top : 0 },
                 rotation: layer.rotation,
                 scale: layer.scale,
@@ -840,7 +960,7 @@ function renderLayersPanel() {
 
     [...parts].reverse().forEach((part) => {
         const row = document.createElement("div");
-        const thumbnail = document.createElement("img");
+        const thumbnail = createAssetPreview(assetFromElement(part), "layer-thumbnail", 58, 44);
         const visibility = document.createElement("button");
         const lock = document.createElement("button");
         row.className = "layer-row";
@@ -854,9 +974,6 @@ function renderLayersPanel() {
         row.classList.toggle("is-locked", part.classList.contains("is-layer-locked"));
         row.classList.toggle("is-flipped", part.dataset.flipX === "-1");
 
-        thumbnail.src = part.dataset.src;
-        thumbnail.alt = "";
-        thumbnail.draggable = false;
         visibility.className = "layer-visibility";
         visibility.type = "button";
         visibility.setAttribute("aria-label", part.classList.contains("is-layer-hidden") ? `顯示 ${part.dataset.name}` : `隱藏 ${part.dataset.name}`);
@@ -1580,11 +1697,13 @@ function addPartToCanvas(part, clientX, clientY, options = {}) {
     const point = options.worldPoint ?? clientToWorld(clientX, clientY);
     const placedPart = document.createElement("div");
     const image = document.createElement("img");
+    const sprite = normalizeSprite(part.sprite);
     const lockStripeOverlay = document.createElement("canvas");
     const rotateHandle = document.createElement("button");
     placedPart.className = "placed-part";
     placedPart.dataset.src = part.src;
     placedPart.dataset.name = part.name;
+    if (sprite) placedPart.dataset.sprite = JSON.stringify(sprite);
     image.src = part.src;
     image.alt = part.name;
     lockStripeOverlay.className = "lock-stripe-overlay";
@@ -1603,7 +1722,24 @@ function addPartToCanvas(part, clientX, clientY, options = {}) {
     placedPart.style.setProperty("--rotation", options.rotation ?? "0deg");
     setPartScale(placedPart, options.scale ?? "1.6");
     setPartFlip(placedPart, options.flipX ?? "1");
-    placedPart.append(image, lockStripeOverlay, rotateHandle);
+    if (sprite) {
+        const crop = document.createElement("span");
+        placedPart.classList.add("has-sprite");
+        placedPart.style.width = `${sprite.width}px`;
+        placedPart.style.height = `${sprite.height}px`;
+        crop.className = "placed-sprite-crop";
+        crop.style.width = `${sprite.width}px`;
+        crop.style.height = `${sprite.height}px`;
+        image.className = "sprite-sheet-image";
+        image.style.width = `${sprite.sheetWidth}px`;
+        image.style.height = `${sprite.sheetHeight}px`;
+        image.style.left = `${-sprite.x}px`;
+        image.style.top = `${-sprite.y}px`;
+        crop.append(image);
+        placedPart.append(crop, lockStripeOverlay, rotateHandle);
+    } else {
+        placedPart.append(image, lockStripeOverlay, rotateHandle);
+    }
     makePlacedPartDraggable(placedPart);
     makePlacedPartRotatable(placedPart);
     canvasWorld.append(placedPart);
@@ -1625,8 +1761,7 @@ function copySelectedParts() {
     });
 
     copiedParts = parts.map((part) => ({
-            src: part.dataset.src,
-            name: part.dataset.name,
+            ...assetFromElement(part),
             ...positionOf(part),
             groupKey: copiedGroups.has(part.dataset.groupId) ? part.dataset.groupId : "",
         }));
@@ -1680,18 +1815,18 @@ function renderParts() {
 
     for (const part of parts) {
         const card = document.createElement("button");
-        const image = document.createElement("img");
+        const preview = createAssetPreview(part, "part-asset-preview", 76, 76);
         card.className = "part-card";
         card.type = "button";
         card.draggable = true;
         card.setAttribute("aria-label", `拖曳 ${part.form} 階級部件：${part.name}`);
-        image.src = part.src;
-        image.alt = "";
+        const image = preview.querySelector?.("img") ?? preview;
         image.loading = "lazy";
         image.decoding = "async";
         card.addEventListener("dragstart", (event) => {
             event.dataTransfer.effectAllowed = "copy";
             event.dataTransfer.setData("text/plain", part.id);
+            setPartDragImage(event.dataTransfer, part, image);
         });
         card.addEventListener("click", () => {
             const spread = 180;
@@ -1703,7 +1838,7 @@ function renderParts() {
             });
             playPopSound();
         });
-        card.append(image);
+        card.append(preview);
         partsList.append(card);
     }
 }

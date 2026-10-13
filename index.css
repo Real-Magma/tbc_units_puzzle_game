@@ -319,6 +319,24 @@ html[data-theme="dark"] .rounded-box.is-rotating {
     pointer-events: none;
 }
 
+.placed-sprite-crop,
+.sprite-preview {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    flex: 0 0 auto;
+}
+
+.placed-sprite-crop > .sprite-sheet-image,
+.sprite-preview > .sprite-sheet-image {
+    position: absolute;
+    display: block;
+    max-width: none;
+    max-height: none;
+    image-rendering: pixelated;
+    pointer-events: none;
+}
+
 .lock-stripe-overlay {
     position: absolute;
     z-index: 3;
@@ -525,7 +543,7 @@ html[data-theme="dark"] .rounded-box.is-rotating {
 .layer-row.is-dragging { opacity: 0.3; }
 .layer-row.is-drop-target { border-color: #4c8dff; box-shadow: 0 0 0 2px color-mix(in srgb, #4c8dff 35%, transparent); }
 
-.layer-row img {
+.layer-row > img {
     width: 58px;
     height: 44px;
     object-fit: contain;
@@ -533,7 +551,12 @@ html[data-theme="dark"] .rounded-box.is-rotating {
     pointer-events: none;
 }
 
-.layer-row.is-flipped img { transform: scaleX(-1); }
+.layer-row.is-flipped > .asset-preview { transform: scaleX(-1); }
+
+.layer-row > .sprite-preview {
+    justify-self: center;
+    align-self: center;
+}
 
 .layer-group {
     display: grid;
@@ -916,12 +939,17 @@ html[data-theme="dark"] .rounded-box.is-rotating {
 .part-card:active { cursor: grabbing; }
 .part-card:hover { outline: 1px solid var(--border); border-radius: 6px; }
 
-.part-card img {
+.part-card > img {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
     image-rendering: pixelated;
     pointer-events: none;
+}
+
+.part-card > .sprite-preview {
+    max-width: 100%;
+    max-height: 100%;
 }
 
 .help-dialog {
