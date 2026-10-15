@@ -391,16 +391,27 @@ html.is-score-result-open .score-result-overlay {
 }
 
 .score-result-layout { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: stretch; }
-.score-result-scenes { display: grid; gap: 10px; }
+.score-result-scenes {
+    display: grid;
+    box-sizing: border-box;
+    gap: 10px;
+    padding-left: 100px;
+}
 
-.score-result-scene { display: grid; gap: 8px; min-width: 0; }
+.score-result-scene { position: relative; min-width: 0; }
 .score-result-scene-label {
+    position: absolute;
+    z-index: 2;
+    top: 50%;
+    right: calc(100% + 8px);
     margin: 0;
-    width: fit-content;
-    min-width: 4.2rem;
-    justify-self: center;
-    padding: 7px 20px;
-    border: 1px solid color-mix(in srgb, var(--text) 33%, transparent);
+    box-sizing: border-box;
+    width: 88px;
+    min-width: 0;
+    white-space: nowrap;
+    transform: translateY(-50%);
+    padding: 7px 8px;
+    border: 2px solid color-mix(in srgb, var(--text) 33%, transparent);
     border-radius: 999px;
     background: color-mix(in srgb, var(--panel-bg) 84%, var(--text));
     color: color-mix(in srgb, var(--text) 68%, transparent);
@@ -413,7 +424,7 @@ html.is-score-result-open .score-result-overlay {
 .score-result-preview {
     flex: 0 0 auto;
     overflow: hidden;
-    border: 1px solid color-mix(in srgb, var(--text) 35%, transparent);
+    border: 3px solid color-mix(in srgb, var(--text) 35%, transparent);
     border-radius: 14px;
     background: var(--panel-bg);
     box-shadow: 0 12px 22px rgb(0 0 0 / 0.3);
@@ -426,7 +437,7 @@ html.is-score-result-open .score-result-overlay {
     box-sizing: border-box;
     place-items: center;
     overflow: hidden;
-    border: 1px dashed color-mix(in srgb, var(--text) 45%, transparent);
+    border: 3px dashed color-mix(in srgb, var(--text) 45%, transparent);
     border-radius: 14px;
     background: color-mix(in srgb, var(--panel-bg) 88%, var(--text));
     color: color-mix(in srgb, var(--text) 52%, transparent);
@@ -469,15 +480,15 @@ html.is-score-result-open .score-result-overlay {
     position: relative;
     display: block;
     box-sizing: border-box;
-    margin-top: 52px;
-    padding: 24px 16px 28px;
-    border: 1px solid color-mix(in srgb, var(--text) 35%, transparent);
+    margin-top: 0;
+    padding: 18px 16px 20px;
+    border: 3px solid color-mix(in srgb, var(--text) 35%, transparent);
     border-radius: 14px;
     background: var(--panel-bg);
     box-shadow: 0 8px 18px rgb(0 0 0 / 0.2);
 }
 
-.score-result-overlay-breakdown { position: absolute; inset: 0; display: grid; align-content: center; justify-items: center; gap: 18px; text-align: center; }
+.score-result-overlay-breakdown { position: absolute; inset: 0; display: grid; align-content: center; justify-items: center; gap: 14px; text-align: center; }
 .score-result-overlay-breakdown div {
     display: grid;
     min-width: 0;
@@ -499,7 +510,7 @@ html.is-score-result-open .score-result-overlay {
     z-index: 1;
     display: block;
     justify-self: center;
-    margin: 48px 0 0;
+    margin: 34px 0 0;
     text-align: center;
     color: var(--text);
     font-family: "GenJyuuGothic", sans-serif;
@@ -514,8 +525,10 @@ html.is-score-result-open .score-result-overlay {
 
 @media (max-width: 719px) {
     .score-result-layout { grid-template-columns: minmax(0, 1fr); }
-    .score-result-scenes { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-    .score-result-overlay-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 0; }
+    .score-result-scenes { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding-left: 0; }
+    .score-result-scene { display: grid; gap: 8px; }
+    .score-result-scene-label { position: static; margin: 0; justify-self: center; transform: none; }
+    .score-result-overlay-stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin-top: 0; }
     .score-result-overlay-breakdown { position: static; display: contents; }
     .score-result-overlay-breakdown div { display: grid; justify-content: initial; justify-items: center; gap: 3px; }
     .score-result-overlay-score { grid-column: 1 / -1; margin-top: 20px; }
@@ -1233,6 +1246,16 @@ html[data-theme="dark"] .rounded-box.is-rotating {
     text-align: center;
 }
 
+.score-result-panel > * {
+    transition: opacity 360ms ease, transform 360ms cubic-bezier(0.22, 0.8, 0.24, 1);
+}
+
+.score-result-panel.is-summary-pending > * {
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(10px);
+}
+
 .score-result-panel :is(.score-result-kicker, .score-final-score, .score-final-score span, .score-result-message, .score-result-breakdown, .score-result-breakdown *) {
     font-family: "GenJyuuGothic", sans-serif;
 }
@@ -1255,7 +1278,6 @@ html[data-theme="dark"] .rounded-box.is-rotating {
     line-height: 1;
 }
 .score-final-score span { margin-left: 4px; font-size: 0.96rem; }
-.score-result-panel.is-summary-pending .score-final-score { display: none; }
 .score-result-message { margin: 12px 0 22px; color: color-mix(in srgb, var(--text) 74%, transparent); font-family: "GenJyuuGothic", sans-serif; font-size: 0.9rem; font-weight: 700; }
 .score-result-breakdown { width: min(100%, 270px); border-top: 1px solid color-mix(in srgb, var(--text) 22%, transparent); }
 .score-result-breakdown div { display: flex; justify-content: space-between; gap: 14px; padding: 9px 2px; border-bottom: 1px solid color-mix(in srgb, var(--text) 15%, transparent); color: color-mix(in srgb, var(--text) 70%, transparent); font-family: "GenJyuuGothic", sans-serif; font-size: 0.78rem; }

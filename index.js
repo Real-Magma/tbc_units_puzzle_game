@@ -94,6 +94,7 @@ let unitCatalog = {};
 let unitIndex = globalThis.UNIT_INDEX ?? {};
 const loadingUnits = new Map();
 const loadingPartSources = new Map();
+const loadedPartImages = new Map();
 const history = [];
 let activeParts = new Map();
 let selectedPart = null;
@@ -378,7 +379,7 @@ function showScoreResultOverlay(result) {
         answerWidth: sceneWidth,
         answerHeight: previewHeight,
         statsWidth,
-        cardWidth: narrowLayout ? statsWidth : sceneWidth + statsWidth + 12,
+        cardWidth: narrowLayout ? statsWidth : sceneWidth + statsWidth + 112,
     };
 
     snapshot.removeAttribute("id");
@@ -484,6 +485,7 @@ async function revealScoreResult(result) {
         ["位置", Math.round(result.layout * 100)],
         ["角度", Math.round(result.transform * 100)],
         ["圖層", Math.round(result.order * 100)],
+        ["影像", Math.round(result.image * 100)],
     ];
     const values = metrics.map(([label]) => {
         const row = document.createElement("div");
@@ -507,11 +509,11 @@ async function revealScoreResult(result) {
         values[index].value.textContent = `${metrics[index][1]}%`;
         flashRevealedScore(values[index].value);
         if (index === 0) playScoreRevealSound();
-        await waitForScoreReveal(200);
+        await waitForScoreReveal(190);
     }
     if (version !== scoreResultRevealVersion) return;
     const stopFinalScramble = startScoreScramble(finalValue, "", version);
-    await waitForScoreReveal(1970);
+    await waitForScoreReveal(1820);
     if (version !== scoreResultRevealVersion) return;
     stopFinalScramble();
     finalValue.textContent = `${result.total}`;
@@ -755,7 +757,14 @@ function withoutPlaceholderScoreParts(template, unit, rank) {
         .filter((index) => index !== null));
     return {
         ...template,
-        parts: template.parts.filter((part) => allowedCropIndexes.has(part.cropIndex)),
+        // maanim can keep a part in the data while hiding it for this idle
+        // frame. Hidden sprites should not appear in the palette or affect any
+        // of the scoring metrics.
+        parts: template.parts.filter((part) => {
+            const opacity = Number(part.opacity);
+            return allowedCropIndexes.has(part.cropIndex)
+                && (!Number.isFinite(opacity) || opacity > 0.01);
+        }),
     };
 }
 
@@ -831,7 +840,186 @@ function fitScoreLayout(pairs) {
     return { scale: 1, angle: 0, positionQuality: clamp(1 - error / layoutTolerance, 0, 1) };
 }
 
-function gradeScoreRound() {
+function scoreEntryBounds(entry) {
+    const radians = entry.angle * (Math.PI / 180);
+    const width = entry.sprite.width * Math.abs(entry.scaleX);
+    const height = entry.sprite.height * Math.abs(entry.scaleY);
+    const rotatedWidth = Math.abs(Math.cos(radians)) * width + Math.abs(Math.sin(radians)) * height;
+    const rotatedHeight = Math.abs(Math.sin(radians)) * width + Math.abs(Math.cos(radians)) * height;
+    return {
+        left: entry.x - rotatedWidth / 2,
+        top: entry.y - rotatedHeight / 2,
+        right: entry.x + rotatedWidth / 2,
+        bottom: entry.y + rotatedHeight / 2,
+    };
+}
+
+function scoreImageBounds(entries) {
+    return entries.reduce((bounds, entry) => {
+        const entryBounds = scoreEntryBounds(entry);
+        return {
+            left: Math.min(bounds.left, entryBounds.left),
+            top: Math.min(bounds.top, entryBounds.top),
+            right: Math.max(bounds.right, entryBounds.right),
+            bottom: Math.max(bounds.bottom, entryBounds.bottom),
+        };
+    }, { left: Infinity, top: Infinity, right: -Infinity, bottom: -Infinity });
+}
+
+function scoreRectangleOverlap(first, second) {
+    const firstBounds = scoreEntryBounds(first);
+    const secondBounds = scoreEntryBounds(second);
+    const overlapWidth = Math.max(0, Math.min(firstBounds.right, secondBounds.right) - Math.max(firstBounds.left, secondBounds.left));
+    const overlapHeight = Math.max(0, Math.min(firstBounds.bottom, secondBounds.bottom) - Math.max(firstBounds.top, secondBounds.top));
+    const overlap = overlapWidth * overlapHeight;
+    const firstArea = Math.max(0, firstBounds.right - firstBounds.left) * Math.max(0, firstBounds.bottom - firstBounds.top);
+    const secondArea = Math.max(0, secondBounds.right - secondBounds.left) * Math.max(0, secondBounds.bottom - secondBounds.top);
+    const union = firstArea + secondArea - overlap;
+    return union ? overlap / union : 0;
+}
+
+function scoreImageFallback(targetEntries, playerEntries, pairs, targetCount) {
+    const targetsByPart = new Map(targetEntries.map((entry) => [entry.targetPart, entry]));
+    const playersByPart = new Map(playerEntries.map((entry) => [entry.part, entry]));
+    const overlaps = pairs.map((pair) => {
+        const target = targetsByPart.get(pair.target);
+        const player = playersByPart.get(pair.player);
+        return target && player ? scoreRectangleOverlap(target, player) : 0;
+    });
+    if (!overlaps.length) return 0;
+    const average = overlaps.reduce((total, value) => total + value, 0) / overlaps.length;
+    // Extra player sprites still lower the fallback score, matching the alpha
+    // mask comparison used when the browser allows canvas pixel readback.
+    return average * clamp(overlaps.length / Math.max(targetCount, playerEntries.length, 1), 0, 1);
+}
+
+function rasterizeScoreEntries(entries, bounds, scale, canvasSize, padding) {
+    const raster = document.createElement("canvas");
+    raster.width = canvasSize;
+    raster.height = canvasSize;
+    const context = raster.getContext("2d", { willReadFrequently: true });
+    context.imageSmoothingEnabled = false;
+    [...entries]
+        .sort((left, right) => left.z - right.z)
+        .forEach((entry) => {
+            const image = loadedPartImages.get(entry.source);
+            if (!image) return;
+            context.save();
+            context.globalAlpha = entry.opacity;
+            context.translate(
+                padding + (entry.x - bounds.left) * scale,
+                padding + (entry.y - bounds.top) * scale,
+            );
+            context.rotate(entry.angle * (Math.PI / 180));
+            context.scale(entry.scaleX * scale, entry.scaleY * scale);
+            context.drawImage(
+                image,
+                entry.sprite.x,
+                entry.sprite.y,
+                entry.sprite.width,
+                entry.sprite.height,
+                -entry.sprite.width / 2,
+                -entry.sprite.height / 2,
+                entry.sprite.width,
+                entry.sprite.height,
+            );
+            context.restore();
+        });
+    return context.getImageData(0, 0, canvasSize, canvasSize).data;
+}
+
+async function scoreImageSimilarity(templateParts, placedParts, pairs) {
+    if (!scoreRoundTarget || !templateParts.length || !pairs.length) return 0;
+
+    const unit = unitCatalog[scoreRoundTarget.unitId] ?? await ensureUnitLoaded(scoreRoundTarget.unitId);
+    const assetsByCrop = new Map(availablePartsForRank(unit, scoreRoundTarget.rank)
+        .map((part) => [cropIndexFromPartId(part.id), part])
+        .filter(([cropIndex]) => cropIndex !== null));
+    const targetEntries = templateParts.map((targetPart) => {
+        const asset = assetsByCrop.get(targetPart.cropIndex);
+        const sprite = normalizeSprite(asset?.sprite);
+        if (!asset?.src || !sprite) return null;
+        return {
+            targetPart,
+            source: asset.src,
+            sprite,
+            x: Number(targetPart.x),
+            y: Number(targetPart.y),
+            angle: Number(targetPart.angle) || 0,
+            scaleX: Math.abs(Number(targetPart.scaleX) || 1),
+            scaleY: Math.abs(Number(targetPart.scaleY) || 1),
+            z: Number(targetPart.z) || 0,
+            opacity: clamp(Number.isFinite(Number(targetPart.opacity)) ? Number(targetPart.opacity) : 1, 0, 1),
+        };
+    }).filter(Boolean)
+        .filter((entry) => Number.isFinite(entry.x) && Number.isFinite(entry.y));
+    if (!targetEntries.length) return 0;
+
+    const offset = pairs.reduce((total, pair) => {
+        const position = positionOf(pair.player);
+        return {
+            x: total.x + pair.target.x - Number.parseFloat(position.left),
+            y: total.y + pair.target.y - Number.parseFloat(position.top),
+        };
+    }, { x: 0, y: 0 });
+    offset.x /= pairs.length;
+    offset.y /= pairs.length;
+
+    const playerEntries = placedParts.map((part) => {
+        const asset = assetFromElement(part);
+        const sprite = normalizeSprite(asset.sprite);
+        const position = positionOf(part);
+        const x = Number.parseFloat(position.left);
+        const y = Number.parseFloat(position.top);
+        const scale = Number.parseFloat(position.scale);
+        const flipX = Number.parseFloat(position.flipX);
+        if (!asset.src || !sprite || !Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(scale)) return null;
+        return {
+            part,
+            source: asset.src,
+            sprite,
+            x: x + offset.x,
+            y: y + offset.y,
+            angle: Number.parseFloat(position.rotation) || 0,
+            scaleX: scale * (Number.isFinite(flipX) ? flipX : 1),
+            scaleY: scale,
+            z: Number(part.style.zIndex) || 0,
+            opacity: 1,
+        };
+    }).filter(Boolean);
+    if (!playerEntries.length) return 0;
+
+    await Promise.all([...new Set([...targetEntries, ...playerEntries].map((entry) => entry.source))]
+        .map(ensurePartSourceLoaded));
+
+    const bounds = scoreImageBounds([...targetEntries, ...playerEntries]);
+    if (!Number.isFinite(bounds.left)) return 0;
+    const padding = 6;
+    const canvasSize = 192;
+    const width = Math.max(1, bounds.right - bounds.left);
+    const height = Math.max(1, bounds.bottom - bounds.top);
+    const scale = Math.min((canvasSize - padding * 2) / width, (canvasSize - padding * 2) / height);
+    try {
+        const targetPixels = rasterizeScoreEntries(targetEntries, bounds, scale, canvasSize, padding);
+        const playerPixels = rasterizeScoreEntries(playerEntries, bounds, scale, canvasSize, padding);
+        let overlap = 0;
+        let union = 0;
+        for (let index = 3; index < targetPixels.length; index += 4) {
+            const targetVisible = targetPixels[index] > 32;
+            const playerVisible = playerPixels[index] > 32;
+            if (targetVisible || playerVisible) union += 1;
+            if (targetVisible && playerVisible) overlap += 1;
+        }
+        if (overlap > 0 && union) return overlap / union;
+    } catch (error) {
+        // Local file pages can display sprites but still block Canvas pixel
+        // readback. The fallback keeps local scoring useful in that browser mode.
+        console.warn("無法讀取 Sprite Sheet 像素，改用圖形外框比對。", error);
+    }
+    return scoreImageFallback(targetEntries, playerEntries, pairs, templateParts.length);
+}
+
+async function gradeScoreRound() {
     const templateParts = scoreRoundTemplate?.parts ?? [];
     const placedParts = currentScoreRoundParts();
     const { pairs, extras } = matchScoreParts(templateParts, placedParts);
@@ -872,16 +1060,24 @@ function gradeScoreRound() {
         orderQuality = comparisons ? correct / comparisons : 1;
     }
 
+    let image = 0;
+    try {
+        image = await scoreImageSimilarity(templateParts, placedParts, pairs);
+    } catch (error) {
+        console.warn("影像比對失敗，略過本項分數。", error);
+    }
+
     // Identifying the right sprites alone earns only a small base score. The
     // remaining points need a coherent arrangement, so scattered or duplicated
     // colour blocks cannot score well merely by matching a crop id.
     const arrangementGate = coverage * layout.positionQuality;
     const detailGate = 0.2 + layout.positionQuality * 0.8;
     const total = Math.round(
-        coverage * 12
-        + arrangementGate * 50
-        + coverage * transformQuality * detailGate * 24
-        + coverage * orderQuality * detailGate * 14,
+        coverage * 10
+        + arrangementGate * 43
+        + coverage * transformQuality * detailGate * 20
+        + coverage * orderQuality * detailGate * 12
+        + coverage * image * 15,
     );
     return {
         total,
@@ -892,6 +1088,7 @@ function gradeScoreRound() {
         layout: layout.positionQuality,
         transform: transformQuality,
         order: orderQuality,
+        image,
     };
 }
 
@@ -903,6 +1100,7 @@ function renderScoreResult(result) {
         ["位置", `${Math.round(result.layout * 100)}%`],
         ["角度", `${Math.round(result.transform * 100)}%`],
         ["圖層", `${Math.round(result.order * 100)}%`],
+        ["影像", `${Math.round(result.image * 100)}%`],
     ];
     scoreResultBreakdown.replaceChildren(...details.map(([label, value]) => {
         const row = document.createElement("div");
@@ -999,12 +1197,14 @@ async function startScoreRound() {
     }
 }
 
-function finishScoreRound(finished = false, { clearCanvas = true } = {}) {
+async function finishScoreRound(finished = false, { clearCanvas = true } = {}) {
     window.clearInterval(scoreTimerId);
     scoreTimerId = null;
     scoreRoundFinished = finished;
     if (finished) {
-        const result = gradeScoreRound();
+        scoreGradeButton.disabled = true;
+        scoreCancelButton.disabled = true;
+        const result = await gradeScoreRound();
         renderScoreResult(result);
         scoreCountdown.textContent = "完成";
         scoreGradeButton.disabled = true;
@@ -1028,6 +1228,7 @@ function finishScoreRound(finished = false, { clearCanvas = true } = {}) {
     setScoreRoundCanvasState(false);
     tryPlayMusic();
     scoreGradeButton.disabled = false;
+    scoreCancelButton.disabled = false;
     scoreCancelButton.innerHTML = '<i class="fa-solid fa-xmark" aria-hidden="true"></i><span>取消</span>';
     normalModeTab.disabled = false;
     scoreModeStatus.textContent = scoreQuestionMode === "fixed" && !scoreFixedUnitId
@@ -1163,11 +1364,18 @@ function showPartsLoading() {
 }
 
 function ensurePartSourceLoaded(source) {
+    if (loadedPartImages.has(source)) return Promise.resolve(loadedPartImages.get(source));
     if (loadingPartSources.has(source)) return loadingPartSources.get(source);
     const request = new Promise((resolve, reject) => {
         const image = new Image();
-        image.onload = resolve;
-        image.onerror = () => reject(new Error(`無法載入角色圖片：${source}`));
+        image.onload = () => {
+            loadedPartImages.set(source, image);
+            resolve(image);
+        };
+        image.onerror = () => {
+            loadingPartSources.delete(source);
+            reject(new Error(`無法載入角色圖片：${source}`));
+        };
         image.src = source;
     });
     loadingPartSources.set(source, request);
@@ -1984,18 +2192,25 @@ function renderLayersPanel() {
         });
         row.addEventListener("dragleave", () => row.classList.remove("is-drop-target"));
         row.addEventListener("drop", (event) => {
+            const sourceParts = draggedLayerParts();
+            const [source] = sourceParts;
+            const canDropOnRow = source && source !== part && (
+                (source.dataset.groupId && source.dataset.groupId === part.dataset.groupId)
+                || (!source.dataset.groupId && !part.dataset.groupId)
+                || (source.dataset.groupId && !part.dataset.groupId)
+            );
+
+            // A drop over a member row of another group belongs to that group's
+            // container. Do not clear the drag state here, or the bubbled group
+            // drop loses its source and appears to do nothing.
+            if (!canDropOnRow) return;
             event.preventDefault();
-            const [source] = draggedLayerParts();
-            if (!source || source === part || (source.dataset.groupId !== part.dataset.groupId && part.dataset.groupId)) {
-                clearLayerDragState();
-                return;
-            }
             const bounds = row.getBoundingClientRect();
             const insertAbove = event.clientY <= bounds.top + bounds.height / 2;
             if (part.dataset.groupId) {
                 placePartWithinGroup(source, part, insertAbove);
             } else {
-                moveLayerBlock(draggedLayerParts(), [part], insertAbove);
+                moveLayerBlock(sourceParts, [part], insertAbove);
             }
             clearLayerDragState();
         });
@@ -2093,7 +2308,9 @@ function renderLayersPanel() {
                 event.preventDefault();
                 groupContainer.classList.add("is-drop-target");
             });
-            groupContainer.addEventListener("dragleave", () => groupContainer.classList.remove("is-drop-target"));
+            groupContainer.addEventListener("dragleave", (event) => {
+                if (!groupContainer.contains(event.relatedTarget)) groupContainer.classList.remove("is-drop-target");
+            });
             groupContainer.addEventListener("drop", (event) => {
                 event.preventDefault();
                 const targetParts = orderedParts().filter((item) => item.dataset.groupId === part.dataset.groupId);
