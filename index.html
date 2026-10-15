@@ -92,7 +92,12 @@
                     </div>
                 </section>
                 <aside class="side-panel" aria-label="單位與物品面板">
-                    <div class="unit-panel">
+                    <div id="score-start-flash" class="score-start-flash" aria-hidden="true"></div>
+                    <div class="mode-tabs" role="tablist" aria-label="操作模式">
+                        <button id="normal-mode-tab" class="mode-tab is-active" type="button" role="tab" aria-selected="true" aria-controls="normal-mode-panel">一般模式</button>
+                        <button id="score-mode-tab" class="mode-tab" type="button" role="tab" aria-selected="false" aria-controls="score-mode-panel">評分模式</button>
+                    </div>
+                    <div id="normal-mode-panel" class="unit-panel" role="tabpanel" aria-labelledby="normal-mode-tab">
                         <label for="unit-search">角色</label>
                         <div class="unit-search">
                             <div class="unit-search-row">
@@ -115,12 +120,79 @@
                         <p id="unit-status" class="sr-only" role="status"></p>
                         <div id="parts-list" class="parts-list" aria-label="可拖曳部件"></div>
                     </div>
+                    <section id="score-mode-panel" class="score-mode-panel" role="tabpanel" aria-labelledby="score-mode-tab" hidden>
+                        <div id="score-setup" class="score-setup">
+                            <p class="score-section-label">時間</p>
+                            <div class="score-time-options" role="group" aria-label="評分時間">
+                                <button class="score-time-button is-selected" type="button" data-duration="60" aria-pressed="true">1:00</button>
+                                <button class="score-time-button" type="button" data-duration="180" aria-pressed="false">3:00</button>
+                                <button class="score-time-button" type="button" data-duration="300" aria-pressed="false">5:00</button>
+                                <button class="score-time-button" type="button" data-duration="0" aria-pressed="false" aria-label="不限時間">∞</button>
+                            </div>
+                            <div class="score-setup-scroll">
+                                <p class="score-section-label score-mode-label">模式</p>
+                                <div class="score-question-modes" role="group" aria-label="題目模式">
+                                    <button class="score-question-mode is-selected" type="button" data-score-mode="fixed" aria-pressed="true"><i class="fa-solid fa-thumbtack" aria-hidden="true"></i>固定</button>
+                                    <button class="score-question-mode" type="button" data-score-mode="random" aria-pressed="false"><i class="fa-solid fa-shuffle" aria-hidden="true"></i>隨機</button>
+                                </div>
+                                <div id="score-fixed-picker" class="score-fixed-picker">
+                                    <label for="score-unit-search">角色</label>
+                                    <div class="unit-search score-unit-search">
+                                        <input id="score-unit-search" type="search" autocomplete="off" placeholder="搜尋編號或名稱" aria-controls="score-unit-results" aria-expanded="false">
+                                        <div id="score-unit-results" class="unit-results score-unit-results" role="listbox" aria-label="評分模式角色搜尋結果"></div>
+                                    </div>
+                                    <label class="score-rank-label" for="score-fixed-rank">階級</label>
+                                    <select id="score-fixed-rank" aria-label="固定題目階級">
+                                        <option value="f">1 階</option>
+                                        <option value="c">2 階</option>
+                                        <option value="s">3 階</option>
+                                        <option value="u">4 階</option>
+                                    </select>
+                                </div>
+                                <p id="score-mode-status" class="score-mode-status sr-only" aria-live="polite">選擇一隻角色後即可開始。</p>
+                                <button id="score-start-button" class="score-start-button" type="button"><i class="fa-solid fa-play" aria-hidden="true"></i><span>開始</span></button>
+                            </div>
+                        </div>
+                        <div id="score-running" class="score-running" hidden aria-live="polite">
+                            <div class="score-running-fixed">
+                                <div class="score-round-actions">
+                                    <button id="score-cancel-button" class="score-cancel-button" type="button"><i class="fa-solid fa-xmark" aria-hidden="true"></i><span>取消</span></button>
+                                    <button id="score-grade-button" class="score-grade-button" type="button"><i class="fa-solid fa-check" aria-hidden="true"></i><span>評分</span></button>
+                                </div>
+                                <div class="score-timer-window" aria-label="倒數時間"><span class="score-timer-caption">TIME</span><strong id="score-countdown" class="score-countdown">1:00</strong></div>
+                            </div>
+                            <div class="score-round-scroll">
+                                <div class="score-active-unit-panel">
+                                    <label for="score-active-unit">角色</label>
+                                    <input id="score-active-unit" type="text" readonly aria-readonly="true">
+                                    <label for="score-active-rank">階級</label>
+                                    <select id="score-active-rank" disabled aria-label="本回合階級">
+                                        <option value="f">1 階</option>
+                                        <option value="c">2 階</option>
+                                        <option value="s">3 階</option>
+                                        <option value="u">4 階</option>
+                                    </select>
+                                </div>
+                                <div id="score-parts-list" class="parts-list score-parts-list" aria-label="本回合可拖曳部件"></div>
+                            </div>
+                        </div>
+                        <section id="score-result-panel" class="score-result-panel" aria-label="評分結果" hidden>
+                            <p class="score-result-kicker">RESULT</p>
+                            <strong id="score-final-score" class="score-final-score">0<span>分</span></strong>
+                            <p id="score-result-message" class="score-result-message">本回合完成</p>
+                            <div id="score-result-breakdown" class="score-result-breakdown" aria-label="評分明細"></div>
+                            <button id="score-retry-button" class="score-start-button score-retry-button" type="button"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i><span>再來一局</span></button>
+                        </section>
+                    </section>
                 </aside>
             </div>
         </section>
     </main>
     <audio id="background-music" loop preload="metadata">
-        <source src="bgm/Battle Cats Lo-fi.ogg" type="audio/ogg; codecs=opus">
+        <source src="bgm/Battle Cats Lo-fi short.ogg" type="audio/ogg; codecs=opus">
+    </audio>
+    <audio id="score-music" loop preload="metadata">
+        <source src="bgm/Rush Theme.ogg" type="audio/ogg; codecs=opus">
     </audio>
     <audio id="bowling-sound" preload="auto">
         <source src="sfx/bowling-sound.mp3" type="audio/mpeg">
@@ -134,6 +206,25 @@
     <audio id="button-sound" preload="auto">
         <source src="sfx/MC Button.mp3" type="audio/mpeg">
     </audio>
+    <audio id="score-reveal-sound" preload="auto">
+        <source src="sfx/right green bright bling upstairs.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="score-final-sound" preload="auto">
+        <source src="sfx/you are right.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="score-dojo-win-sound" preload="auto">
+        <source src="sfx/dojo win.mp3" type="audio/mpeg">
+    </audio>
+
+    <div id="score-result-overlay" class="score-result-overlay" role="dialog" aria-modal="true" aria-label="本回合畫面" hidden>
+        <div id="score-result-card" class="score-result-card">
+            <div id="score-result-preview" class="score-result-preview" aria-hidden="true"></div>
+            <section id="score-result-overlay-stats" class="score-result-overlay-stats" aria-label="本回合分數">
+                <div id="score-result-overlay-breakdown" class="score-result-overlay-breakdown"></div>
+                <strong id="score-result-overlay-score" class="score-result-overlay-score"><span class="score-reveal-value">--</span><span>分</span></strong>
+            </section>
+        </div>
+    </div>
 
     <dialog id="help-dialog" class="help-dialog" aria-labelledby="help-title">
         <header class="help-header">

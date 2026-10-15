@@ -1,0 +1,1 @@
+window.SCORE_TEMPLATES ??= {};window.SCORE_TEMPLATES["092/f"]={"version":1,"unitId":"092","rank":"f","frame":0,"parts":[{"modelIndex":1,"cropIndex":0,"x":45.645,"y":76.075,"angle":0.0,"scaleX":1.79,"scaleY":1.79,"z":6,"opacity":1.0}],"bounds":{"minX":45.645,"maxX":45.645,"minY":76.075,"maxY":76.075}};

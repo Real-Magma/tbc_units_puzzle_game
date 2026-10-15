@@ -13,6 +13,7 @@
     --scrollbar-thumb-hover: #5d6167;
     --sidebar-width: clamp(220px, 19vw, 380px);
     --toolbar-gap: clamp(18px, 2vw, 34px);
+    --score-start-flash: 0 0 0;
 }
 
 @font-face {
@@ -36,6 +37,7 @@ html[data-theme="dark"] {
     --scrollbar-track: #171717;
     --scrollbar-thumb: #777777;
     --scrollbar-thumb-hover: #a5a5a5;
+    --score-start-flash: 255 255 255;
 }
 
 * { box-sizing: border-box; }
@@ -291,6 +293,167 @@ html, body, .app-frame, .rounded-box, .side-panel, .help-dialog, .icon-button, .
     will-change: transform;
 }
 
+.rounded-box.is-score-round .placed-part.score-preexisting-part { display: none; }
+.layer-button[hidden],
+.layers-panel[hidden] { display: none !important; }
+
+.score-start-flash {
+    position: absolute;
+    inset: 0;
+    z-index: 12000;
+    overflow: hidden;
+    pointer-events: none;
+    opacity: 0;
+}
+
+.score-start-flash::before {
+    position: absolute;
+    content: "";
+    pointer-events: none;
+    inset: -45%;
+    background: linear-gradient(112deg, transparent 40%, rgb(var(--score-start-flash) / 0.92) 48%, rgb(var(--score-start-flash) / 0.28) 54%, transparent 63%);
+    transform: translateX(-72%) skewX(-12deg);
+}
+
+.score-start-flash.is-playing { animation: score-start-flash 520ms cubic-bezier(0.18, 0.72, 0.2, 1) both; }
+.score-start-flash.is-playing::before { animation: score-start-sweep 520ms cubic-bezier(0.1, 0.7, 0.2, 1) both; }
+
+@keyframes score-start-flash {
+    0%, 100% { opacity: 0; }
+    9% { opacity: 1; }
+    33% { opacity: 0.48; }
+}
+
+@keyframes score-start-sweep {
+    from { transform: translateX(-72%) skewX(-12deg); }
+    to { transform: translateX(72%) skewX(-12deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .score-start-flash.is-playing,
+    .score-start-flash.is-playing::before { animation: none; }
+}
+
+.score-result-overlay {
+    position: fixed;
+    z-index: 30000;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    overflow: hidden;
+    background: rgb(0 0 0 / 0.4);
+    backdrop-filter: blur(2px);
+    opacity: 0;
+    transition: opacity 180ms ease;
+}
+
+.score-result-overlay[hidden] { display: none !important; }
+.score-result-overlay.is-open { opacity: 1; }
+
+.score-result-card {
+    display: flex;
+    max-width: 100%;
+    flex-direction: column;
+    gap: 12px;
+    overflow: visible;
+    opacity: 0;
+    transform: translate3d(0, 110vh, 0) scale(0.94);
+    backface-visibility: hidden;
+    contain: paint;
+    will-change: transform, opacity;
+}
+
+.score-result-overlay.is-open .score-result-card {
+    animation: score-result-rise 580ms cubic-bezier(0.18, 0.82, 0.25, 1) both;
+}
+
+.score-result-preview {
+    flex: 0 0 auto;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--text) 35%, transparent);
+    border-radius: 14px;
+    background: var(--panel-bg);
+    box-shadow: 0 12px 22px rgb(0 0 0 / 0.3);
+    transform: translateZ(0);
+}
+.score-result-canvas {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-sizing: border-box;
+    pointer-events: none;
+}
+
+.score-result-overlay-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+    align-items: end;
+    padding: 11px 14px 13px;
+    border: 1px solid color-mix(in srgb, var(--text) 35%, transparent);
+    border-radius: 14px;
+    background: var(--panel-bg);
+    box-shadow: 0 8px 18px rgb(0 0 0 / 0.2);
+}
+
+.score-result-overlay-breakdown { display: contents; }
+.score-result-overlay-breakdown div {
+    display: grid;
+    min-width: 0;
+    justify-items: center;
+    gap: 3px;
+    color: color-mix(in srgb, var(--text) 68%, transparent);
+    font-family: "GenJyuuGothic", sans-serif;
+    font-size: clamp(0.58rem, 1.15vw, 0.72rem);
+    font-weight: 700;
+    text-align: center;
+}
+.score-result-overlay-breakdown strong {
+    color: var(--text);
+    font-size: clamp(0.82rem, 1.55vw, 1.02rem);
+}
+.score-result-overlay-score {
+    grid-column: 1 / -1;
+    justify-self: center;
+    margin-top: 5px;
+    color: var(--text);
+    font-family: "GenJyuuGothic", sans-serif;
+    font-size: clamp(2.1rem, 5vw, 3.5rem);
+    font-weight: 900;
+    line-height: 1;
+}
+.score-result-overlay-score > span:last-child { margin-left: 4px; font-size: 0.82rem; }
+.score-reveal-value { display: inline-block; }
+.score-reveal-value.is-scrambling { animation: score-scramble-shake 70ms steps(2, end) infinite; }
+.score-reveal-value.is-revealed { animation: score-reveal-flash 260ms ease-out both; }
+
+@keyframes score-scramble-shake {
+    0%, 100% { transform: translate(0, 0) rotate(0); }
+    25% { transform: translate(-1px, 1px) rotate(-1deg); }
+    75% { transform: translate(1px, -1px) rotate(1deg); }
+}
+
+@keyframes score-reveal-flash {
+    0% { color: rgb(var(--score-start-flash) / 1); text-shadow: 0 0 14px rgb(var(--score-start-flash) / 0.92); transform: scale(1.25); }
+    100% { color: var(--text); text-shadow: none; transform: scale(1); }
+}
+
+@keyframes score-result-rise {
+    from { opacity: 0; transform: translate3d(0, 110vh, 0) scale(0.94); }
+    78% { opacity: 1; transform: translate3d(0, -7px, 0) scale(1.005); }
+    to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .score-result-overlay,
+    .score-result-overlay.is-open .score-result-card { animation: none; transition: none; }
+    .score-result-overlay.is-open .score-result-card { opacity: 1; transform: none; }
+}
+
 .rounded-box.is-panning { cursor: grabbing; }
 
 .rounded-box.is-rotation-ready,
@@ -375,8 +538,8 @@ html[data-theme="dark"] .rounded-box.is-rotating {
 
 .selection-corner {
     position: absolute;
-    width: calc(15px * var(--selection-ui-scale, 1));
-    height: calc(15px * var(--selection-ui-scale, 1));
+    width: calc(8px * var(--selection-ui-scale, 1));
+    height: calc(8px * var(--selection-ui-scale, 1));
     padding: 0;
     border-color: var(--selection-color);
     border-style: solid;
@@ -773,6 +936,7 @@ html[data-theme="dark"] .rounded-box.is-rotating {
 }
 
 .side-panel {
+    position: relative;
     min-height: 0;
     border-left: 3px solid var(--border);
     background: var(--panel-bg);
@@ -781,6 +945,269 @@ html[data-theme="dark"] .rounded-box.is-rotating {
 }
 
 .side-panel::-webkit-scrollbar { display: none; }
+
+.mode-tabs {
+    position: sticky;
+    top: 0;
+    z-index: 15;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0px;
+    padding: 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 42%, transparent);
+    background: var(--panel-bg);
+}
+
+.mode-tab {
+    min-height: 46px;
+    padding: 7px 5px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: color-mix(in srgb, var(--text) 58%, transparent);
+    cursor: pointer;
+    font-family: "GenJyuuGothic", sans-serif;
+    font-size: 0.84rem;
+    font-weight: 700;
+    transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.mode-tab:hover,
+.mode-tab:focus-visible {
+    background: color-mix(in srgb, var(--button-hover-bg) 72%, transparent);
+    color: var(--text);
+    outline: none;
+}
+
+.mode-tab:focus-visible { box-shadow: 0 0 0 3px #4c8dff; }
+
+.mode-tab.is-active {
+    box-shadow: inset 0 -2px var(--text);
+    background: color-mix(in srgb, var(--button-hover-bg) 88%, var(--panel-bg));
+    color: var(--text);
+    margin: 0;
+    transform: none;
+}
+
+.score-mode-panel { height: calc(100dvh - 48px); min-height: 0; padding: 20px 14px; }
+.score-setup { display: flex; height: 100%; min-height: 0; flex-direction: column; }
+.score-setup[hidden],
+.score-running[hidden],
+.score-result-panel[hidden] { display: none !important; }
+
+.score-section-label {
+    margin: 0 0 9px;
+    font-family: "GenJyuuGothic", sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.score-time-options {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 5px;
+}
+
+.score-setup-scroll {
+    min-height: 0;
+    flex: 1;
+    margin-top: 2px;
+    padding: 18px 2px 24px;
+    overflow-y: auto;
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 14px, #000 calc(100% - 18px), transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 14px, #000 calc(100% - 18px), transparent 100%);
+}
+
+.score-setup-scroll::-webkit-scrollbar { display: none; }
+
+.score-time-button,
+.score-start-button,
+.score-question-mode,
+.score-cancel-button,
+.score-grade-button {
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: var(--play-bg);
+    color: var(--text);
+    cursor: pointer;
+    font-family: "GenJyuuGothic", sans-serif;
+    font-weight: 700;
+}
+
+.score-time-button {
+    min-height: 40px;
+    padding: 5px 2px;
+    font-size: clamp(0.78rem, 1.55vw, 1.05rem);
+    transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+}
+
+.score-time-button:hover,
+.score-time-button:focus-visible,
+.score-time-button.is-selected,
+.score-start-button:hover,
+.score-start-button:focus-visible,
+.score-question-mode:hover,
+.score-question-mode:focus-visible,
+.score-question-mode.is-selected,
+.score-cancel-button:hover,
+.score-cancel-button:focus-visible,
+.score-grade-button:hover,
+.score-grade-button:focus-visible {
+    background: var(--button-hover-bg);
+    outline: none;
+}
+
+.score-time-button.is-selected { box-shadow: inset 0 -1px var(--text); }
+.score-time-button:active { box-shadow: none; transform: translateY(2px) scale(0.97); }
+
+.score-mode-label { margin-top: 24px; }
+
+.score-question-modes {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+}
+
+.score-question-mode {
+    min-height: 39px;
+    padding: 6px;
+    font-size: 0.85rem;
+    transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+}
+
+.score-question-mode i { margin-right: 6px; }
+.score-question-mode.is-selected { box-shadow: inset 0 -1px var(--text); }
+.score-question-mode:active { box-shadow: none; transform: translateY(2px) scale(0.98); }
+
+.score-fixed-picker { margin-top: 18px; }
+.score-fixed-picker > label,
+.score-active-unit-panel label {
+    display: block;
+    margin: 0 0 8px;
+    font-family: "GenJyuuGothic", sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.score-fixed-picker input,
+.score-fixed-picker select,
+.score-active-unit-panel input,
+.score-active-unit-panel select {
+    width: 100%;
+    margin: 0 0 16px;
+    padding: 9px 8px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: var(--play-bg);
+    color: var(--text);
+    font-family: "GenJyuuGothic", sans-serif;
+    font-weight: 700;
+}
+
+.score-active-unit-panel input[readonly],
+.score-active-unit-panel select:disabled {
+    cursor: default;
+    opacity: 1;
+}
+
+.score-fixed-picker .score-unit-search { margin-bottom: 18px; }
+.score-fixed-picker .score-unit-search input { margin-bottom: 0; }
+.score-unit-results { right: auto; left: 0; width: 100%; box-sizing: border-box; }
+.score-rank-label { margin-top: 0; }
+.score-mode-status { min-height: 1.2em; margin: 10px 0 0; color: color-mix(in srgb, var(--text) 66%, transparent); font-family: "GenJyuuGothic", sans-serif; font-size: 0.74rem; font-weight: 700; }
+
+.score-start-button {
+    display: flex;
+    width: min(100%, 290px);
+    min-height: 43px;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    margin: 28px auto 0;
+    font-size: 1rem;
+}
+
+.score-start-button:disabled { cursor: wait; opacity: 0.58; }
+
+.score-running { display: flex; height: 100%; min-height: 0; flex-direction: column; }
+.score-running-fixed { flex: 0 0 auto; }
+.score-result-panel {
+    display: flex;
+    height: 100%;
+    min-height: 0;
+    flex-direction: column;
+    align-items: center;
+    padding: 34px 14px 20px;
+    text-align: center;
+}
+.score-result-kicker {
+    margin: 0;
+    color: color-mix(in srgb, var(--text) 55%, transparent);
+    font-family: "GenJyuuGothic", sans-serif;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.19em;
+}
+.score-final-score {
+    display: inline-flex;
+    align-items: baseline;
+    margin-top: 10px;
+    color: var(--text);
+    font-family: "GenJyuuGothic", sans-serif;
+    font-size: clamp(3rem, 8vw, 4.8rem);
+    font-weight: 900;
+    line-height: 1;
+}
+.score-final-score span { margin-left: 4px; font-size: 0.96rem; }
+.score-result-message { margin: 12px 0 22px; color: color-mix(in srgb, var(--text) 74%, transparent); font-family: "GenJyuuGothic", sans-serif; font-size: 0.9rem; font-weight: 700; }
+.score-result-breakdown { width: min(100%, 270px); border-top: 1px solid color-mix(in srgb, var(--text) 22%, transparent); }
+.score-result-breakdown div { display: flex; justify-content: space-between; gap: 14px; padding: 9px 2px; border-bottom: 1px solid color-mix(in srgb, var(--text) 15%, transparent); color: color-mix(in srgb, var(--text) 70%, transparent); font-family: "GenJyuuGothic", sans-serif; font-size: 0.78rem; }
+.score-result-breakdown strong { color: var(--text); }
+.score-retry-button { margin-top: auto; }
+.score-round-scroll {
+    min-height: 0;
+    flex: 1;
+    padding: 18px 2px 24px;
+    overflow-y: auto;
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 14px, #000 calc(100% - 18px), transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 14px, #000 calc(100% - 18px), transparent 100%);
+}
+.score-round-scroll::-webkit-scrollbar { display: none; }
+
+.score-round-actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px; }
+.score-cancel-button, .score-grade-button { display: flex; min-height: 37px; align-items: center; justify-content: center; gap: 6px; padding: 6px 4px; font-size: 0.76rem; }
+.score-cancel-button { border-color: #c43b3b; color: #c43b3b; }
+.score-cancel-button:hover, .score-cancel-button:focus-visible { background: color-mix(in srgb, #c43b3b 14%, var(--play-bg)); }
+.score-grade-button { border-color: #279653; color: #279653; }
+.score-grade-button:hover, .score-grade-button:focus-visible { background: color-mix(in srgb, #279653 14%, var(--play-bg)); }
+
+.score-timer-window {
+    display: grid;
+    width: fit-content;
+    min-width: 0;
+    margin: 18px auto 20px;
+    padding: 0;
+    justify-items: center;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.score-timer-caption { color: color-mix(in srgb, var(--text) 62%, transparent); font-family: "GenJyuuGothic", sans-serif; font-size: 0.58rem; font-weight: 700; letter-spacing: 0.12em; }
+.score-countdown {
+    margin: 3px 0 0;
+    color: var(--text);
+    font-family: "GenJyuuGothic", sans-serif;
+    font-size: clamp(1.6rem, 4vw, 2.35rem);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.04em;
+}
+
+.score-parts-list { margin-top: 4px; }
 
 .unit-panel { padding: 20px 14px; }
 

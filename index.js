@@ -9,10 +9,14 @@ const themeTooltip = document.querySelector("#theme-tooltip");
 const soundTooltip = document.querySelector("#sound-tooltip");
 const effectsTooltip = document.querySelector("#effects-tooltip");
 const backgroundMusic = document.querySelector("#background-music");
+const scoreMusic = document.querySelector("#score-music");
 const bowlingSound = document.querySelector("#bowling-sound");
 const popSound = document.querySelector("#pop-sound");
 const secretAreaSound = document.querySelector("#secret-area-sound");
 const buttonSound = document.querySelector("#button-sound");
+const scoreRevealSound = document.querySelector("#score-reveal-sound");
+const scoreFinalSound = document.querySelector("#score-final-sound");
+const scoreDojoWinSound = document.querySelector("#score-dojo-win-sound");
 const volumeSlider = document.querySelector("#volume-slider");
 const helpButton = document.querySelector("#help-button");
 const helpDialog = document.querySelector("#help-dialog");
@@ -23,6 +27,7 @@ const layerFrontButton = document.querySelector("#layer-front-button");
 const viewHomeButton = document.querySelector("#view-home-button");
 const canvas = document.querySelector("#canvas");
 const canvasWorld = document.querySelector("#canvas-world");
+const scoreStartFlash = document.querySelector("#score-start-flash");
 const selectionFrame = document.querySelector("#selection-frame");
 const selectionRotateHandle = document.querySelector("#selection-rotate-handle");
 const marqueeSelection = document.querySelector("#marquee-selection");
@@ -48,6 +53,36 @@ const randomUnitButton = document.querySelector("#random-unit-button");
 const rankSelect = document.querySelector("#rank-select");
 const unitStatus = document.querySelector("#unit-status");
 const partsList = document.querySelector("#parts-list");
+const normalModeTab = document.querySelector("#normal-mode-tab");
+const scoreModeTab = document.querySelector("#score-mode-tab");
+const normalModePanel = document.querySelector("#normal-mode-panel");
+const scoreModePanel = document.querySelector("#score-mode-panel");
+const scoreSetup = document.querySelector("#score-setup");
+const scoreRunning = document.querySelector("#score-running");
+const scoreResultPanel = document.querySelector("#score-result-panel");
+const scoreTimeButtons = [...document.querySelectorAll(".score-time-button")];
+const scoreQuestionModeButtons = [...document.querySelectorAll(".score-question-mode")];
+const scoreFixedPicker = document.querySelector("#score-fixed-picker");
+const scoreFixedRankSelect = document.querySelector("#score-fixed-rank");
+const scoreUnitSearch = document.querySelector("#score-unit-search");
+const scoreUnitResults = document.querySelector("#score-unit-results");
+const scoreModeStatus = document.querySelector("#score-mode-status");
+const scoreStartButton = document.querySelector("#score-start-button");
+const scoreCancelButton = document.querySelector("#score-cancel-button");
+const scoreGradeButton = document.querySelector("#score-grade-button");
+const scoreCountdown = document.querySelector("#score-countdown");
+const scoreActiveUnit = document.querySelector("#score-active-unit");
+const scoreActiveRank = document.querySelector("#score-active-rank");
+const scorePartsList = document.querySelector("#score-parts-list");
+const scoreResultOverlay = document.querySelector("#score-result-overlay");
+const scoreResultCard = document.querySelector("#score-result-card");
+const scoreResultPreview = document.querySelector("#score-result-preview");
+const scoreResultOverlayBreakdown = document.querySelector("#score-result-overlay-breakdown");
+const scoreResultOverlayScore = document.querySelector("#score-result-overlay-score");
+const scoreFinalScore = document.querySelector("#score-final-score");
+const scoreResultMessage = document.querySelector("#score-result-message");
+const scoreResultBreakdown = document.querySelector("#score-result-breakdown");
+const scoreRetryButton = document.querySelector("#score-retry-button");
 
 exportPngButton.hidden = !pngExportEnabled;
 
@@ -70,6 +105,22 @@ let viewY = 0;
 let partsRenderVersion = 0;
 let palettePartDrag = null;
 let palettePointerGrab = null;
+let selectedScoreDuration = 60;
+let scoreRoundStartedAt = 0;
+let scoreTimerId = null;
+let scoreRoundFinished = false;
+let scoreQuestionMode = "fixed";
+let scoreFixedUnitId = "";
+let scoreFixedRank = "f";
+let scoreRandomTarget = null;
+let scoreRandomPreparation = null;
+let scoreRoundTarget = null;
+let scoreRoundTemplate = null;
+let isScoreRoundCanvasActive = false;
+let scoreResultCloseTimer = null;
+let scoreResultRevealVersion = 0;
+let scoreHistoryStart = null;
+const scoreTemplateCache = new Map();
 
 const savedTheme = localStorage.getItem("theme");
 const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -83,7 +134,11 @@ const effectsVolume = Object.freeze({
     bowling: 0.48,
     secretArea: 0.32,
     button: 0.3,
+    scoreReveal: 0.36,
+    scoreFinal: 0.1,
 });
+const musicTracks = [backgroundMusic, scoreMusic];
+const PLACEHOLDER_PART_MARKERS = ["dummy", "dmy", "ダミー", "空っぽ", "placeholder", "blank", "empty"];
 
 function setTheme(theme) {
     const isDark = theme === "dark";
@@ -95,7 +150,7 @@ function setTheme(theme) {
 }
 
 function setMuted(muted) {
-    backgroundMusic.muted = muted;
+    musicTracks.forEach((music) => { music.muted = muted; });
     soundIcon.className = muted ? "fa-solid fa-volume-xmark" : "fa-solid fa-volume-high";
     soundButton.setAttribute("aria-pressed", String(muted));
     const label = muted ? "開音樂" : "關音樂";
@@ -104,7 +159,7 @@ function setMuted(muted) {
 }
 
 function setEffectsMuted(muted) {
-    [bowlingSound, popSound, secretAreaSound, buttonSound].forEach((sound) => { sound.muted = muted; });
+    [bowlingSound, popSound, secretAreaSound, buttonSound, scoreRevealSound, scoreFinalSound, scoreDojoWinSound].forEach((sound) => { sound.muted = muted; });
     effectsIcon.className = muted ? "fa-solid fa-music" : "fa-solid fa-music";
     effectsButton.setAttribute("aria-pressed", String(muted));
     const label = muted ? "開音效" : "關音效";
@@ -114,13 +169,21 @@ function setEffectsMuted(muted) {
 
 function setVolume(volume) {
     const nextVolume = clamp(volume, 0, 1);
-    backgroundMusic.volume = nextVolume;
+    musicTracks.forEach((music) => { music.volume = nextVolume; });
     volumeSlider.value = String(nextVolume);
     localStorage.setItem("music-volume", String(nextVolume));
 }
 
 function tryPlayMusic() {
-    if (!backgroundMusic.muted) backgroundMusic.play().catch(() => {});
+    if (!scoreResultOverlay.hidden) {
+        musicTracks.forEach((music) => music.pause());
+        return;
+    }
+    const activeMusic = isScoreRoundCanvasActive && !scoreRoundFinished ? scoreMusic : backgroundMusic;
+    musicTracks.forEach((music) => {
+        if (music !== activeMusic) music.pause();
+    });
+    if (!activeMusic.muted) activeMusic.play().catch(() => {});
 }
 
 function playBowlingSound() {
@@ -147,8 +210,612 @@ function playButtonSound() {
     buttonSound.play().catch(() => {});
 }
 
+function playScoreRevealSound() {
+    scoreRevealSound.volume = effectsVolume.scoreReveal;
+    scoreRevealSound.currentTime = 0;
+    scoreRevealSound.play().catch(() => {});
+}
+
+function playScoreFinalSound() {
+    scoreFinalSound.volume = effectsVolume.scoreFinal;
+    scoreFinalSound.currentTime = 0;
+    scoreFinalSound.play().catch(() => {});
+}
+
+function playScoreDojoWinSound() {
+    scoreDojoWinSound.volume = 0.03;
+    scoreDojoWinSound.currentTime = 0;
+    scoreDojoWinSound.play().catch(() => {});
+}
+
 function clamp(value, minimum, maximum) {
     return Math.min(Math.max(value, minimum), maximum);
+}
+
+function setActiveMode(mode) {
+    const isScoreMode = mode === "score";
+    if (!isScoreMode && scoreRoundStartedAt && !scoreRoundFinished) return;
+    normalModeTab.classList.toggle("is-active", !isScoreMode);
+    normalModeTab.setAttribute("aria-selected", String(!isScoreMode));
+    scoreModeTab.classList.toggle("is-active", isScoreMode);
+    scoreModeTab.setAttribute("aria-selected", String(isScoreMode));
+    normalModePanel.hidden = isScoreMode;
+    scoreModePanel.hidden = !isScoreMode;
+    if (!isScoreMode) {
+        if (!scoreRoundFinished) {
+            clearScoreRoundParts();
+            scoreRoundTemplate = null;
+        }
+        setScoreRoundCanvasState(false);
+    }
+    if (isScoreMode) updateScoreRound();
+}
+
+function setScoreRoundCanvasState(isActive) {
+    isScoreRoundCanvasActive = isActive;
+    canvas.classList.toggle("is-score-round", isActive);
+    importProjectButton.hidden = isActive;
+    saveProjectButton.hidden = isActive;
+    layerContextMenu.hidden = true;
+
+    if (isActive) {
+        canvasWorld.querySelectorAll(".placed-part").forEach((part) => {
+            part.classList.add("score-preexisting-part");
+        });
+        setSelectedParts([], null);
+    } else {
+        canvasWorld.querySelectorAll(".score-preexisting-part").forEach((part) => {
+            part.classList.remove("score-preexisting-part");
+        });
+    }
+
+    renderLayersPanel();
+    updateSelectionFrame();
+}
+
+function playScoreStartFlash() {
+    scoreStartFlash.classList.remove("is-playing");
+    void scoreStartFlash.offsetWidth;
+    scoreStartFlash.classList.add("is-playing");
+    window.setTimeout(() => scoreStartFlash.classList.remove("is-playing"), 560);
+}
+
+function showScoreResultOverlay(result) {
+    const snapshot = canvas.cloneNode(true);
+    const snapshotWorld = snapshot.querySelector(".canvas-world");
+    const canvasBounds = canvas.getBoundingClientRect();
+    const aspectRatio = canvasBounds.width / Math.max(canvasBounds.height, 1);
+    const previewWidth = Math.max(1, Math.min(window.innerWidth * 0.84, 1080, window.innerHeight * 0.58 * aspectRatio));
+    const previewHeight = previewWidth / aspectRatio;
+
+    snapshot.removeAttribute("id");
+    snapshot.classList.add("score-result-canvas");
+    snapshot.querySelectorAll(".selection-frame, .marquee-selection, .layer-controls, .layers-panel, .layer-context-menu").forEach((element) => element.remove());
+    snapshot.querySelectorAll("[id]").forEach((element) => element.removeAttribute("id"));
+    snapshot.querySelectorAll("button").forEach((button) => button.remove());
+    if (snapshotWorld) {
+        const parts = currentScoreRoundParts();
+        const bounds = parts.reduce((total, part) => {
+            const rect = part.getBoundingClientRect();
+            const left = (rect.left - canvasBounds.left - viewX) / viewScale;
+            const top = (rect.top - canvasBounds.top - viewY) / viewScale;
+            const right = (rect.right - canvasBounds.left - viewX) / viewScale;
+            const bottom = (rect.bottom - canvasBounds.top - viewY) / viewScale;
+            return {
+                left: Math.min(total.left, left),
+                top: Math.min(total.top, top),
+                right: Math.max(total.right, right),
+                bottom: Math.max(total.bottom, bottom),
+            };
+        }, { left: Infinity, top: Infinity, right: -Infinity, bottom: -Infinity });
+
+        if (Number.isFinite(bounds.left)) {
+            const centerX = (bounds.left + bounds.right) / 2;
+            const centerY = (bounds.top + bounds.bottom) / 2;
+            const width = Math.max(bounds.right - bounds.left, 1);
+            const height = Math.max(bounds.bottom - bounds.top, 1);
+            const normalScale = viewScale * (previewWidth / canvasBounds.width);
+            const fitScale = Math.min(normalScale, previewWidth * 0.82 / width, previewHeight * 0.82 / height);
+            snapshotWorld.style.transform = `translate(${previewWidth / 2 - centerX * fitScale}px, ${previewHeight / 2 - centerY * fitScale}px) scale(${fitScale})`;
+        } else {
+            snapshotWorld.style.transform = "none";
+        }
+        snapshotWorld.style.transformOrigin = "0 0";
+    }
+
+    scoreResultCard.style.width = `${previewWidth}px`;
+    scoreResultPreview.style.width = `${previewWidth}px`;
+    scoreResultPreview.style.height = `${previewHeight}px`;
+    scoreResultPreview.replaceChildren(snapshot);
+    window.clearTimeout(scoreResultCloseTimer);
+    scoreResultOverlay.hidden = false;
+    scoreResultOverlay.classList.remove("is-open");
+    tryPlayMusic();
+    playScoreDojoWinSound();
+    requestAnimationFrame(() => {
+        scoreResultOverlay.classList.add("is-open");
+        revealScoreResult(result);
+    });
+}
+
+function closeScoreResultOverlay() {
+    scoreResultRevealVersion += 1;
+    if (scoreResultOverlay.hidden) return;
+    scoreResultOverlay.classList.remove("is-open");
+    window.clearTimeout(scoreResultCloseTimer);
+    scoreResultCloseTimer = window.setTimeout(() => {
+        scoreResultOverlay.hidden = true;
+        scoreResultPreview.replaceChildren();
+        tryPlayMusic();
+    }, 180);
+}
+
+function startScoreScramble(element, suffix, version) {
+    let active = true;
+    let animationFrame = null;
+    element.classList.add("is-scrambling");
+    const tick = () => {
+        if (!active || version !== scoreResultRevealVersion) {
+            element.classList.remove("is-scrambling");
+            return;
+        }
+        element.textContent = `${Math.floor(Math.random() * 101)}${suffix}`;
+        animationFrame = requestAnimationFrame(tick);
+    };
+    tick();
+    return () => {
+        active = false;
+        if (animationFrame !== null) cancelAnimationFrame(animationFrame);
+        element.classList.remove("is-scrambling");
+    };
+}
+
+function flashRevealedScore(element) {
+    element.classList.remove("is-revealed");
+    void element.offsetWidth;
+    element.classList.add("is-revealed");
+    window.setTimeout(() => element.classList.remove("is-revealed"), 280);
+}
+
+function waitForScoreReveal(milliseconds) {
+    return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+}
+
+async function revealScoreResult(result) {
+    if (!result) return;
+    const version = ++scoreResultRevealVersion;
+    const metrics = [
+        ["部件", Math.round(result.coverage * 100)],
+        ["排列", Math.round(result.layout * 100)],
+        ["角度", Math.round(result.transform * 100)],
+        ["圖層", Math.round(result.order * 100)],
+    ];
+    const values = metrics.map(([label]) => {
+        const row = document.createElement("div");
+        const title = document.createElement("span");
+        const value = document.createElement("strong");
+        title.textContent = label;
+        value.className = "score-reveal-value";
+        value.textContent = "--%";
+        row.append(title, value);
+        return { row, value };
+    });
+    scoreResultOverlayBreakdown.replaceChildren(...values.map(({ row }) => row));
+    scoreResultOverlayScore.innerHTML = '<span class="score-reveal-value">--</span><span>分</span>';
+    const finalValue = scoreResultOverlayScore.querySelector(".score-reveal-value");
+
+    const stopMetricScrambles = values.map(({ value }) => startScoreScramble(value, "%", version));
+    await waitForScoreReveal(320);
+    for (let index = 0; index < metrics.length; index += 1) {
+        if (version !== scoreResultRevealVersion) return;
+        stopMetricScrambles[index]();
+        values[index].value.textContent = `${metrics[index][1]}%`;
+        flashRevealedScore(values[index].value);
+        if (index === 0) playScoreRevealSound();
+        await waitForScoreReveal(200);
+    }
+    if (version !== scoreResultRevealVersion) return;
+    const stopFinalScramble = startScoreScramble(finalValue, "", version);
+    await waitForScoreReveal(1970);
+    if (version !== scoreResultRevealVersion) return;
+    stopFinalScramble();
+    finalValue.textContent = `${result.total}`;
+    flashRevealedScore(finalValue);
+    playScoreFinalSound();
+}
+
+function formatScoreTime(milliseconds) {
+    const seconds = Math.max(0, Math.ceil(milliseconds / 1000));
+    return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+}
+
+function updateScoreRound() {
+    if (!scoreRoundStartedAt || scoreRoundFinished) return;
+    if (selectedScoreDuration === 0) {
+        scoreCountdown.textContent = "∞";
+        return;
+    }
+    const remaining = selectedScoreDuration * 1000 - (Date.now() - scoreRoundStartedAt);
+    if (remaining <= 0) {
+        finishScoreRound(true);
+        return;
+    }
+    scoreCountdown.textContent = formatScoreTime(remaining);
+}
+
+async function prepareRandomScoreTarget() {
+    const unitIds = Object.keys(unitIndex);
+    if (!unitIds.length) return null;
+    const unitId = unitIds[Math.floor(Math.random() * unitIds.length)];
+    const unit = await ensureUnitLoaded(unitId);
+    const ranks = availableRanksForUnit(unit);
+    if (!ranks.length) return null;
+    return { unitId, rank: ranks[Math.floor(Math.random() * ranks.length)] };
+}
+
+function showScorePartsLoading() {
+    scorePartsList.replaceChildren();
+    const loading = document.createElement("p");
+    loading.className = "parts-loading";
+    loading.setAttribute("role", "status");
+    loading.innerHTML = '<span>載入中</span><span class="parts-loading-dots" aria-hidden="true"></span>';
+    scorePartsList.append(loading);
+}
+
+async function renderScoreParts(target, template) {
+    const renderVersion = ++partsRenderVersion;
+    const unit = unitCatalog[target.unitId] ?? await ensureUnitLoaded(target.unitId);
+    const requiredCropIndexes = new Set((template?.parts ?? []).map((part) => part.cropIndex));
+    const parts = availablePartsForRank(unit, target.rank)
+        .filter((part) => requiredCropIndexes.has(cropIndexFromPartId(part.id)));
+    showScorePartsLoading();
+    try {
+        await Promise.all([...new Set(parts.map((part) => part.src))].map(ensurePartSourceLoaded));
+    } catch (error) {
+        console.error(error);
+        if (renderVersion === partsRenderVersion) {
+            scorePartsList.replaceChildren();
+            scoreModeStatus.textContent = "角色圖片載入失敗，請取消後再試一次。";
+        }
+        return false;
+    }
+    if (renderVersion !== partsRenderVersion) return false;
+    const scoreParts = parts.map((part) => ({ ...part, scoreRound: true }));
+    activeParts = new Map(scoreParts.map((part) => [part.id, part]));
+    scorePartsList.replaceChildren(...scoreParts.map(createPartCard));
+    return true;
+}
+
+function scoreTemplateKey(target) {
+    return `${target.unitId}/${target.rank}`;
+}
+
+async function ensureScoreTemplateLoaded(target) {
+    const key = scoreTemplateKey(target);
+    if (scoreTemplateCache.has(key)) return scoreTemplateCache.get(key);
+    const template = await new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.async = true;
+        script.src = `assets/unit_scoring/templates/${encodeURIComponent(target.unitId)}/${encodeURIComponent(target.rank)}.js`;
+        script.onload = () => {
+            const loaded = globalThis.SCORE_TEMPLATES?.[key];
+            script.remove();
+            if (!loaded) {
+                reject(new Error(`正確答案資料格式無效：${key}`));
+                return;
+            }
+            resolve(loaded);
+        };
+        script.onerror = () => {
+            script.remove();
+            reject(new Error(`無法載入正確答案：${key}`));
+        };
+        document.head.append(script);
+    });
+    if (!Array.isArray(template.parts) || !template.parts.length) throw new Error(`正確答案資料格式無效：${key}`);
+    scoreTemplateCache.set(key, template);
+    return template;
+}
+
+function cropIndexFromPartId(id) {
+    const match = (id ?? "").match(/^[fcsu]-(\d+)$/i);
+    return match ? Number.parseInt(match[1], 10) : null;
+}
+
+function cropIndexFromPlacedPart(part) {
+    return cropIndexFromPartId(part.dataset.partId);
+}
+
+function isPlaceholderPart(part) {
+    const name = String(part?.name ?? "").trim().toLocaleLowerCase();
+    const sprite = normalizeSprite(part?.sprite);
+    const width = Number(sprite?.width ?? part?.width);
+    const height = Number(sprite?.height ?? part?.height);
+    return (width === 1 && height === 1)
+        || PLACEHOLDER_PART_MARKERS.some((marker) => name.includes(marker));
+}
+
+function availablePartsForRank(unit, rank) {
+    return (unit?.parts ?? []).filter((part) => part.form === rank && !isPlaceholderPart(part));
+}
+
+function withoutPlaceholderScoreParts(template, unit, rank) {
+    const allowedCropIndexes = new Set(availablePartsForRank(unit, rank)
+        .map((part) => cropIndexFromPartId(part.id))
+        .filter((index) => index !== null));
+    return {
+        ...template,
+        parts: template.parts.filter((part) => allowedCropIndexes.has(part.cropIndex)),
+    };
+}
+
+function normalizeAngle(angle) {
+    return ((angle + 180) % 360 + 360) % 360 - 180;
+}
+
+function currentScoreRoundParts() {
+    return [...canvasWorld.querySelectorAll('.placed-part[data-score-round-part="true"]')]
+        .filter((part) => part.isConnected && !part.classList.contains("is-layer-hidden"));
+}
+
+function matchScoreParts(templateParts, placedParts) {
+    const targetsByCrop = new Map();
+    const playersByCrop = new Map();
+    templateParts.forEach((part) => {
+        const list = targetsByCrop.get(part.cropIndex) ?? [];
+        list.push(part);
+        targetsByCrop.set(part.cropIndex, list);
+    });
+    placedParts.forEach((part) => {
+        const cropIndex = cropIndexFromPlacedPart(part);
+        if (cropIndex === null) return;
+        const list = playersByCrop.get(cropIndex) ?? [];
+        list.push(part);
+        playersByCrop.set(cropIndex, list);
+    });
+
+    const pairs = [];
+    let extras = 0;
+    playersByCrop.forEach((players, cropIndex) => {
+        const targets = [...(targetsByCrop.get(cropIndex) ?? [])]
+            .sort((left, right) => left.x - right.x || left.y - right.y || left.modelIndex - right.modelIndex);
+        const orderedPlayers = [...players]
+            .sort((left, right) => Number.parseFloat(left.style.left) - Number.parseFloat(right.style.left)
+                || Number.parseFloat(left.style.top) - Number.parseFloat(right.style.top));
+        const amount = Math.min(targets.length, orderedPlayers.length);
+        for (let index = 0; index < amount; index += 1) {
+            pairs.push({ target: targets[index], player: orderedPlayers[index] });
+        }
+        extras += Math.max(0, orderedPlayers.length - targets.length);
+    });
+    return { pairs, extras };
+}
+
+function fitScoreLayout(pairs) {
+    // A single part has no relative layout. Its position, scale, and rotation
+    // are deliberately free, so a correct part should not receive a fixed penalty.
+    if (pairs.length < 2) return { scale: 1, angle: 0, positionQuality: pairs.length ? 1 : 0 };
+    const targetCenter = pairs.reduce((total, pair) => ({ x: total.x + pair.target.x, y: total.y + pair.target.y }), { x: 0, y: 0 });
+    const playerCenter = pairs.reduce((total, pair) => {
+        const position = positionOf(pair.player);
+        return { x: total.x + Number.parseFloat(position.left), y: total.y + Number.parseFloat(position.top) };
+    }, { x: 0, y: 0 });
+    targetCenter.x /= pairs.length;
+    targetCenter.y /= pairs.length;
+    playerCenter.x /= pairs.length;
+    playerCenter.y /= pairs.length;
+
+    let real = 0;
+    let imaginary = 0;
+    let targetEnergy = 0;
+    const points = pairs.map((pair) => {
+        const position = positionOf(pair.player);
+        const target = { x: pair.target.x - targetCenter.x, y: pair.target.y - targetCenter.y };
+        const player = { x: Number.parseFloat(position.left) - playerCenter.x, y: Number.parseFloat(position.top) - playerCenter.y };
+        real += target.x * player.x + target.y * player.y;
+        imaginary += target.x * player.y - target.y * player.x;
+        targetEnergy += target.x ** 2 + target.y ** 2;
+        return { pair, target, player };
+    });
+    if (targetEnergy < 0.001) return { scale: 1, angle: 0, positionQuality: 0.5 };
+    const scaleValue = Math.hypot(real, imaginary) / targetEnergy;
+    const angle = Math.atan2(imaginary, real) * 180 / Math.PI;
+    const cosine = Math.cos(angle * Math.PI / 180);
+    const sine = Math.sin(angle * Math.PI / 180);
+    const rms = Math.sqrt(targetEnergy / pairs.length);
+    const error = Math.sqrt(points.reduce((sum, point) => {
+        const x = scaleValue * (point.target.x * cosine - point.target.y * sine);
+        const y = scaleValue * (point.target.x * sine + point.target.y * cosine);
+        return sum + (point.player.x - x) ** 2 + (point.player.y - y) ** 2;
+    }, 0) / pairs.length) / Math.max(rms, 1);
+    return { scale: scaleValue, angle, positionQuality: clamp(1 - error / 0.95, 0, 1) };
+}
+
+function gradeScoreRound() {
+    const templateParts = scoreRoundTemplate?.parts ?? [];
+    const placedParts = currentScoreRoundParts();
+    const { pairs, extras } = matchScoreParts(templateParts, placedParts);
+    const coverage = templateParts.length
+        ? clamp(pairs.length / (templateParts.length + extras * 0.5), 0, 1)
+        : 0;
+    const layout = fitScoreLayout(pairs);
+
+    const transformQuality = pairs.length === 1 ? 1 : pairs.length ? pairs.reduce((sum, pair) => {
+        const position = positionOf(pair.player);
+        const playerScale = Number.parseFloat(position.scale);
+        const expectedScale = (pair.target.scaleX + pair.target.scaleY) / 2 * Math.max(layout.scale, 0.01);
+        const scaleError = Math.abs(Math.log(Math.max(playerScale, 0.01) / Math.max(expectedScale, 0.01)));
+        const expectedAngle = pair.target.angle + layout.angle;
+        const angleError = Math.abs(normalizeAngle(Number.parseFloat(position.rotation) - expectedAngle));
+        const scaleQuality = clamp(1 - scaleError / 1.15, 0, 1);
+        const rotationQuality = clamp(1 - angleError / 135, 0, 1);
+        return sum + (scaleQuality + rotationQuality) / 2;
+    }, 0) / pairs.length : 0;
+
+    let orderQuality = pairs.length < 2 ? (pairs.length ? 1 : 0) : 0;
+    if (pairs.length >= 2) {
+        let comparisons = 0;
+        let correct = 0;
+        for (let first = 0; first < pairs.length; first += 1) {
+            for (let second = first + 1; second < pairs.length; second += 1) {
+                const targetOrder = pairs[first].target.z - pairs[second].target.z;
+                const playerOrder = Number(pairs[first].player.style.zIndex) - Number(pairs[second].player.style.zIndex);
+                if (!targetOrder || !playerOrder) continue;
+                comparisons += 1;
+                if (Math.sign(targetOrder) === Math.sign(playerOrder)) correct += 1;
+            }
+        }
+        orderQuality = comparisons ? correct / comparisons : 1;
+    }
+
+    const total = Math.round(coverage * 42 + layout.positionQuality * 36 + transformQuality * 14 + orderQuality * 8);
+    return {
+        total,
+        matched: pairs.length,
+        targetCount: templateParts.length,
+        extras,
+        coverage,
+        layout: layout.positionQuality,
+        transform: transformQuality,
+        order: orderQuality,
+    };
+}
+
+function renderScoreResult(result) {
+    scoreFinalScore.firstChild.nodeValue = `${result.total}`;
+    scoreResultMessage.textContent = result.total == 67 ? "🫲🤪🫱" : result.total >= 90 ? "你是記憶拼圖大師吧！" : result.total >= 70 ? "很強了！" : result.total >= 45 ? "還行啦~" : "你是如何走到這地步的?";
+    const details = [
+        ["物件", `${result.matched} / ${result.targetCount}`],
+        ["排列", `${Math.round(result.layout * 100)}%`],
+        ["細節", `${Math.round(result.transform * 100)}%`],
+        ["圖層", `${Math.round(result.order * 100)}%`],
+    ];
+    scoreResultBreakdown.replaceChildren(...details.map(([label, value]) => {
+        const row = document.createElement("div");
+        const text = document.createElement("span");
+        const score = document.createElement("strong");
+        text.textContent = label;
+        score.textContent = value;
+        row.append(text, score);
+        return row;
+    }));
+}
+
+function clearScoreRoundParts() {
+    canvasWorld.querySelectorAll('.placed-part[data-score-round-part="true"]').forEach((part) => part.remove());
+    if (scoreHistoryStart !== null) {
+        history.length = scoreHistoryStart;
+        scoreHistoryStart = null;
+        updateUndoButton();
+    }
+    selectedParts.clear();
+    selectedPart = null;
+    updateSelectionFrame();
+}
+
+async function startScoreRound() {
+    let target = null;
+    scoreStartButton.disabled = true;
+    scoreModeStatus.textContent = "正在準備題目…";
+    try {
+        if (scoreQuestionMode === "fixed") {
+            if (!scoreFixedUnitId) {
+                scoreUnitSearch.value = "";
+                scoreUnitSearch.placeholder = "請先選擇一隻角色";
+                scoreUnitSearch.focus();
+                scoreModeStatus.textContent = "請先選擇一隻角色。";
+                return;
+            }
+            scoreFixedRank = scoreFixedRankSelect.value;
+            const unit = await ensureUnitLoaded(scoreFixedUnitId);
+            const ranks = availableRanksForUnit(unit);
+            if (!ranks.includes(scoreFixedRank)) {
+                scoreModeStatus.textContent = "這隻角色沒有選擇的階級，請改選其他階級。";
+                return;
+            }
+            target = { unitId: scoreFixedUnitId, rank: scoreFixedRank };
+        } else {
+            target = scoreRandomTarget ?? await (scoreRandomPreparation ?? prepareRandomScoreTarget());
+            if (!target) throw new Error("無法準備隨機題目");
+            scoreRandomTarget = null;
+            scoreRandomPreparation = null;
+        }
+
+        scoreModeStatus.textContent = "正在讀取正確答案…";
+        const template = await ensureScoreTemplateLoaded(target);
+        const unit = unitCatalog[target.unitId] ?? await ensureUnitLoaded(target.unitId);
+        const usableTemplate = withoutPlaceholderScoreParts(template, unit, target.rank);
+        if (!usableTemplate.parts.length) throw new Error("此題沒有可用的角色部件");
+        clearScoreRoundParts();
+        scoreHistoryStart = history.length;
+        scoreRoundTarget = target;
+        scoreRoundTemplate = usableTemplate;
+        scoreResultPanel.hidden = true;
+        setScoreRoundCanvasState(true);
+        playScoreStartFlash();
+        scoreActiveUnit.value = unitLabel(target.unitId);
+        scoreActiveRank.value = target.rank;
+        scoreSetup.hidden = true;
+        scoreRunning.hidden = false;
+        normalModeTab.disabled = true;
+        const rendered = await renderScoreParts(target, usableTemplate);
+        if (scoreRoundTarget !== target) return;
+        if (!rendered) throw new Error("無法載入評分部件");
+        scoreRoundStartedAt = Date.now();
+        scoreRoundFinished = false;
+        scoreMusic.currentTime = 0;
+        tryPlayMusic();
+        window.clearInterval(scoreTimerId);
+        updateScoreRound();
+        scoreTimerId = window.setInterval(updateScoreRound, 250);
+    } catch (error) {
+        console.error(error);
+        clearScoreRoundParts();
+        scoreRoundTemplate = null;
+        setScoreRoundCanvasState(false);
+        tryPlayMusic();
+        scoreModeStatus.textContent = "題目準備失敗，請再試一次。";
+        scoreRunning.hidden = true;
+        scoreSetup.hidden = false;
+        normalModeTab.disabled = false;
+    } finally {
+        scoreStartButton.disabled = false;
+    }
+}
+
+function finishScoreRound(finished = false, { clearCanvas = true } = {}) {
+    window.clearInterval(scoreTimerId);
+    scoreTimerId = null;
+    scoreRoundFinished = finished;
+    if (finished) {
+        const result = gradeScoreRound();
+        renderScoreResult(result);
+        scoreCountdown.textContent = "完成";
+        scoreGradeButton.disabled = true;
+        scoreRoundStartedAt = 0;
+        scoreRunning.hidden = true;
+        scoreSetup.hidden = true;
+        scoreResultPanel.hidden = false;
+        normalModeTab.disabled = false;
+        showScoreResultOverlay(result);
+        return;
+    }
+    scoreRoundStartedAt = 0;
+    scoreRoundTarget = null;
+    scoreRoundTemplate = null;
+    scoreRunning.hidden = true;
+    scoreSetup.hidden = false;
+    scoreResultPanel.hidden = true;
+    if (clearCanvas) clearScoreRoundParts();
+    setScoreRoundCanvasState(false);
+    tryPlayMusic();
+    scoreGradeButton.disabled = false;
+    scoreCancelButton.innerHTML = '<i class="fa-solid fa-xmark" aria-hidden="true"></i><span>取消</span>';
+    normalModeTab.disabled = false;
+    scoreModeStatus.textContent = scoreQuestionMode === "fixed" && !scoreFixedUnitId
+        ? "選擇一隻角色後即可開始。"
+        : "題目已準備好，可以開始。";
+    renderParts();
 }
 
 function worldSize() {
@@ -200,6 +867,7 @@ function spriteFromElement(part) {
 
 function assetFromElement(part) {
     return {
+        id: part.dataset.partId,
         src: part.dataset.src,
         name: part.dataset.name,
         sprite: spriteFromElement(part),
@@ -372,7 +1040,7 @@ function updateSelectionFrame() {
 
     const state = positionOf(selectedPart);
     const scale = Number.parseFloat(state.scale);
-    const padding = 14;
+    const padding = 24;
     selectionFrame.style.left = state.left;
     selectionFrame.style.top = state.top;
     selectionFrame.style.width = `${selectedPart.offsetWidth * scale + padding}px`;
@@ -973,7 +1641,9 @@ async function importLayerProject(event) {
 }
 
 function renderLayersPanel() {
-    const parts = orderedParts();
+    const parts = isScoreRoundCanvasActive
+        ? orderedParts().filter((part) => part.dataset.scoreRoundPart === "true")
+        : orderedParts();
     layersPanel.hidden = parts.length === 0;
     layersPanel.replaceChildren();
     if (!parts.length) return;
@@ -1710,6 +2380,8 @@ function addPartToCanvas(part, clientX, clientY, options = {}) {
     const lockStripeOverlay = document.createElement("canvas");
     const rotateHandle = document.createElement("button");
     placedPart.className = "placed-part";
+    if (part.scoreRound || isScoreRoundCanvasActive) placedPart.dataset.scoreRoundPart = "true";
+    placedPart.dataset.partId = part.id;
     placedPart.dataset.src = part.src;
     placedPart.dataset.name = part.name;
     if (sprite) placedPart.dataset.sprite = JSON.stringify(sprite);
@@ -1809,6 +2481,57 @@ function pasteCopiedParts() {
     remember({ type: "paste-group", parts: pastedParts });
 }
 
+function createPartCard(part) {
+    const card = document.createElement("button");
+    const preview = createAssetPreview(part, "part-asset-preview", 76, 76);
+    card.className = "part-card";
+    card.type = "button";
+    card.draggable = true;
+    card.setAttribute("aria-label", `拖曳 ${part.form} 階級部件：${part.name}`);
+    const image = preview.querySelector?.("img") ?? preview;
+    image.loading = "lazy";
+    image.decoding = "async";
+    card.addEventListener("pointerdown", (event) => {
+        if (event.button !== 0) return;
+        palettePointerGrab = {
+            id: part.id,
+            clientX: event.clientX,
+            clientY: event.clientY,
+            sourceBounds: preview.getBoundingClientRect(),
+        };
+    });
+    card.addEventListener("dragstart", (event) => {
+        event.dataTransfer.effectAllowed = "copy";
+        event.dataTransfer.setData(PART_DRAG_TYPE, part.id);
+        const grab = palettePointerGrab?.id === part.id ? palettePointerGrab : null;
+        beginPalettePartDrag(
+            part,
+            image,
+            grab?.sourceBounds ?? preview.getBoundingClientRect(),
+            grab?.clientX ?? event.clientX,
+            grab?.clientY ?? event.clientY,
+            event.dataTransfer,
+        );
+    });
+    card.addEventListener("dragend", () => {
+        palettePartDrag = null;
+        palettePointerGrab = null;
+    });
+    card.addEventListener("click", () => {
+        palettePointerGrab = null;
+        const spread = 180;
+        addPartToCanvas(part, 0, 0, {
+            worldPoint: {
+                x: (Math.random() - 0.5) * spread,
+                y: (Math.random() - 0.5) * spread,
+            },
+        });
+        playPopSound();
+    });
+    card.append(preview);
+    return card;
+}
+
 async function renderParts() {
     const renderVersion = ++partsRenderVersion;
     const unit = unitCatalog[unitSelect.value];
@@ -1816,7 +2539,7 @@ async function renderParts() {
         showPartsLoading();
         return;
     }
-    const parts = unit?.parts.filter((part) => part.form === rankSelect.value) ?? [];
+    const parts = availablePartsForRank(unit, rankSelect.value);
     showPartsLoading();
     try {
         await Promise.all([...new Set(parts.map((part) => part.src))].map(ensurePartSourceLoaded));
@@ -1833,56 +2556,7 @@ async function renderParts() {
     partsList.replaceChildren();
     unitStatus.textContent = parts.length ? `${parts.length} 個可拖曳部件` : "此階級沒有可用部件。";
 
-    for (const part of parts) {
-        const card = document.createElement("button");
-        const preview = createAssetPreview(part, "part-asset-preview", 76, 76);
-        card.className = "part-card";
-        card.type = "button";
-        card.draggable = true;
-        card.setAttribute("aria-label", `拖曳 ${part.form} 階級部件：${part.name}`);
-        const image = preview.querySelector?.("img") ?? preview;
-        image.loading = "lazy";
-        image.decoding = "async";
-        card.addEventListener("pointerdown", (event) => {
-            if (event.button !== 0) return;
-            palettePointerGrab = {
-                id: part.id,
-                clientX: event.clientX,
-                clientY: event.clientY,
-                sourceBounds: preview.getBoundingClientRect(),
-            };
-        });
-        card.addEventListener("dragstart", (event) => {
-            event.dataTransfer.effectAllowed = "copy";
-            event.dataTransfer.setData(PART_DRAG_TYPE, part.id);
-            const grab = palettePointerGrab?.id === part.id ? palettePointerGrab : null;
-            beginPalettePartDrag(
-                part,
-                image,
-                grab?.sourceBounds ?? preview.getBoundingClientRect(),
-                grab?.clientX ?? event.clientX,
-                grab?.clientY ?? event.clientY,
-                event.dataTransfer,
-            );
-        });
-        card.addEventListener("dragend", () => {
-            palettePartDrag = null;
-            palettePointerGrab = null;
-        });
-        card.addEventListener("click", () => {
-            palettePointerGrab = null;
-            const spread = 180;
-            addPartToCanvas(part, 0, 0, {
-                worldPoint: {
-                    x: (Math.random() - 0.5) * spread,
-                    y: (Math.random() - 0.5) * spread,
-                },
-            });
-            playPopSound();
-        });
-        card.append(preview);
-        partsList.append(card);
-    }
+    partsList.append(...parts.map(createPartCard));
 }
 
 function updateRankOptions() {
@@ -1938,6 +2612,101 @@ function closeUnitResults() {
     unitResults.classList.remove("is-open");
     unitSearch.setAttribute("aria-expanded", "false");
     activeUnitResultIndex = -1;
+}
+
+function closeScoreUnitResults() {
+    scoreUnitResults.classList.remove("is-open");
+    scoreUnitSearch.setAttribute("aria-expanded", "false");
+}
+
+function chooseFixedScoreUnit(unitId) {
+    if (!unitIndex[unitId]) return;
+    scoreFixedUnitId = unitId;
+    scoreUnitSearch.placeholder = "搜尋編號或名稱";
+    scoreUnitSearch.value = unitLabel(unitId);
+    closeScoreUnitResults();
+    scoreModeStatus.textContent = "角色已選擇；請確認階級後開始。";
+}
+
+function renderScoreUnitResults() {
+    const query = scoreUnitSearch.value.trim().toLocaleLowerCase();
+    const allUnitIds = Object.keys(unitIndex).sort();
+    const suggestions = query
+        ? allUnitIds.filter((unitId) => unitLabel(unitId).toLocaleLowerCase().includes(query))
+        : allUnitIds;
+    const remaining = query ? allUnitIds.filter((unitId) => !suggestions.includes(unitId)) : [];
+    scoreUnitResults.replaceChildren();
+    scoreUnitResults.scrollTop = 0;
+
+    const addSectionTitle = (text) => {
+        const title = document.createElement("p");
+        title.className = "unit-result-section";
+        title.textContent = text;
+        scoreUnitResults.append(title);
+    };
+    const addResult = (unitId) => {
+        const result = document.createElement("button");
+        const id = document.createElement("span");
+        const name = document.createElement("span");
+        result.className = "unit-result";
+        result.type = "button";
+        result.setAttribute("role", "option");
+        id.className = "unit-result-id";
+        name.className = "unit-result-name";
+        id.textContent = unitId;
+        name.textContent = unitIndex[unitId].name ?? "";
+        result.append(id, name);
+        result.addEventListener("click", () => chooseFixedScoreUnit(unitId));
+        scoreUnitResults.append(result);
+    };
+
+    if (!suggestions.length) {
+        const empty = document.createElement("p");
+        empty.className = "unit-result-empty";
+        empty.textContent = "找不到相符角色，仍可從完整清單選擇。";
+        scoreUnitResults.append(empty);
+    }
+    if (query && suggestions.length) addSectionTitle("建議角色");
+    suggestions.forEach(addResult);
+    if (query) addSectionTitle("全部角色");
+    remaining.forEach(addResult);
+    scoreUnitResults.classList.add("is-open");
+    scoreUnitSearch.setAttribute("aria-expanded", "true");
+}
+
+function setScoreQuestionMode(mode) {
+    scoreQuestionMode = mode;
+    const isFixed = mode === "fixed";
+    scoreQuestionModeButtons.forEach((button) => {
+        const isSelected = button.dataset.scoreMode === mode;
+        button.classList.toggle("is-selected", isSelected);
+        button.setAttribute("aria-pressed", String(isSelected));
+    });
+    scoreFixedPicker.hidden = !isFixed;
+    closeScoreUnitResults();
+    if (isFixed) {
+        scoreModeStatus.textContent = scoreFixedUnitId
+            ? "角色已選擇；請確認階級後開始。"
+            : "選擇一隻角色後即可開始。";
+        return;
+    }
+
+    scoreRandomTarget = null;
+    scoreModeStatus.textContent = "正在準備隨機題目…";
+    const preparation = prepareRandomScoreTarget();
+    scoreRandomPreparation = preparation;
+    preparation
+        .then((target) => {
+            if (scoreQuestionMode !== "random" || scoreRandomPreparation !== preparation) return;
+            scoreRandomTarget = target;
+            scoreModeStatus.textContent = target ? "隨機題目已準備完成。" : "隨機題目準備失敗，請再試一次。";
+        })
+        .catch((error) => {
+            console.error(error);
+            if (scoreQuestionMode === "random" && scoreRandomPreparation === preparation) {
+                scoreModeStatus.textContent = "隨機題目準備失敗，請再試一次。";
+            }
+        });
 }
 
 function updateActiveUnitResult() {
@@ -2083,6 +2852,48 @@ updateUndoButton();
 makeSelectedGroupRotatable();
 makeSelectionScalable();
 
+normalModeTab.addEventListener("click", () => setActiveMode("normal"));
+scoreModeTab.addEventListener("click", () => setActiveMode("score"));
+scoreTimeButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+        selectedScoreDuration = Number(button.dataset.duration);
+        scoreTimeButtons.forEach((item) => {
+            const isSelected = item === button;
+            item.classList.toggle("is-selected", isSelected);
+            item.setAttribute("aria-pressed", String(isSelected));
+        });
+    });
+});
+scoreQuestionModeButtons.forEach((button) => {
+    button.addEventListener("click", () => setScoreQuestionMode(button.dataset.scoreMode));
+});
+scoreFixedRankSelect.addEventListener("change", () => {
+    scoreFixedRank = scoreFixedRankSelect.value;
+    if (scoreFixedUnitId) scoreModeStatus.textContent = "角色與階級已選擇，可以開始。";
+});
+scoreStartButton.addEventListener("click", startScoreRound);
+scoreCancelButton.addEventListener("click", () => finishScoreRound(false));
+scoreGradeButton.addEventListener("click", () => finishScoreRound(true));
+scoreRetryButton.addEventListener("click", () => {
+    closeScoreResultOverlay();
+    finishScoreRound(false, { clearCanvas: false });
+});
+scoreResultOverlay.addEventListener("pointerdown", (event) => {
+    if (event.target === scoreResultOverlay) closeScoreResultOverlay();
+});
+scoreUnitSearch.addEventListener("focus", renderScoreUnitResults);
+scoreUnitSearch.addEventListener("input", () => {
+    scoreUnitSearch.placeholder = "搜尋編號或名稱";
+    scoreFixedUnitId = "";
+    renderScoreUnitResults();
+});
+scoreUnitSearch.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+        closeScoreUnitResults();
+        scoreUnitSearch.blur();
+    }
+});
+
 themeButton.addEventListener("click", () => {
     const nextTheme = root.dataset.theme === "dark" ? "light" : "dark";
     localStorage.setItem("theme", nextTheme);
@@ -2158,7 +2969,8 @@ unitSearch.addEventListener("keydown", (event) => {
     }
 });
 document.addEventListener("pointerdown", (event) => {
-    if (!event.target.closest(".unit-search")) closeUnitResults();
+    if (!event.target.closest(".unit-search:not(.score-unit-search)")) closeUnitResults();
+    if (!event.target.closest(".score-unit-search")) closeScoreUnitResults();
     if (!event.target.closest("#layer-context-menu")) closeLayerContextMenu();
 });
 mergeLayersButton.addEventListener("click", () => {

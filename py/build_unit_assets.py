@@ -98,7 +98,7 @@ def is_placeholder_crop(rectangle: dict[str, object]) -> bool:
     height = int(rectangle["height"])
     return (
         (width == 1 and height == 1)
-        or any(marker in label for marker in ("ダミー", "空っぽ", "dummy", "dmy"))
+        or any(marker in label for marker in ("ダミー", "空っぽ", "dummy", "dmy", "placeholder", "blank", "empty"))
     )
 
 
