@@ -382,18 +382,22 @@ html, body, .app-frame, .rounded-box, .side-panel, .help-dialog, .icon-button, .
     animation: score-result-rise 580ms cubic-bezier(0.18, 0.82, 0.25, 1) both;
 }
 
-.score-result-scenes {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 0.45fr);
-    gap: 12px;
-}
+.score-result-layout { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: stretch; }
+.score-result-scenes { display: grid; gap: 10px; }
 
-.score-result-scene { display: grid; gap: 6px; min-width: 0; }
+.score-result-scene { display: grid; gap: 8px; min-width: 0; }
 .score-result-scene-label {
     margin: 0;
+    width: fit-content;
+    min-width: 4.2rem;
+    justify-self: center;
+    padding: 7px 20px;
+    border: 1px solid color-mix(in srgb, var(--text) 33%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--panel-bg) 84%, var(--text));
     color: color-mix(in srgb, var(--text) 68%, transparent);
     font-family: "GenJyuuGothic", sans-serif;
-    font-size: 0.72rem;
+    font-size: clamp(0.95rem, 1.7vw, 1.18rem);
     font-weight: 700;
     text-align: center;
 }
@@ -409,6 +413,7 @@ html, body, .app-frame, .rounded-box, .side-panel, .help-dialog, .icon-button, .
 }
 
 .score-result-answer {
+    position: relative;
     display: grid;
     box-sizing: border-box;
     place-items: center;
@@ -420,6 +425,25 @@ html, body, .app-frame, .rounded-box, .side-panel, .help-dialog, .icon-button, .
     font-family: "GenJyuuGothic", sans-serif;
     font-size: 0.78rem;
     font-weight: 700;
+}
+
+.score-answer-world {
+    position: absolute;
+    overflow: visible;
+    pointer-events: none;
+    transform-origin: 0 0;
+}
+
+.score-answer-part {
+    position: absolute;
+    display: block;
+    transform-origin: center;
+    will-change: transform;
+}
+
+.score-answer-loading {
+    position: relative;
+    z-index: 1;
 }
 
 .score-result-canvas {
@@ -435,22 +459,26 @@ html, body, .app-frame, .rounded-box, .side-panel, .help-dialog, .icon-button, .
 
 .score-result-overlay-stats {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 4px;
-    align-items: end;
-    padding: 11px 14px 13px;
+    box-sizing: border-box;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: stretch;
+    align-self: stretch;
+    margin-top: 52px;
+    padding: 18px 14px 17px;
     border: 1px solid color-mix(in srgb, var(--text) 35%, transparent);
     border-radius: 14px;
     background: var(--panel-bg);
     box-shadow: 0 8px 18px rgb(0 0 0 / 0.2);
 }
 
-.score-result-overlay-breakdown { display: contents; }
+.score-result-overlay-breakdown { display: grid; align-content: center; gap: 18px; }
 .score-result-overlay-breakdown div {
     display: grid;
     min-width: 0;
     justify-items: center;
-    gap: 3px;
+    gap: 4px;
     color: color-mix(in srgb, var(--text) 68%, transparent);
     font-family: "GenJyuuGothic", sans-serif;
     font-size: clamp(0.58rem, 1.15vw, 0.72rem);
@@ -462,7 +490,6 @@ html, body, .app-frame, .rounded-box, .side-panel, .help-dialog, .icon-button, .
     font-size: clamp(0.82rem, 1.55vw, 1.02rem);
 }
 .score-result-overlay-score {
-    grid-column: 1 / -1;
     justify-self: center;
     margin-top: 5px;
     color: var(--text);
@@ -477,7 +504,11 @@ html, body, .app-frame, .rounded-box, .side-panel, .help-dialog, .icon-button, .
 .score-reveal-value.is-revealed { animation: score-reveal-flash 260ms ease-out both; }
 
 @media (max-width: 719px) {
-    .score-result-scenes { grid-template-columns: minmax(0, 1fr); }
+    .score-result-layout { grid-template-columns: minmax(0, 1fr); }
+    .score-result-overlay-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: auto; margin-top: 0; }
+    .score-result-overlay-breakdown { display: contents; }
+    .score-result-overlay-breakdown div { display: grid; justify-content: initial; justify-items: center; gap: 3px; }
+    .score-result-overlay-score { grid-column: 1 / -1; }
 }
 
 @keyframes score-scramble-shake {
@@ -1221,12 +1252,12 @@ html[data-theme="dark"] .rounded-box.is-rotating {
 .score-result-history-button {
     display: flex;
     width: min(100%, 270px);
-    min-height: 0;
-    flex: 1 1 auto;
+    height: 112px;
+    flex: 0 0 112px;
     flex-direction: column;
-    gap: 7px;
-    margin-top: 18px;
-    padding: 8px;
+    gap: 5px;
+    margin-top: 14px;
+    padding: 5px;
     overflow: hidden;
     border: 1px solid color-mix(in srgb, var(--text) 28%, transparent);
     border-radius: 10px;
@@ -1236,10 +1267,13 @@ html[data-theme="dark"] .rounded-box.is-rotating {
 }
 .score-result-history-button[hidden] { display: none; }
 .score-result-history-button:hover { border-color: color-mix(in srgb, var(--text) 62%, transparent); }
-.score-result-history-label { flex: 0 0 auto; font-size: 0.68rem; font-weight: 700; text-align: left; }
+.score-result-history-label { flex: 0 0 auto; font-size: 0.7rem; font-weight: 700; line-height: 1; text-align: left; }
 .score-result-history-preview { position: relative; display: block; min-height: 0; flex: 1; overflow: hidden; border-radius: 5px; background: var(--frame-bg); }
+.score-result-history-compare { display: grid; height: 100%; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
+.score-result-history-pane { position: relative; overflow: hidden; border: 1px solid color-mix(in srgb, var(--text) 18%, transparent); border-radius: 4px; background: var(--panel-bg); }
 .score-result-history-stage { position: absolute; top: 0; left: 0; display: block; transform-origin: top left; }
 .score-result-history-canvas { display: block; min-height: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; box-sizing: border-box; pointer-events: none; }
+.score-result-history-answer { display: grid; min-height: 0; padding: 0; border: 0; border-radius: 0; box-shadow: none; }
 .score-retry-button { margin-top: 14px; }
 .score-round-scroll {
     min-height: 0;

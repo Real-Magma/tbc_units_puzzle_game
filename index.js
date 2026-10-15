@@ -78,6 +78,7 @@ const scoreResultOverlay = document.querySelector("#score-result-overlay");
 const scoreResultCard = document.querySelector("#score-result-card");
 const scoreResultPreview = document.querySelector("#score-result-preview");
 const scoreResultAnswer = document.querySelector("#score-result-answer");
+const scoreResultOverlayStats = document.querySelector("#score-result-overlay-stats");
 const scoreResultOverlayBreakdown = document.querySelector("#score-result-overlay-breakdown");
 const scoreResultOverlayScore = document.querySelector("#score-result-overlay-score");
 const scoreFinalScore = document.querySelector("#score-final-score");
@@ -124,6 +125,7 @@ let scoreRoundInputLocked = false;
 let scoreResultCloseTimer = null;
 let scoreResultOpenedAt = 0;
 let scoreResultRevealVersion = 0;
+let scoreAnswerRenderVersion = 0;
 let scoreHistoryStart = null;
 let latestScoreResultView = null;
 const scoreTemplateCache = new Map();
@@ -145,6 +147,10 @@ const effectsVolume = Object.freeze({
 });
 const musicTracks = [backgroundMusic, scoreMusic];
 const PLACEHOLDER_PART_MARKERS = ["dummy", "dmy", "ダミー", "空っぽ", "placeholder", "blank", "empty"];
+const SCORE_EFFECT_PART_MARKERS = [
+    "エフェクト", "effect", "攻撃", "attack", "煙", "smoke", "flash", "spark",
+    "beam", "laser", "bullet", "shot", "explosion", "爆発", "fire", "flame",
+];
 const SCORE_FINAL_INPUT_LOCK_MS = 1000;
 const SCORE_RESULT_CLOSE_GUARD_MS = 850;
 
@@ -293,29 +299,46 @@ function playScoreStartFlash() {
     window.setTimeout(() => scoreStartFlash.classList.remove("is-playing"), 560);
 }
 
+function createScoreResultHistoryPane(content, width, height, contentClass) {
+    const pane = document.createElement("span");
+    const stage = document.createElement("span");
+    stage.className = "score-result-history-stage";
+    stage.style.width = `${width}px`;
+    stage.style.height = `${height}px`;
+    content.classList.add(contentClass);
+    content.style.setProperty("width", `${width}px`, "important");
+    content.style.setProperty("height", `${height}px`, "important");
+    stage.append(content);
+    pane.className = "score-result-history-pane";
+    pane.append(stage);
+    return { pane, stage, width, height };
+}
+
 function renderScoreResultHistory(snapshot, layout) {
     const historySnapshot = snapshot.cloneNode(true);
-    const stage = document.createElement("span");
     historySnapshot.classList.remove("score-result-canvas");
-    historySnapshot.classList.add("score-result-history-canvas");
-    historySnapshot.style.setProperty("width", `${layout.sceneWidth}px`, "important");
-    historySnapshot.style.setProperty("height", `${layout.previewHeight}px`, "important");
-    stage.className = "score-result-history-stage";
-    stage.style.width = `${layout.sceneWidth}px`;
-    stage.style.height = `${layout.previewHeight}px`;
-    stage.append(historySnapshot);
-    scoreResultHistoryPreview.replaceChildren(stage);
+    const historyAnswer = scoreResultAnswer.cloneNode(true);
+    historyAnswer.removeAttribute("id");
+    const comparison = document.createElement("span");
+    const player = createScoreResultHistoryPane(historySnapshot, layout.sceneWidth, layout.previewHeight, "score-result-history-canvas");
+    const answer = createScoreResultHistoryPane(historyAnswer, layout.answerWidth, layout.answerHeight, "score-result-history-answer");
+    comparison.className = "score-result-history-compare";
+    comparison.append(player.pane, answer.pane);
+    scoreResultHistoryPreview.replaceChildren(comparison);
     scoreResultHistoryButton.hidden = false;
 
     requestAnimationFrame(() => {
-        const historyBounds = scoreResultHistoryPreview.getBoundingClientRect();
-        const scale = Math.min(historyBounds.width / layout.sceneWidth, historyBounds.height / layout.previewHeight);
-        stage.style.transform = `scale(${Math.max(scale, 0.01)})`;
+        [player, answer].forEach(({ pane, stage, width, height }) => {
+            const bounds = pane.getBoundingClientRect();
+            const scale = Math.min(bounds.width / width, bounds.height / height);
+            stage.style.transform = `scale(${Math.max(scale, 0.01)})`;
+        });
     });
 }
 
 function openScoreResultOverlay({ result, snapshot, layout, replayScores = false, playIntro = false }) {
     scoreResultCard.style.width = `${layout.cardWidth}px`;
+    scoreResultOverlayStats.style.width = `${layout.statsWidth}px`;
     scoreResultPreview.style.width = `${layout.sceneWidth}px`;
     scoreResultPreview.style.height = `${layout.previewHeight}px`;
     scoreResultAnswer.style.width = `${layout.answerWidth}px`;
@@ -339,19 +362,21 @@ function showScoreResultOverlay(result) {
     const canvasBounds = canvas.getBoundingClientRect();
     const aspectRatio = canvasBounds.width / Math.max(canvasBounds.height, 1);
     const narrowLayout = window.innerWidth < 720;
+    const maximumSceneHeight = Math.max(106, window.innerHeight * (narrowLayout ? 0.29 : 0.34));
     const sceneWidth = Math.max(1, Math.min(
-        narrowLayout ? window.innerWidth * 0.84 : (window.innerWidth * 0.84 - 12) / 1.45,
-        720,
-        window.innerHeight * (narrowLayout ? 0.27 : 0.58) * aspectRatio,
+        narrowLayout ? window.innerWidth * 0.88 : window.innerWidth * 0.66,
+        820,
+        maximumSceneHeight * aspectRatio,
     ));
     const previewHeight = sceneWidth / aspectRatio;
-    const answerWidth = narrowLayout ? sceneWidth : sceneWidth * 0.45;
+    const statsWidth = narrowLayout ? sceneWidth : clamp(sceneWidth * 0.32, 156, 230);
     const layout = {
         sceneWidth,
         previewHeight,
-        answerWidth,
-        answerHeight: answerWidth / aspectRatio,
-        cardWidth: narrowLayout ? sceneWidth : sceneWidth + answerWidth + 12,
+        answerWidth: sceneWidth,
+        answerHeight: previewHeight,
+        statsWidth,
+        cardWidth: narrowLayout ? sceneWidth : sceneWidth + statsWidth + 12,
     };
 
     snapshot.removeAttribute("id");
@@ -380,8 +405,7 @@ function showScoreResultOverlay(result) {
             const centerY = (bounds.top + bounds.bottom) / 2;
             const width = Math.max(bounds.right - bounds.left, 1);
             const height = Math.max(bounds.bottom - bounds.top, 1);
-            const normalScale = viewScale * (sceneWidth / canvasBounds.width);
-            const fitScale = Math.min(normalScale, sceneWidth * 0.82 / width, previewHeight * 0.82 / height);
+            const fitScale = Math.min(sceneWidth * 0.86 / width, previewHeight * 0.86 / height);
             snapshotWorld.style.transform = `translate(${sceneWidth / 2 - centerX * fitScale}px, ${previewHeight / 2 - centerY * fitScale}px) scale(${fitScale})`;
         } else {
             snapshotWorld.style.transform = "none";
@@ -392,6 +416,7 @@ function showScoreResultOverlay(result) {
     latestScoreResultView = { result, snapshot: snapshot.cloneNode(true), layout };
     renderScoreResultHistory(snapshot, layout);
     openScoreResultOverlay({ result, snapshot, layout, replayScores: true, playIntro: true });
+    void renderScoreAnswer(scoreRoundTarget, scoreRoundTemplate, layout);
 }
 
 function reopenLatestScoreResultOverlay() {
@@ -550,6 +575,110 @@ async function renderScoreParts(target, template) {
     return true;
 }
 
+function createScoreAnswerPart(asset, targetPart) {
+    const sprite = normalizeSprite(asset.sprite);
+    if (!sprite) return null;
+
+    const answerPart = document.createElement("span");
+    const crop = document.createElement("span");
+    const image = document.createElement("img");
+    const scaleX = Math.abs(Number(targetPart.scaleX) || 1);
+    const scaleY = Math.abs(Number(targetPart.scaleY) || 1);
+    const angle = Number(targetPart.angle) || 0;
+    const opacity = Number(targetPart.opacity);
+
+    answerPart.className = "score-answer-part";
+    answerPart.style.left = `${targetPart.x}px`;
+    answerPart.style.top = `${targetPart.y}px`;
+    answerPart.style.zIndex = String(Number(targetPart.z) || 0);
+    answerPart.style.opacity = String(clamp(Number.isFinite(opacity) ? opacity : 1, 0, 1));
+    answerPart.style.transform = `translate(-50%, -50%) rotate(${angle}deg) scale(${scaleX}, ${scaleY})`;
+
+    crop.className = "placed-sprite-crop";
+    crop.style.width = `${sprite.width}px`;
+    crop.style.height = `${sprite.height}px`;
+    image.className = "sprite-sheet-image";
+    image.src = asset.src;
+    image.alt = "";
+    image.draggable = false;
+    image.style.width = `${sprite.sheetWidth}px`;
+    image.style.height = `${sprite.sheetHeight}px`;
+    image.style.left = `${-sprite.x}px`;
+    image.style.top = `${-sprite.y}px`;
+    crop.append(image);
+    answerPart.append(crop);
+    return answerPart;
+}
+
+function scoreAnswerBounds(parts) {
+    return parts.reduce((bounds, { asset, targetPart }) => {
+        const sprite = normalizeSprite(asset.sprite);
+        const scaleX = Math.abs(Number(targetPart.scaleX) || 1);
+        const scaleY = Math.abs(Number(targetPart.scaleY) || 1);
+        const radians = (Number(targetPart.angle) || 0) * (Math.PI / 180);
+        const width = sprite.width * scaleX;
+        const height = sprite.height * scaleY;
+        const rotatedWidth = Math.abs(Math.cos(radians)) * width + Math.abs(Math.sin(radians)) * height;
+        const rotatedHeight = Math.abs(Math.sin(radians)) * width + Math.abs(Math.cos(radians)) * height;
+        return {
+            left: Math.min(bounds.left, targetPart.x - rotatedWidth / 2),
+            top: Math.min(bounds.top, targetPart.y - rotatedHeight / 2),
+            right: Math.max(bounds.right, targetPart.x + rotatedWidth / 2),
+            bottom: Math.max(bounds.bottom, targetPart.y + rotatedHeight / 2),
+        };
+    }, { left: Infinity, top: Infinity, right: -Infinity, bottom: -Infinity });
+}
+
+async function renderScoreAnswer(target, template, layout) {
+    const renderVersion = ++scoreAnswerRenderVersion;
+    scoreResultAnswer.replaceChildren();
+    const loading = document.createElement("span");
+    loading.className = "score-answer-loading";
+    loading.textContent = "正解載入中…";
+    scoreResultAnswer.append(loading);
+    if (!target || !template?.parts?.length) return;
+
+    try {
+        const unit = unitCatalog[target.unitId] ?? await ensureUnitLoaded(target.unitId);
+        const assetsByCrop = new Map(availablePartsForRank(unit, target.rank)
+            .map((part) => [cropIndexFromPartId(part.id), part])
+            .filter(([cropIndex]) => cropIndex !== null));
+        const parts = template.parts
+            .map((targetPart) => ({ targetPart, asset: assetsByCrop.get(targetPart.cropIndex) }))
+            .filter(({ asset }) => asset && normalizeSprite(asset.sprite));
+        await Promise.all([...new Set(parts.map(({ asset }) => asset.src))].map(ensurePartSourceLoaded));
+        if (renderVersion !== scoreAnswerRenderVersion) return;
+
+        const bounds = scoreAnswerBounds(parts);
+        if (!Number.isFinite(bounds.left)) throw new Error("正解沒有可用部件");
+        const contentWidth = Math.max(1, bounds.right - bounds.left);
+        const contentHeight = Math.max(1, bounds.bottom - bounds.top);
+        const fitScale = Math.min(
+            (layout.answerWidth * 0.86) / contentWidth,
+            (layout.answerHeight * 0.86) / contentHeight,
+        );
+        const world = document.createElement("span");
+        world.className = "score-answer-world";
+        world.style.width = `${contentWidth}px`;
+        world.style.height = `${contentHeight}px`;
+        world.style.left = `${layout.answerWidth / 2 - ((bounds.left + bounds.right) / 2) * fitScale}px`;
+        world.style.top = `${layout.answerHeight / 2 - ((bounds.top + bounds.bottom) / 2) * fitScale}px`;
+        world.style.transform = `scale(${fitScale})`;
+        parts.forEach(({ asset, targetPart }) => {
+            const answerPart = createScoreAnswerPart(asset, targetPart);
+            if (answerPart) world.append(answerPart);
+        });
+        scoreResultAnswer.replaceChildren(world);
+        if (latestScoreResultView) renderScoreResultHistory(latestScoreResultView.snapshot, layout);
+    } catch (error) {
+        console.error(error);
+        if (renderVersion !== scoreAnswerRenderVersion) return;
+        loading.textContent = "正解載入失敗";
+        scoreResultAnswer.replaceChildren(loading);
+        if (latestScoreResultView) renderScoreResultHistory(latestScoreResultView.snapshot, layout);
+    }
+}
+
 function scoreTemplateKey(target) {
     return `${target.unitId}/${target.rank}`;
 }
@@ -599,12 +728,22 @@ function isPlaceholderPart(part) {
         || PLACEHOLDER_PART_MARKERS.some((marker) => name.includes(marker));
 }
 
+function isScoreEffectPart(part) {
+    const name = String(part?.name ?? "").trim().toLocaleLowerCase();
+    return SCORE_EFFECT_PART_MARKERS.some((marker) => name.includes(marker));
+}
+
+function isScoreEligiblePart(part) {
+    return !isPlaceholderPart(part) && !isScoreEffectPart(part);
+}
+
 function availablePartsForRank(unit, rank) {
     return (unit?.parts ?? []).filter((part) => part.form === rank && !isPlaceholderPart(part));
 }
 
 function withoutPlaceholderScoreParts(template, unit, rank) {
     const allowedCropIndexes = new Set(availablePartsForRank(unit, rank)
+        .filter(isScoreEligiblePart)
         .map((part) => cropIndexFromPartId(part.id))
         .filter((index) => index !== null));
     return {
@@ -656,8 +795,7 @@ function matchScoreParts(templateParts, placedParts) {
 }
 
 function fitScoreLayout(pairs) {
-    // A single part has no relative layout. Its position, scale, and rotation
-    // are deliberately free, so a correct part should not receive a fixed penalty.
+    // A single part has no relative layout, so using the correct one is enough.
     if (pairs.length < 2) return { scale: 1, angle: 0, positionQuality: pairs.length ? 1 : 0 };
     const targetCenter = pairs.reduce((total, pair) => ({ x: total.x + pair.target.x, y: total.y + pair.target.y }), { x: 0, y: 0 });
     const playerCenter = pairs.reduce((total, pair) => {
@@ -669,39 +807,34 @@ function fitScoreLayout(pairs) {
     playerCenter.x /= pairs.length;
     playerCenter.y /= pairs.length;
 
-    let real = 0;
-    let imaginary = 0;
     let targetEnergy = 0;
     const points = pairs.map((pair) => {
         const position = positionOf(pair.player);
         const target = { x: pair.target.x - targetCenter.x, y: pair.target.y - targetCenter.y };
         const player = { x: Number.parseFloat(position.left) - playerCenter.x, y: Number.parseFloat(position.top) - playerCenter.y };
-        real += target.x * player.x + target.y * player.y;
-        imaginary += target.x * player.y - target.y * player.x;
         targetEnergy += target.x ** 2 + target.y ** 2;
         return { pair, target, player };
     });
     if (targetEnergy < 0.001) return { scale: 1, angle: 0, positionQuality: 0.5 };
-    const scaleValue = Math.hypot(real, imaginary) / targetEnergy;
-    const angle = Math.atan2(imaginary, real) * 180 / Math.PI;
-    const cosine = Math.cos(angle * Math.PI / 180);
-    const sine = Math.sin(angle * Math.PI / 180);
     const rms = Math.sqrt(targetEnergy / pairs.length);
     const error = Math.sqrt(points.reduce((sum, point) => {
-        const x = scaleValue * (point.target.x * cosine - point.target.y * sine);
-        const y = scaleValue * (point.target.x * sine + point.target.y * cosine);
-        return sum + (point.player.x - x) ** 2 + (point.player.y - y) ** 2;
+        return sum + (point.player.x - point.target.x) ** 2 + (point.player.y - point.target.y) ** 2;
     }, 0) / pairs.length) / Math.max(rms, 1);
-    return { scale: scaleValue, angle, positionQuality: clamp(1 - error / 0.95, 0, 1) };
+    const layoutTolerance = 0.7 + clamp(Math.log2(pairs.length) * 0.11, 0, 0.45);
+    return { scale: 1, angle: 0, positionQuality: clamp(1 - error / layoutTolerance, 0, 1) };
 }
 
 function gradeScoreRound() {
     const templateParts = scoreRoundTemplate?.parts ?? [];
     const placedParts = currentScoreRoundParts();
     const { pairs, extras } = matchScoreParts(templateParts, placedParts);
-    const coverage = templateParts.length
-        ? clamp(pairs.length / (templateParts.length + extras * 0.5), 0, 1)
+    const rawCoverage = templateParts.length
+        ? clamp(pairs.length / (templateParts.length + extras * 1.25), 0, 1)
         : 0;
+    // Large characters contain many tiny independent sprites. Missing a few of
+    // them should be less punishing, while a sparse random arrangement stays low.
+    const coverageExponent = 1 - clamp((templateParts.length - 8) / 72, 0, 0.28);
+    const coverage = rawCoverage ** coverageExponent;
     const layout = fitScoreLayout(pairs);
 
     const transformQuality = pairs.length === 1 ? 1 : pairs.length ? pairs.reduce((sum, pair) => {
@@ -732,7 +865,17 @@ function gradeScoreRound() {
         orderQuality = comparisons ? correct / comparisons : 1;
     }
 
-    const total = Math.round(coverage * 42 + layout.positionQuality * 36 + transformQuality * 14 + orderQuality * 8);
+    // Identifying the right sprites alone earns only a small base score. The
+    // remaining points need a coherent arrangement, so scattered or duplicated
+    // colour blocks cannot score well merely by matching a crop id.
+    const arrangementGate = coverage * layout.positionQuality;
+    const detailGate = 0.2 + layout.positionQuality * 0.8;
+    const total = Math.round(
+        coverage * 12
+        + arrangementGate * 50
+        + coverage * transformQuality * detailGate * 24
+        + coverage * orderQuality * detailGate * 14,
+    );
     return {
         total,
         matched: pairs.length,

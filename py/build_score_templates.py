@@ -21,7 +21,7 @@ from pathlib import Path
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-SOURCE_ROOT = PROJECT_ROOT / "assets" / "unit_scoring"
+SOURCE_ROOT = PROJECT_ROOT / "assets" / "unit_scoring" / "units"
 OUTPUT_ROOT = SOURCE_ROOT / "templates"
 FORM_ORDER = ("f", "c", "s", "u")
 DUMMY_MARKERS = ("ダミー", "dummy", "dmy", "空っぽ", "placeholder", "blank", "empty")
@@ -262,11 +262,12 @@ def build_template(unit_id: str, form: str, form_dir: Path) -> dict[str, object]
 
     sizes: dict[int, tuple[float, float]] = {}
     matrices: dict[int, tuple[float, float, float, float, float, float]] = {}
+    effective_opacities: dict[int, float] = {}
     resolving: set[int] = set()
 
-    def resolve(index: int) -> tuple[tuple[float, float], tuple[float, float, float, float, float, float]]:
+    def resolve(index: int) -> tuple[tuple[float, float], tuple[float, float, float, float, float, float], float]:
         if index in sizes:
-            return sizes[index], matrices[index]
+            return sizes[index], matrices[index], effective_opacities[index]
         if index in resolving:
             raise ValueError(f"parent cycle at part {index}")
         resolving.add(index)
@@ -274,8 +275,9 @@ def build_template(unit_id: str, form: str, form_dir: Path) -> dict[str, object]
         parent = int(state["parent"])
         parent_size = (1.0, 1.0)
         parent_matrix = (1.0, 0.0, 0.0, 1.0, 0.0, 0.0)
+        parent_opacity = 1.0
         if 0 <= parent < count and parent != index:
-            parent_size, parent_matrix = resolve(parent)
+            parent_size, parent_matrix, parent_opacity = resolve(parent)
 
         part_size = (
             parent_size[0] * float(state["scale_x"]) * float(state["global_scale"]) / (normal_scale * normal_scale),
@@ -293,9 +295,10 @@ def build_template(unit_id: str, form: str, form_dir: Path) -> dict[str, object]
             ))
         matrix = multiply(matrix, scale(float(state["flip_x"]), float(state["flip_y"])))
         matrix = multiply(matrix, rotate(float(state["angle"]) * 360 / full_angle))
-        sizes[index], matrices[index] = part_size, matrix
+        opacity = max(0.0, min(1.0, float(state["opacity"]) / full_opacity)) * parent_opacity
+        sizes[index], matrices[index], effective_opacities[index] = part_size, matrix, opacity
         resolving.remove(index)
-        return part_size, matrix
+        return part_size, matrix, opacity
 
     parts: list[dict[str, object]] = []
     for index, state in enumerate(states):
@@ -306,8 +309,10 @@ def build_template(unit_id: str, form: str, form_dir: Path) -> dict[str, object]
         if bool(crop["placeholder"]) or float(state["opacity"]) <= 0:
             continue
         try:
-            part_size, matrix = resolve(index)
+            part_size, matrix, opacity = resolve(index)
         except ValueError:
+            continue
+        if opacity <= 0:
             continue
         width, height = float(crop["width"]), float(crop["height"])
         local_center_x = (width / 2 - float(state["pivot_x"])) * part_size[0]
@@ -323,7 +328,7 @@ def build_template(unit_id: str, form: str, form_dir: Path) -> dict[str, object]
             "scaleX": round(abs(part_size[0]), 5),
             "scaleY": round(abs(part_size[1]), 5),
             "z": int(state["z"]),
-            "opacity": round(float(state["opacity"]) / full_opacity, 5),
+            "opacity": round(opacity, 5),
         })
 
     parts.sort(key=lambda part: (int(part["z"]), int(part["modelIndex"])))
