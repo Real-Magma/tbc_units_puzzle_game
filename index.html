@@ -181,6 +181,10 @@
                             <strong id="score-final-score" class="score-final-score">0<span>分</span></strong>
                             <p id="score-result-message" class="score-result-message">本回合完成</p>
                             <div id="score-result-breakdown" class="score-result-breakdown" aria-label="評分明細"></div>
+                            <button id="score-result-history-button" class="score-result-history-button" type="button" hidden aria-label="查看本回合結算畫面">
+                                <span class="score-result-history-label">結算頁面</span>
+                                <span id="score-result-history-preview" class="score-result-history-preview" aria-hidden="true"></span>
+                            </button>
                             <button id="score-retry-button" class="score-start-button score-retry-button" type="button"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i><span>再來一局</span></button>
                         </section>
                     </section>
@@ -218,7 +222,16 @@
 
     <div id="score-result-overlay" class="score-result-overlay" role="dialog" aria-modal="true" aria-label="本回合畫面" hidden>
         <div id="score-result-card" class="score-result-card">
-            <div id="score-result-preview" class="score-result-preview" aria-hidden="true"></div>
+            <div class="score-result-scenes">
+                <section class="score-result-scene" aria-label="你的畫面">
+                    <p class="score-result-scene-label">你的畫面</p>
+                    <div id="score-result-preview" class="score-result-preview" aria-hidden="true"></div>
+                </section>
+                <section class="score-result-scene" aria-label="正解畫面">
+                    <p class="score-result-scene-label">正解</p>
+                    <div id="score-result-answer" class="score-result-answer" aria-label="正解畫面框架"><span>正解畫面</span></div>
+                </section>
+            </div>
             <section id="score-result-overlay-stats" class="score-result-overlay-stats" aria-label="本回合分數">
                 <div id="score-result-overlay-breakdown" class="score-result-overlay-breakdown"></div>
                 <strong id="score-result-overlay-score" class="score-result-overlay-score"><span class="score-reveal-value">--</span><span>分</span></strong>

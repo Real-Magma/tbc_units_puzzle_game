@@ -77,11 +77,14 @@ const scorePartsList = document.querySelector("#score-parts-list");
 const scoreResultOverlay = document.querySelector("#score-result-overlay");
 const scoreResultCard = document.querySelector("#score-result-card");
 const scoreResultPreview = document.querySelector("#score-result-preview");
+const scoreResultAnswer = document.querySelector("#score-result-answer");
 const scoreResultOverlayBreakdown = document.querySelector("#score-result-overlay-breakdown");
 const scoreResultOverlayScore = document.querySelector("#score-result-overlay-score");
 const scoreFinalScore = document.querySelector("#score-final-score");
 const scoreResultMessage = document.querySelector("#score-result-message");
 const scoreResultBreakdown = document.querySelector("#score-result-breakdown");
+const scoreResultHistoryButton = document.querySelector("#score-result-history-button");
+const scoreResultHistoryPreview = document.querySelector("#score-result-history-preview");
 const scoreRetryButton = document.querySelector("#score-retry-button");
 
 exportPngButton.hidden = !pngExportEnabled;
@@ -117,9 +120,12 @@ let scoreRandomPreparation = null;
 let scoreRoundTarget = null;
 let scoreRoundTemplate = null;
 let isScoreRoundCanvasActive = false;
+let scoreRoundInputLocked = false;
 let scoreResultCloseTimer = null;
+let scoreResultOpenedAt = 0;
 let scoreResultRevealVersion = 0;
 let scoreHistoryStart = null;
+let latestScoreResultView = null;
 const scoreTemplateCache = new Map();
 
 const savedTheme = localStorage.getItem("theme");
@@ -139,6 +145,8 @@ const effectsVolume = Object.freeze({
 });
 const musicTracks = [backgroundMusic, scoreMusic];
 const PLACEHOLDER_PART_MARKERS = ["dummy", "dmy", "ダミー", "空っぽ", "placeholder", "blank", "empty"];
+const SCORE_FINAL_INPUT_LOCK_MS = 1000;
+const SCORE_RESULT_CLOSE_GUARD_MS = 850;
 
 function setTheme(theme) {
     const isDark = theme === "dark";
@@ -232,6 +240,11 @@ function clamp(value, minimum, maximum) {
     return Math.min(Math.max(value, minimum), maximum);
 }
 
+function setScoreRoundInputLocked(locked) {
+    scoreRoundInputLocked = locked;
+    root.classList.toggle("is-score-input-locked", locked);
+}
+
 function setActiveMode(mode) {
     const isScoreMode = mode === "score";
     if (!isScoreMode && scoreRoundStartedAt && !scoreRoundFinished) return;
@@ -242,10 +255,10 @@ function setActiveMode(mode) {
     normalModePanel.hidden = isScoreMode;
     scoreModePanel.hidden = !isScoreMode;
     if (!isScoreMode) {
-        if (!scoreRoundFinished) {
-            clearScoreRoundParts();
-            scoreRoundTemplate = null;
-        }
+        promoteScoreRoundPartsToNormalGroup();
+        scoreRoundTarget = null;
+        scoreRoundTemplate = null;
+        scoreRoundFinished = false;
         setScoreRoundCanvasState(false);
     }
     if (isScoreMode) updateScoreRound();
@@ -280,13 +293,66 @@ function playScoreStartFlash() {
     window.setTimeout(() => scoreStartFlash.classList.remove("is-playing"), 560);
 }
 
+function renderScoreResultHistory(snapshot, layout) {
+    const historySnapshot = snapshot.cloneNode(true);
+    const stage = document.createElement("span");
+    historySnapshot.classList.remove("score-result-canvas");
+    historySnapshot.classList.add("score-result-history-canvas");
+    historySnapshot.style.setProperty("width", `${layout.sceneWidth}px`, "important");
+    historySnapshot.style.setProperty("height", `${layout.previewHeight}px`, "important");
+    stage.className = "score-result-history-stage";
+    stage.style.width = `${layout.sceneWidth}px`;
+    stage.style.height = `${layout.previewHeight}px`;
+    stage.append(historySnapshot);
+    scoreResultHistoryPreview.replaceChildren(stage);
+    scoreResultHistoryButton.hidden = false;
+
+    requestAnimationFrame(() => {
+        const historyBounds = scoreResultHistoryPreview.getBoundingClientRect();
+        const scale = Math.min(historyBounds.width / layout.sceneWidth, historyBounds.height / layout.previewHeight);
+        stage.style.transform = `scale(${Math.max(scale, 0.01)})`;
+    });
+}
+
+function openScoreResultOverlay({ result, snapshot, layout, replayScores = false, playIntro = false }) {
+    scoreResultCard.style.width = `${layout.cardWidth}px`;
+    scoreResultPreview.style.width = `${layout.sceneWidth}px`;
+    scoreResultPreview.style.height = `${layout.previewHeight}px`;
+    scoreResultAnswer.style.width = `${layout.answerWidth}px`;
+    scoreResultAnswer.style.height = `${layout.answerHeight}px`;
+    scoreResultPreview.replaceChildren(snapshot);
+    window.clearTimeout(scoreResultCloseTimer);
+    scoreResultOverlay.hidden = false;
+    scoreResultOpenedAt = performance.now();
+    scoreResultOverlay.classList.remove("is-open");
+    tryPlayMusic();
+    if (playIntro) playScoreDojoWinSound();
+    requestAnimationFrame(() => {
+        scoreResultOverlay.classList.add("is-open");
+        if (replayScores) revealScoreResult(result);
+    });
+}
+
 function showScoreResultOverlay(result) {
     const snapshot = canvas.cloneNode(true);
     const snapshotWorld = snapshot.querySelector(".canvas-world");
     const canvasBounds = canvas.getBoundingClientRect();
     const aspectRatio = canvasBounds.width / Math.max(canvasBounds.height, 1);
-    const previewWidth = Math.max(1, Math.min(window.innerWidth * 0.84, 1080, window.innerHeight * 0.58 * aspectRatio));
-    const previewHeight = previewWidth / aspectRatio;
+    const narrowLayout = window.innerWidth < 720;
+    const sceneWidth = Math.max(1, Math.min(
+        narrowLayout ? window.innerWidth * 0.84 : (window.innerWidth * 0.84 - 12) / 1.45,
+        720,
+        window.innerHeight * (narrowLayout ? 0.27 : 0.58) * aspectRatio,
+    ));
+    const previewHeight = sceneWidth / aspectRatio;
+    const answerWidth = narrowLayout ? sceneWidth : sceneWidth * 0.45;
+    const layout = {
+        sceneWidth,
+        previewHeight,
+        answerWidth,
+        answerHeight: answerWidth / aspectRatio,
+        cardWidth: narrowLayout ? sceneWidth : sceneWidth + answerWidth + 12,
+    };
 
     snapshot.removeAttribute("id");
     snapshot.classList.add("score-result-canvas");
@@ -314,32 +380,29 @@ function showScoreResultOverlay(result) {
             const centerY = (bounds.top + bounds.bottom) / 2;
             const width = Math.max(bounds.right - bounds.left, 1);
             const height = Math.max(bounds.bottom - bounds.top, 1);
-            const normalScale = viewScale * (previewWidth / canvasBounds.width);
-            const fitScale = Math.min(normalScale, previewWidth * 0.82 / width, previewHeight * 0.82 / height);
-            snapshotWorld.style.transform = `translate(${previewWidth / 2 - centerX * fitScale}px, ${previewHeight / 2 - centerY * fitScale}px) scale(${fitScale})`;
+            const normalScale = viewScale * (sceneWidth / canvasBounds.width);
+            const fitScale = Math.min(normalScale, sceneWidth * 0.82 / width, previewHeight * 0.82 / height);
+            snapshotWorld.style.transform = `translate(${sceneWidth / 2 - centerX * fitScale}px, ${previewHeight / 2 - centerY * fitScale}px) scale(${fitScale})`;
         } else {
             snapshotWorld.style.transform = "none";
         }
         snapshotWorld.style.transformOrigin = "0 0";
     }
 
-    scoreResultCard.style.width = `${previewWidth}px`;
-    scoreResultPreview.style.width = `${previewWidth}px`;
-    scoreResultPreview.style.height = `${previewHeight}px`;
-    scoreResultPreview.replaceChildren(snapshot);
-    window.clearTimeout(scoreResultCloseTimer);
-    scoreResultOverlay.hidden = false;
-    scoreResultOverlay.classList.remove("is-open");
-    tryPlayMusic();
-    playScoreDojoWinSound();
-    requestAnimationFrame(() => {
-        scoreResultOverlay.classList.add("is-open");
-        revealScoreResult(result);
-    });
+    latestScoreResultView = { result, snapshot: snapshot.cloneNode(true), layout };
+    renderScoreResultHistory(snapshot, layout);
+    openScoreResultOverlay({ result, snapshot, layout, replayScores: true, playIntro: true });
+}
+
+function reopenLatestScoreResultOverlay() {
+    if (!latestScoreResultView) return;
+    const { result, snapshot, layout } = latestScoreResultView;
+    openScoreResultOverlay({ result, snapshot: snapshot.cloneNode(true), layout });
 }
 
 function closeScoreResultOverlay() {
     scoreResultRevealVersion += 1;
+    setScoreRoundInputLocked(false);
     if (scoreResultOverlay.hidden) return;
     scoreResultOverlay.classList.remove("is-open");
     window.clearTimeout(scoreResultCloseTimer);
@@ -385,8 +448,8 @@ async function revealScoreResult(result) {
     if (!result) return;
     const version = ++scoreResultRevealVersion;
     const metrics = [
-        ["部件", Math.round(result.coverage * 100)],
-        ["排列", Math.round(result.layout * 100)],
+        ["物件", Math.round(result.coverage * 100)],
+        ["位置", Math.round(result.layout * 100)],
         ["角度", Math.round(result.transform * 100)],
         ["圖層", Math.round(result.order * 100)],
     ];
@@ -436,6 +499,7 @@ function updateScoreRound() {
         return;
     }
     const remaining = selectedScoreDuration * 1000 - (Date.now() - scoreRoundStartedAt);
+    if (remaining <= SCORE_FINAL_INPUT_LOCK_MS) setScoreRoundInputLocked(true);
     if (remaining <= 0) {
         finishScoreRound(true);
         return;
@@ -686,8 +750,8 @@ function renderScoreResult(result) {
     scoreResultMessage.textContent = result.total == 67 ? "🫲🤪🫱" : result.total >= 90 ? "你是記憶拼圖大師吧！" : result.total >= 70 ? "很強了！" : result.total >= 45 ? "還行啦~" : "你是如何走到這地步的?";
     const details = [
         ["物件", `${result.matched} / ${result.targetCount}`],
-        ["排列", `${Math.round(result.layout * 100)}%`],
-        ["細節", `${Math.round(result.transform * 100)}%`],
+        ["位置", `${Math.round(result.layout * 100)}%`],
+        ["角度", `${Math.round(result.transform * 100)}%`],
         ["圖層", `${Math.round(result.order * 100)}%`],
     ];
     scoreResultBreakdown.replaceChildren(...details.map(([label, value]) => {
@@ -716,6 +780,7 @@ function clearScoreRoundParts() {
 async function startScoreRound() {
     let target = null;
     scoreStartButton.disabled = true;
+    setScoreRoundInputLocked(false);
     scoreModeStatus.textContent = "正在準備題目…";
     try {
         if (scoreQuestionMode === "fixed") {
@@ -800,6 +865,7 @@ function finishScoreRound(finished = false, { clearCanvas = true } = {}) {
         showScoreResultOverlay(result);
         return;
     }
+    setScoreRoundInputLocked(false);
     scoreRoundStartedAt = 0;
     scoreRoundTarget = null;
     scoreRoundTemplate = null;
@@ -1345,6 +1411,36 @@ function mergeSelectedParts() {
     setLayerOrder(afterOrder);
     setSelectedParts(parts, parts.at(-1));
     remember({ type: "group", parts: previousGroups, order: beforeOrder });
+}
+
+function promoteScoreRoundPartsToNormalGroup() {
+    const beforeOrder = orderedParts();
+    const parts = beforeOrder.filter((part) => part.dataset.scoreRoundPart === "true" && part.isConnected);
+    if (!parts.length) return;
+
+    const previousGroups = parts.map((part) => ({
+        image: part,
+        groupId: part.dataset.groupId ?? "",
+        groupColor: part.dataset.groupColor ?? "",
+    }));
+
+    if (parts.length > 1) {
+        const groupId = createGroupId();
+        const groupColor = createGroupColor();
+        parts.forEach((part) => {
+            part.dataset.groupId = groupId;
+            part.dataset.groupColor = groupColor;
+        });
+        const firstGroupIndex = beforeOrder.findIndex((part) => parts.includes(part));
+        const afterOrder = beforeOrder.filter((part) => !parts.includes(part));
+        afterOrder.splice(firstGroupIndex, 0, ...parts);
+        setLayerOrder(afterOrder);
+        remember({ type: "group", parts: previousGroups, order: beforeOrder });
+    }
+
+    parts.forEach((part) => delete part.dataset.scoreRoundPart);
+    scoreHistoryStart = null;
+    setSelectedParts(parts, parts.at(-1));
 }
 
 function ungroupContextParts() {
@@ -2878,8 +2974,10 @@ scoreRetryButton.addEventListener("click", () => {
     closeScoreResultOverlay();
     finishScoreRound(false, { clearCanvas: false });
 });
+scoreResultHistoryButton.addEventListener("click", reopenLatestScoreResultOverlay);
 scoreResultOverlay.addEventListener("pointerdown", (event) => {
-    if (event.target === scoreResultOverlay) closeScoreResultOverlay();
+    const hasJustOpened = performance.now() - scoreResultOpenedAt < SCORE_RESULT_CLOSE_GUARD_MS;
+    if (event.target === scoreResultOverlay && !hasJustOpened) closeScoreResultOverlay();
 });
 scoreUnitSearch.addEventListener("focus", renderScoreUnitResults);
 scoreUnitSearch.addEventListener("input", () => {
