@@ -97,6 +97,14 @@ html, body, .app-frame, .rounded-box, .side-panel, .help-dialog, .icon-button, .
     animation: diagonal-background-drift 0.79s linear infinite;
 }
 
+html.is-score-result-open .app-frame::before {
+    animation-play-state: paused;
+}
+
+html.is-score-result-open .score-result-overlay {
+    backdrop-filter: none;
+}
+
 .top-bar {
     position: absolute;
     top: 12px;
@@ -458,40 +466,41 @@ html, body, .app-frame, .rounded-box, .side-panel, .help-dialog, .icon-button, .
 }
 
 .score-result-overlay-stats {
-    display: grid;
+    position: relative;
+    display: block;
     box-sizing: border-box;
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr) auto;
-    gap: 10px;
-    align-items: stretch;
-    align-self: stretch;
     margin-top: 52px;
-    padding: 18px 14px 17px;
+    padding: 24px 16px 28px;
     border: 1px solid color-mix(in srgb, var(--text) 35%, transparent);
     border-radius: 14px;
     background: var(--panel-bg);
     box-shadow: 0 8px 18px rgb(0 0 0 / 0.2);
 }
 
-.score-result-overlay-breakdown { display: grid; align-content: center; gap: 18px; }
+.score-result-overlay-breakdown { position: absolute; inset: 0; display: grid; align-content: center; justify-items: center; gap: 18px; text-align: center; }
 .score-result-overlay-breakdown div {
     display: grid;
     min-width: 0;
+    width: 100%;
     justify-items: center;
-    gap: 4px;
+    gap: 6px;
     color: color-mix(in srgb, var(--text) 68%, transparent);
     font-family: "GenJyuuGothic", sans-serif;
-    font-size: clamp(0.58rem, 1.15vw, 0.72rem);
+    font-size: clamp(0.72rem, 1.35vw, 0.9rem);
     font-weight: 700;
     text-align: center;
 }
 .score-result-overlay-breakdown strong {
     color: var(--text);
-    font-size: clamp(0.82rem, 1.55vw, 1.02rem);
+    font-size: clamp(1rem, 1.85vw, 1.22rem);
 }
 .score-result-overlay-score {
+    position: relative;
+    z-index: 1;
+    display: block;
     justify-self: center;
-    margin-top: 5px;
+    margin: 16px 0 0;
+    text-align: center;
     color: var(--text);
     font-family: "GenJyuuGothic", sans-serif;
     font-size: clamp(2.1rem, 5vw, 3.5rem);
@@ -505,10 +514,11 @@ html, body, .app-frame, .rounded-box, .side-panel, .help-dialog, .icon-button, .
 
 @media (max-width: 719px) {
     .score-result-layout { grid-template-columns: minmax(0, 1fr); }
-    .score-result-overlay-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: auto; margin-top: 0; }
-    .score-result-overlay-breakdown { display: contents; }
+    .score-result-scenes { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .score-result-overlay-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 0; }
+    .score-result-overlay-breakdown { position: static; display: contents; }
     .score-result-overlay-breakdown div { display: grid; justify-content: initial; justify-items: center; gap: 3px; }
-    .score-result-overlay-score { grid-column: 1 / -1; }
+    .score-result-overlay-score { grid-column: 1 / -1; margin-top: 20px; }
 }
 
 @keyframes score-scramble-shake {
@@ -1245,6 +1255,7 @@ html[data-theme="dark"] .rounded-box.is-rotating {
     line-height: 1;
 }
 .score-final-score span { margin-left: 4px; font-size: 0.96rem; }
+.score-result-panel.is-summary-pending .score-final-score { display: none; }
 .score-result-message { margin: 12px 0 22px; color: color-mix(in srgb, var(--text) 74%, transparent); font-family: "GenJyuuGothic", sans-serif; font-size: 0.9rem; font-weight: 700; }
 .score-result-breakdown { width: min(100%, 270px); border-top: 1px solid color-mix(in srgb, var(--text) 22%, transparent); }
 .score-result-breakdown div { display: flex; justify-content: space-between; gap: 14px; padding: 9px 2px; border-bottom: 1px solid color-mix(in srgb, var(--text) 15%, transparent); color: color-mix(in srgb, var(--text) 70%, transparent); font-family: "GenJyuuGothic", sans-serif; font-size: 0.78rem; }
@@ -1252,12 +1263,12 @@ html[data-theme="dark"] .rounded-box.is-rotating {
 .score-result-history-button {
     display: flex;
     width: min(100%, 270px);
-    height: 112px;
-    flex: 0 0 112px;
+    height: 118px;
+    flex: 0 0 118px;
     flex-direction: column;
-    gap: 5px;
+    gap: 7px;
     margin-top: 14px;
-    padding: 5px;
+    padding: 9px 7px;
     overflow: hidden;
     border: 1px solid color-mix(in srgb, var(--text) 28%, transparent);
     border-radius: 10px;
@@ -1267,7 +1278,7 @@ html[data-theme="dark"] .rounded-box.is-rotating {
 }
 .score-result-history-button[hidden] { display: none; }
 .score-result-history-button:hover { border-color: color-mix(in srgb, var(--text) 62%, transparent); }
-.score-result-history-label { flex: 0 0 auto; font-size: 0.7rem; font-weight: 700; line-height: 1; text-align: left; }
+.score-result-history-label { flex: 0 0 auto; width: 100%; padding: 2px 0 4px; font-size: 0.74rem; font-weight: 700; line-height: 1; text-align: center; }
 .score-result-history-preview { position: relative; display: block; min-height: 0; flex: 1; overflow: hidden; border-radius: 5px; background: var(--frame-bg); }
 .score-result-history-compare { display: grid; height: 100%; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
 .score-result-history-pane { position: relative; overflow: hidden; border: 1px solid color-mix(in srgb, var(--text) 18%, transparent); border-radius: 4px; background: var(--panel-bg); }

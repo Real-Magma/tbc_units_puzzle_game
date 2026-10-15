@@ -345,6 +345,7 @@ function openScoreResultOverlay({ result, snapshot, layout, replayScores = false
     scoreResultAnswer.style.height = `${layout.answerHeight}px`;
     scoreResultPreview.replaceChildren(snapshot);
     window.clearTimeout(scoreResultCloseTimer);
+    root.classList.add("is-score-result-open");
     scoreResultOverlay.hidden = false;
     scoreResultOpenedAt = performance.now();
     scoreResultOverlay.classList.remove("is-open");
@@ -363,20 +364,21 @@ function showScoreResultOverlay(result) {
     const aspectRatio = canvasBounds.width / Math.max(canvasBounds.height, 1);
     const narrowLayout = window.innerWidth < 720;
     const maximumSceneHeight = Math.max(106, window.innerHeight * (narrowLayout ? 0.29 : 0.34));
+    const narrowSceneWidth = (window.innerWidth * 0.88 - 10) / 2;
     const sceneWidth = Math.max(1, Math.min(
-        narrowLayout ? window.innerWidth * 0.88 : window.innerWidth * 0.66,
-        820,
+        narrowLayout ? narrowSceneWidth : window.innerWidth * 0.66,
+        narrowLayout ? 410 : 820,
         maximumSceneHeight * aspectRatio,
     ));
     const previewHeight = sceneWidth / aspectRatio;
-    const statsWidth = narrowLayout ? sceneWidth : clamp(sceneWidth * 0.32, 156, 230);
+    const statsWidth = narrowLayout ? sceneWidth * 2 + 10 : clamp(sceneWidth * 0.32, 156, 230);
     const layout = {
         sceneWidth,
         previewHeight,
         answerWidth: sceneWidth,
         answerHeight: previewHeight,
         statsWidth,
-        cardWidth: narrowLayout ? sceneWidth : sceneWidth + statsWidth + 12,
+        cardWidth: narrowLayout ? statsWidth : sceneWidth + statsWidth + 12,
     };
 
     snapshot.removeAttribute("id");
@@ -428,12 +430,17 @@ function reopenLatestScoreResultOverlay() {
 function closeScoreResultOverlay() {
     scoreResultRevealVersion += 1;
     setScoreRoundInputLocked(false);
-    if (scoreResultOverlay.hidden) return;
+    if (scoreResultOverlay.hidden) {
+        root.classList.remove("is-score-result-open");
+        return;
+    }
     scoreResultOverlay.classList.remove("is-open");
     window.clearTimeout(scoreResultCloseTimer);
     scoreResultCloseTimer = window.setTimeout(() => {
         scoreResultOverlay.hidden = true;
         scoreResultPreview.replaceChildren();
+        scoreResultPanel.classList.remove("is-summary-pending");
+        root.classList.remove("is-score-result-open");
         tryPlayMusic();
     }, 180);
 }
@@ -959,6 +966,7 @@ async function startScoreRound() {
         scoreRoundTarget = target;
         scoreRoundTemplate = usableTemplate;
         scoreResultPanel.hidden = true;
+        scoreResultPanel.classList.remove("is-summary-pending");
         setScoreRoundCanvasState(true);
         playScoreStartFlash();
         scoreActiveUnit.value = unitLabel(target.unitId);
@@ -1004,6 +1012,7 @@ function finishScoreRound(finished = false, { clearCanvas = true } = {}) {
         scoreRunning.hidden = true;
         scoreSetup.hidden = true;
         scoreResultPanel.hidden = false;
+        scoreResultPanel.classList.add("is-summary-pending");
         normalModeTab.disabled = false;
         showScoreResultOverlay(result);
         return;
