@@ -97,6 +97,7 @@ const loadingUnits = new Map();
 const loadingPartSources = new Map();
 const loadedPartImages = new Map();
 const opaqueHitMasks = new Map();
+const spriteVisibilityCache = new Map();
 const history = [];
 let activeParts = new Map();
 let selectedPart = null;
@@ -150,7 +151,10 @@ const effectsVolume = Object.freeze({
     scoreFinal: 0.1,
 });
 const musicTracks = [backgroundMusic, scoreMusic];
-const PLACEHOLDER_PART_MARKERS = ["dummy", "dmy", "ダミー", "空っぽ", "placeholder", "blank", "empty"];
+const PLACEHOLDER_PART_MARKERS = [
+    "dummy", "dmy", "ダミー", "空っぽ", "空データ", "空資料", "空数据",
+    "placeholder", "blank", "empty", "empty data", "no data",
+];
 const SCORE_EFFECT_PART_MARKERS = [
     "エフェクト", "effect", "攻撃", "attack", "煙", "smoke", "flash", "spark",
     "beam", "laser", "bullet", "shot", "explosion", "爆発", "fire", "flame",
@@ -601,11 +605,11 @@ async function renderScoreParts(target, template) {
     const renderVersion = ++partsRenderVersion;
     const unit = unitCatalog[target.unitId] ?? await ensureUnitLoaded(target.unitId);
     const requiredCropIndexes = new Set((template?.parts ?? []).map((part) => part.cropIndex));
-    const parts = availablePartsForRank(unit, target.rank)
+    const candidateParts = availablePartsForRank(unit, target.rank)
         .filter((part) => requiredCropIndexes.has(cropIndexFromPartId(part.id)));
     showScorePartsLoading();
     try {
-        await Promise.all([...new Set(parts.map((part) => part.src))].map(ensurePartSourceLoaded));
+        await Promise.all([...new Set(candidateParts.map((part) => part.src))].map(ensurePartSourceLoaded));
     } catch (error) {
         console.error(error);
         if (renderVersion === partsRenderVersion) {
@@ -615,6 +619,7 @@ async function renderScoreParts(target, template) {
         return false;
     }
     if (renderVersion !== partsRenderVersion) return false;
+    const parts = withoutTransparentParts(candidateParts);
     const scoreParts = parts.map((part) => ({ ...part, scoreRound: true }));
     activeParts = new Map(scoreParts.map((part) => [part.id, part]));
     scorePartsList.replaceChildren(...scoreParts.map(createPartCard));
@@ -786,6 +791,45 @@ function isScoreEligiblePart(part) {
     return !isPlaceholderPart(part) && !isScoreEffectPart(part);
 }
 
+function hasVisibleSpritePixels(part) {
+    const sprite = normalizeSprite(part?.sprite);
+    const source = part?.src;
+    if (!sprite || !source) return true;
+
+    const key = `${source}|${sprite.x},${sprite.y},${sprite.width},${sprite.height}`;
+    if (spriteVisibilityCache.has(key)) return spriteVisibilityCache.get(key);
+
+    const image = loadedPartImages.get(source);
+    if (!image?.complete || !image.naturalWidth) return true;
+    try {
+        const raster = document.createElement("canvas");
+        raster.width = sprite.width;
+        raster.height = sprite.height;
+        const context = raster.getContext("2d", { willReadFrequently: true });
+        context.drawImage(image, sprite.x, sprite.y, sprite.width, sprite.height, 0, 0, sprite.width, sprite.height);
+        const pixels = context.getImageData(0, 0, sprite.width, sprite.height).data;
+        let hasVisiblePixel = false;
+        for (let index = 3; index < pixels.length; index += 4) {
+            if (pixels[index] > 8) {
+                hasVisiblePixel = true;
+                break;
+            }
+        }
+        spriteVisibilityCache.set(key, hasVisiblePixel);
+        return hasVisiblePixel;
+    } catch (error) {
+        // Local pages can occasionally block Canvas readback. Keeping the part
+        // is safer than accidentally hiding a real sprite in that environment.
+        console.warn("無法判斷部件透明像素，保留該部件。", error);
+        spriteVisibilityCache.set(key, true);
+        return true;
+    }
+}
+
+function withoutTransparentParts(parts) {
+    return parts.filter(hasVisibleSpritePixels);
+}
+
 function availablePartsForRank(unit, rank) {
     return (unit?.parts ?? []).filter((part) => part.form === rank && !isPlaceholderPart(part));
 }
@@ -793,6 +837,7 @@ function availablePartsForRank(unit, rank) {
 function withoutPlaceholderScoreParts(template, unit, rank) {
     const allowedCropIndexes = new Set(availablePartsForRank(unit, rank)
         .filter(isScoreEligiblePart)
+        .filter(hasVisibleSpritePixels)
         .map((part) => cropIndexFromPartId(part.id))
         .filter((index) => index !== null));
     return {
@@ -1142,16 +1187,21 @@ async function gradeScoreRound() {
     // Identifying the right sprites alone earns only a small base score. The
     // remaining points need a coherent arrangement, so scattered or duplicated
     // colour blocks cannot score well merely by matching a crop id.
+    // Position scores the arrangement only. Do not apply it again as a harsh
+    // multiplier to angle and layer order; that made one layout mistake count
+    // several times and punished visually close answers too heavily.
     const arrangementGate = coverage * layout.positionQuality;
-    const detailGate = 0.2 + layout.positionQuality * 0.8;
     const coreScore = coverage * 20
         + arrangementGate * 35
-        + coverage * transformQuality * detailGate * 30
-        + coverage * orderQuality * detailGate * 15;
-    // This is a bonus after the structural score.  It first aligns both
+        + coverage * transformQuality * 30
+        + coverage * orderQuality * 15;
+    // This is a bonus after the structural score. It first aligns both
     // compositions as a whole, so arbitrary canvas placement does not punish
-    // an otherwise correct arrangement.
-    const imageBonus = image * 60;
+    // an otherwise correct arrangement. Simple characters should not gain as
+    // much from image similarity: each required part raises the cap by 3,
+    // from +3 for one part to the existing maximum of +60.
+    const imageBonusCap = clamp(templateParts.length * 3, 3, 60);
+    const imageBonus = image * imageBonusCap;
     const total = Math.round(Math.min(100, coreScore + imageBonus));
     return {
         total,
@@ -1232,6 +1282,8 @@ async function startScoreRound() {
         scoreModeStatus.textContent = "正在讀取正確答案…";
         const template = await ensureScoreTemplateLoaded(target);
         const unit = unitCatalog[target.unitId] ?? await ensureUnitLoaded(target.unitId);
+        const rankParts = availablePartsForRank(unit, target.rank);
+        await Promise.all([...new Set(rankParts.map((part) => part.src))].map(ensurePartSourceLoaded));
         const usableTemplate = withoutPlaceholderScoreParts(template, unit, target.rank);
         if (!usableTemplate.parts.length) throw new Error("此題沒有可用的角色部件");
         clearScoreRoundParts();
@@ -2013,6 +2065,85 @@ function canvasToPngBlob(output) {
             else reject(new Error("PNG 編碼失敗"));
         }, "image/png");
     });
+}
+
+function scoreCompositionEntries() {
+    return currentScoreRoundParts()
+        .filter((part) => !part.classList.contains("is-layer-hidden"))
+        .map((part) => {
+            const image = part.querySelector("img");
+            const sprite = spriteFromElement(part);
+            const state = positionOf(part);
+            if (!image || !sprite) return null;
+            return {
+                part,
+                image,
+                sprite,
+                x: Number.parseFloat(state.left),
+                y: Number.parseFloat(state.top),
+                scaleX: Number.parseFloat(state.scale) * Number.parseFloat(state.flipX),
+                scaleY: Number.parseFloat(state.scale),
+                angle: Number.parseFloat(state.rotation),
+                opacity: clamp(Number.parseFloat(part.style.opacity || "1"), 0, 1),
+                z: Number(part.style.zIndex) || 0,
+            };
+        })
+        .filter((entry) => entry
+            && Number.isFinite(entry.x)
+            && Number.isFinite(entry.y)
+            && Number.isFinite(entry.scaleX)
+            && Number.isFinite(entry.scaleY)
+            && Number.isFinite(entry.angle));
+}
+
+async function createScoreCompositionPng() {
+    const entries = scoreCompositionEntries();
+    if (!entries.length) throw new Error("找不到可複製的組合");
+    await Promise.all(entries.map((entry) => waitForExportImage(entry.image)));
+
+    const bounds = scoreImageBounds(entries);
+    const padding = 20;
+    const scale = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
+    const output = document.createElement("canvas");
+    output.width = Math.max(1, Math.ceil((bounds.right - bounds.left + padding * 2) * scale));
+    output.height = Math.max(1, Math.ceil((bounds.bottom - bounds.top + padding * 2) * scale));
+    const context = output.getContext("2d");
+    if (!context) throw new Error("無法建立 PNG 繪圖區");
+
+    context.scale(scale, scale);
+    context.translate(padding - bounds.left, padding - bounds.top);
+    entries
+        .sort((left, right) => left.z - right.z)
+        .forEach((entry) => {
+            context.save();
+            context.globalAlpha = entry.opacity;
+            context.translate(entry.x, entry.y);
+            context.rotate(entry.angle * Math.PI / 180);
+            context.scale(entry.scaleX, entry.scaleY);
+            context.drawImage(
+                entry.image,
+                entry.sprite.x,
+                entry.sprite.y,
+                entry.sprite.width,
+                entry.sprite.height,
+                -entry.sprite.width / 2,
+                -entry.sprite.height / 2,
+                entry.sprite.width,
+                entry.sprite.height,
+            );
+            context.restore();
+        });
+    return canvasToPngBlob(output);
+}
+
+function copyScoreCompositionImage() {
+    if (!navigator.clipboard?.write || typeof ClipboardItem === "undefined") {
+        return Promise.reject(new Error("此瀏覽器不支援複製圖片，請使用 GitHub Pages 或 localhost 網頁。"));
+    }
+    // Pass the in-progress PNG promise to ClipboardItem immediately. This
+    // preserves the right-click user gesture even while the canvas encodes.
+    const png = createScoreCompositionPng();
+    return navigator.clipboard.write([new ClipboardItem({ "image/png": png })]);
 }
 
 async function createPngExport() {
@@ -3246,10 +3377,10 @@ async function renderParts() {
         showPartsLoading();
         return;
     }
-    const parts = availablePartsForRank(unit, rankSelect.value);
+    const candidateParts = availablePartsForRank(unit, rankSelect.value);
     showPartsLoading();
     try {
-        await Promise.all([...new Set(parts.map((part) => part.src))].map(ensurePartSourceLoaded));
+        await Promise.all([...new Set(candidateParts.map((part) => part.src))].map(ensurePartSourceLoaded));
     } catch (error) {
         console.error(error);
         if (renderVersion === partsRenderVersion) {
@@ -3259,6 +3390,7 @@ async function renderParts() {
         return;
     }
     if (renderVersion !== partsRenderVersion) return;
+    const parts = withoutTransparentParts(candidateParts);
     activeParts = new Map(parts.map((part) => [part.id, part]));
     partsList.replaceChildren();
     unitStatus.textContent = parts.length ? `${parts.length} 個可拖曳部件` : "此階級沒有可用部件。";
@@ -3279,6 +3411,17 @@ function availableRanksForUnit(unit) {
     return [...rankSelect.options]
         .map((option) => option.value)
         .filter((form) => forms.has(form));
+}
+
+function updateScoreFixedRankOptions(unit) {
+    const forms = new Set(unit?.parts?.map((part) => part.form) ?? []);
+    for (const option of scoreFixedRankSelect.options) option.disabled = !forms.has(option.value);
+    const selectedRankIsAvailable = forms.has(scoreFixedRankSelect.value);
+    if (!selectedRankIsAvailable) {
+        scoreFixedRankSelect.value = [...scoreFixedRankSelect.options]
+            .find((option) => !option.disabled)?.value ?? "";
+    }
+    scoreFixedRank = scoreFixedRankSelect.value;
 }
 
 function unitLabel(unitId) {
@@ -3326,13 +3469,27 @@ function closeScoreUnitResults() {
     scoreUnitSearch.setAttribute("aria-expanded", "false");
 }
 
-function chooseFixedScoreUnit(unitId) {
+async function chooseFixedScoreUnit(unitId) {
     if (!unitIndex[unitId]) return;
     scoreFixedUnitId = unitId;
     scoreUnitSearch.placeholder = "搜尋編號或名稱";
     scoreUnitSearch.value = unitLabel(unitId);
     closeScoreUnitResults();
-    scoreModeStatus.textContent = "角色已選擇；請確認階級後開始。";
+    scoreFixedRankSelect.disabled = true;
+    scoreModeStatus.textContent = "正在讀取可用階級…";
+    try {
+        const unit = await ensureUnitLoaded(unitId);
+        if (scoreFixedUnitId !== unitId) return;
+        updateScoreFixedRankOptions(unit);
+        scoreModeStatus.textContent = "角色已選擇；請確認階級後開始。";
+    } catch (error) {
+        console.error(error);
+        if (scoreFixedUnitId !== unitId) return;
+        scoreFixedUnitId = "";
+        scoreModeStatus.textContent = "角色資料載入失敗，請再選一次。";
+    } finally {
+        if (scoreFixedUnitId === unitId || !scoreFixedUnitId) scoreFixedRankSelect.disabled = false;
+    }
 }
 
 function renderScoreUnitResults() {
@@ -3589,6 +3746,22 @@ scoreResultHistoryButton.addEventListener("click", reopenLatestScoreResultOverla
 scoreImageOverlapButton.addEventListener("click", () => {
     scoreImageOverlayVisible = !scoreImageOverlayVisible;
     renderScoreImageOverlay();
+});
+scoreResultPreview.title = "右鍵複製你的組合圖片";
+scoreResultPreview.addEventListener("contextmenu", (event) => {
+    event.preventDefault();
+    void copyScoreCompositionImage()
+        .then(() => {
+            scoreResultPreview.classList.add("is-image-copied");
+            window.setTimeout(() => scoreResultPreview.classList.remove("is-image-copied"), 1_200);
+        })
+        .catch((error) => {
+            console.error("複製組合圖片失敗", error);
+            const message = window.location.protocol === "file:"
+                ? "直接雙擊 index.html 的 file:// 模式無法複製圖片。請使用 GitHub Pages 或「啟動本機網站.cmd」開啟 localhost 網頁。"
+                : "複製圖片失敗，請確認角色圖片已載入完成後再試一次。";
+            window.alert(message);
+        });
 });
 scoreResultOverlay.addEventListener("pointerdown", (event) => {
     const hasJustOpened = performance.now() - scoreResultOpenedAt < SCORE_RESULT_CLOSE_GUARD_MS;
