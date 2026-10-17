@@ -32,6 +32,7 @@ const selectionFrame = document.querySelector("#selection-frame");
 const selectionRotateHandle = document.querySelector("#selection-rotate-handle");
 const marqueeSelection = document.querySelector("#marquee-selection");
 const layersPanel = document.querySelector("#layers-panel");
+const mobileUnlockAllButton = document.querySelector("#mobile-unlock-all-layers");
 const layerContextMenu = document.querySelector("#layer-context-menu");
 const mergeLayersButton = document.querySelector("#merge-layers-button");
 const ungroupLayersButton = document.querySelector("#ungroup-layers-button");
@@ -101,6 +102,7 @@ const loadedPartImages = new Map();
 const opaqueHitMasks = new Map();
 const spriteVisibilityCache = new Map();
 const history = [];
+const redoHistory = [];
 let activeParts = new Map();
 let selectedPart = null;
 const selectedParts = new Set();
@@ -1247,6 +1249,7 @@ function clearScoreRoundParts() {
     canvasWorld.querySelectorAll('.placed-part[data-score-round-part="true"]').forEach((part) => part.remove());
     if (scoreHistoryStart !== null) {
         history.length = scoreHistoryStart;
+        redoHistory.length = 0;
         scoreHistoryStart = null;
         updateUndoButton();
     }
@@ -1543,6 +1546,9 @@ function snapAngle(angle) {
 
 function updateUndoButton() {
     undoButton.disabled = history.length === 0;
+    window.dispatchEvent(new CustomEvent("tbcPuzzleHistoryChange", {
+        detail: { canUndo: history.length > 0, canRedo: redoHistory.length > 0 },
+    }));
 }
 
 function updateLayerButtons() {
@@ -2440,6 +2446,7 @@ async function importLayerProject(event) {
 
         orderedParts().forEach((part) => part.remove());
         history.length = 0;
+        redoHistory.length = 0;
 
         const importedParts = layers.map((layer, index) => {
             const left = Number.parseFloat(layer.left);
@@ -2464,6 +2471,7 @@ async function importLayerProject(event) {
         });
 
         history.length = 0;
+        redoHistory.length = 0;
         viewScale = clamp(Number(project.view?.scale) || 1, 0.5, 2.5);
         viewX = Number.isFinite(Number(project.view?.x)) ? Number(project.view.x) : canvas.clientWidth / 2;
         viewY = Number.isFinite(Number(project.view?.y)) ? Number(project.view.y) : canvas.clientHeight / 2;
@@ -2484,6 +2492,8 @@ function renderLayersPanel() {
         ? orderedParts().filter((part) => part.dataset.scoreRoundPart === "true")
         : orderedParts();
     layersPanel.hidden = parts.length === 0;
+    mobileUnlockAllButton.hidden = parts.length === 0;
+    mobileUnlockAllButton.disabled = !parts.some((part) => part.classList.contains("is-layer-locked"));
     layersPanel.replaceChildren();
     if (!parts.length) return;
 
@@ -2499,6 +2509,7 @@ function renderLayersPanel() {
         const visibility = document.createElement("button");
         const lock = document.createElement("button");
         row.className = "layer-row";
+        row.dataset.layerIndex = String(parts.indexOf(part));
         row.draggable = !part.classList.contains("is-layer-locked");
         row.title = part.dataset.name;
         row.tabIndex = 0;
@@ -2608,6 +2619,7 @@ function renderLayersPanel() {
         if (!groupContainer) {
             groupContainer = document.createElement("section");
             groupContainer.className = "layer-group";
+            groupContainer.dataset.layerGroupId = part.dataset.groupId;
             const groupParts = orderedParts().filter((item) => item.dataset.groupId === part.dataset.groupId);
             groupContainer.classList.toggle("is-collapsed", collapsedGroupIds.has(part.dataset.groupId));
             groupContainer.classList.toggle("is-selected", groupParts.length > 0 && groupParts.every((item) => selectedParts.has(item)));
@@ -2746,7 +2758,17 @@ function resetCanvasView() {
 }
 
 function remember(action) {
+    if (action.type === "layers") action.afterOrder = orderedParts();
+    if (action.type === "group" || action.type === "ungroup") {
+        action.afterGroups = action.parts.map(({ image }) => ({
+            image,
+            groupId: image.dataset.groupId ?? "",
+            groupColor: image.dataset.groupColor ?? "",
+        }));
+        action.afterOrder = orderedParts();
+    }
     history.push(action);
+    redoHistory.length = 0;
     updateUndoButton();
 }
 
@@ -2762,6 +2784,7 @@ function restoreImage(image, position) {
 function undo() {
     const action = history.pop();
     if (!action) return;
+    redoHistory.push(action);
 
     if (action.type === "add") action.image.remove();
     if (action.type === "paste-group") action.parts.forEach((image) => image.remove());
@@ -2792,6 +2815,39 @@ function undo() {
         action.parts.forEach(({ image, position }) => restoreImage(image, position));
         setLayerOrder(action.parts.map(({ image }) => image));
     }
+    if (selectedPart && !selectedPart.isConnected) selectPlacedPart(null);
+    updateUndoButton();
+    updateLayerButtons();
+    updateSelectionFrame();
+    renderLayersPanel();
+}
+
+function redo() {
+    const action = redoHistory.pop();
+    if (!action) return;
+
+    if (action.type === "add") canvasWorld.append(action.image);
+    if (action.type === "paste-group") action.parts.forEach((image) => canvasWorld.append(image));
+    if (action.type === "move" || action.type === "rotate" || action.type === "scale" || action.type === "flip") restoreImage(action.image, action.to);
+    if (action.type === "move-group" || action.type === "rotate-group" || action.type === "scale-group" || action.type === "flip-group") {
+        action.changes.forEach(({ image, to }) => restoreImage(image, to));
+    }
+    if (action.type === "remove") action.image.remove();
+    if (action.type === "remove-group") action.parts.forEach(({ image }) => image.remove());
+    if (action.type === "clear") action.parts.forEach(({ image }) => image.remove());
+    if (action.type === "layers" && action.afterOrder) setLayerOrder(action.afterOrder);
+    if ((action.type === "group" || action.type === "ungroup") && action.afterGroups) {
+        action.afterGroups.forEach(({ image, groupId, groupColor }) => {
+            if (groupId) image.dataset.groupId = groupId;
+            else delete image.dataset.groupId;
+            if (groupColor) image.dataset.groupColor = groupColor;
+            else delete image.dataset.groupColor;
+        });
+        if (action.afterOrder) setLayerOrder(action.afterOrder);
+    }
+    if (action.type === "layer" && action.to !== undefined) action.image.style.zIndex = action.to;
+
+    history.push(action);
     if (selectedPart && !selectedPart.isConnected) selectPlacedPart(null);
     updateUndoButton();
     updateLayerButtons();
@@ -3535,10 +3591,11 @@ function createPartCard(part) {
     card.addEventListener("click", () => {
         palettePointerGrab = null;
         const spread = 180;
+        const mobileSpawnOffsetY = window.matchMedia("(max-width: 700px) and (pointer: coarse)").matches ? -120 : 0;
         addPartToCanvas(part, 0, 0, {
             worldPoint: {
                 x: (Math.random() - 0.5) * spread,
-                y: (Math.random() - 0.5) * spread,
+                y: mobileSpawnOffsetY + (Math.random() - 0.5) * spread,
             },
         });
         playPopSound();
@@ -4077,6 +4134,7 @@ showLayersButton.addEventListener("click", () => {
     setLayerVisibility(contextMenuParts(), false);
     closeLayerContextMenu();
 });
+mobileUnlockAllButton.addEventListener("click", unlockAllLayers);
 importProjectButton.addEventListener("click", () => importProjectInput.click());
 importProjectInput.addEventListener("change", importLayerProject);
 saveProjectButton.addEventListener("click", saveLayerProject);
@@ -4211,6 +4269,46 @@ window.tbcPuzzleMobile = Object.freeze({
     },
     deleteSelected() {
         removeSelectedParts();
+    },
+    clearAll() {
+        if (!clearCanvas()) return false;
+        playBowlingSound();
+        playTrashClearAnimation();
+        return true;
+    },
+    undo() {
+        undo();
+    },
+    redo() {
+        redo();
+    },
+    historyState() {
+        return { canUndo: history.length > 0, canRedo: redoHistory.length > 0 };
+    },
+    moveLayerFromTouch({ sourceIndex, sourceGroupId = "", targetIndex, targetGroupId = "", insertAbove }) {
+        const visibleParts = isScoreRoundCanvasActive
+            ? orderedParts().filter((part) => part.dataset.scoreRoundPart === "true")
+            : orderedParts();
+        const sourcePart = Number.isInteger(sourceIndex) ? visibleParts[sourceIndex] : null;
+        const targetPart = Number.isInteger(targetIndex) ? visibleParts[targetIndex] : null;
+        const sourceId = sourceGroupId || sourcePart?.dataset.groupId || "";
+        const targetId = targetGroupId || targetPart?.dataset.groupId || "";
+        if (!sourcePart && !sourceId) return;
+        if (!targetPart && !targetId) return;
+
+        if (sourcePart && sourceId && sourceId === targetId && !sourceGroupId) {
+            placePartWithinGroup(sourcePart, targetPart, Boolean(insertAbove));
+            return;
+        }
+
+        const allParts = orderedParts();
+        const sourceParts = sourceId
+            ? allParts.filter((part) => part.dataset.groupId === sourceId)
+            : [sourcePart];
+        const targetParts = targetId
+            ? allParts.filter((part) => part.dataset.groupId === targetId)
+            : [targetPart];
+        moveLayerBlock(sourceParts, targetParts, Boolean(insertAbove));
     },
     showPartMenu(part, clientX, clientY) {
         if (!part?.isConnected) return;

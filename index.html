@@ -77,6 +77,9 @@
                             </div>
                             <input id="import-project-input" type="file" accept=".tbc-puzzle,application/json" hidden>
                             <aside id="layers-panel" class="layers-panel" aria-label="圖層面板"></aside>
+                            <button id="mobile-unlock-all-layers" class="mobile-unlock-all-layers" type="button" hidden>
+                                <i class="fa-solid fa-lock-open" aria-hidden="true"></i><span>全部解鎖</span>
+                            </button>
                             <div id="layer-context-menu" class="layer-context-menu" role="menu" hidden>
                                 <button id="merge-layers-button" type="button" role="menuitem"><i class="fa-solid fa-object-group" aria-hidden="true"></i><span>群組</span></button>
                                 <button id="ungroup-layers-button" type="button" role="menuitem"><i class="fa-solid fa-object-ungroup" aria-hidden="true"></i><span>解散</span></button>
@@ -287,6 +290,33 @@
             <div class="help-step">
                 <span class="help-visual"><i class="fa-solid fa-wrench"></i></span>
                 <p><strong>工具</strong><br>說明, 亮暗模式, 音效與音量</p>
+            </div>
+        </section>
+
+        <section class="mobile-help-guide" aria-label="手機版操作說明">
+            <div class="help-step">
+                <span class="help-visual"><i class="fa-solid fa-hand-pointer"></i></span>
+                <p><strong>加入與移動</strong><br>點擊新增物件；拖物件</p>
+            </div>
+            <div class="help-step">
+                <span class="help-visual"><i class="fa-solid fa-expand"></i></span>
+                <p><strong>縮放與平移畫布</strong><br>兩指張開放大、合攏縮小；同方向移動可平移</p>
+            </div>
+            <div class="help-step">
+                <span class="help-visual"><i class="fa-solid fa-layer-group"></i></span>
+                <p><strong>圖層</strong><br>開啟圖層後，可拖曳調整順序</p>
+            </div>
+            <div class="help-step">
+                <span class="help-visual"><i class="fa-solid fa-arrow-rotate-left"></i></span>
+                <p><strong>上一步／下一步</strong><br>底部工具的迴轉箭頭</p>
+            </div>
+            <div class="help-step">
+                <span class="help-visual"><i class="fa-solid fa-trash-can"></i></span>
+                <p><strong>刪除與清空</strong><br>點垃圾桶刪除選取物件；長按清空全部</p>
+            </div>
+            <div class="help-step">
+                <span class="help-visual"><i class="fa-solid fa-wrench"></i></span>
+                <p><strong>更多操作</strong><br>長按物件有選單；手掌按鈕可平移</p>
             </div>
         </section>
 

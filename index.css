@@ -1032,6 +1032,7 @@ html[data-theme="dark"] .rounded-box.is-rotating {
 
 .unlock-all-layers:hover:not(:disabled) { background: var(--button-hover-bg); }
 .unlock-all-layers:disabled { cursor: default; opacity: 0.42; }
+.mobile-unlock-all-layers { display: none; }
 
 .placed-part.is-layer-hidden { display: none; }
 
@@ -1674,6 +1675,7 @@ html[data-theme="dark"] .rounded-box.is-rotating {
 }
 
 .help-guide { border-top: 1px solid color-mix(in srgb, var(--border) 35%, transparent); }
+.mobile-help-guide { display: none; }
 .help-step { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid color-mix(in srgb, var(--border) 22%, transparent); }
 .help-step p { margin: 0; font-size: 0.82rem; line-height: 1.5; }
 .help-step strong { font-size: 0.93rem; }
