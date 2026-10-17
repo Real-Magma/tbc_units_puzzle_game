@@ -21,8 +21,13 @@ from pathlib import Path
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-SOURCE_ROOT = PROJECT_ROOT / "assets" / "unit_scoring" / "units"
-OUTPUT_ROOT = SOURCE_ROOT / "templates"
+SOURCE_ROOT_CANDIDATES = (
+    PROJECT_ROOT / "assets" / "unit_scoring" / "units",
+    # Existing projects used this exported-folder name.  Keep accepting it so
+    # the source files do not need to be copied or renamed just to rebuild.
+    PROJECT_ROOT / "assets" / "unit_scoring" / "units_scoring",
+)
+OUTPUT_ROOT = PROJECT_ROOT / "assets" / "unit_scoring" / "templates"
 FORM_ORDER = ("f", "c", "s", "u")
 DUMMY_MARKERS = ("ダミー", "dummy", "dmy", "空っぽ", "placeholder", "blank", "empty")
 
@@ -76,7 +81,7 @@ def parse_imgcut(path: Path) -> list[dict[str, object]]:
     return crops
 
 
-def parse_model(path: Path) -> tuple[list[list[int]], list[int]]:
+def parse_model(path: Path) -> tuple[list[list[int]], list[int], list[list[int]]]:
     lines = [line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
     if len(lines) < 4:
         raise ValueError("mamodel is incomplete")
@@ -90,7 +95,16 @@ def parse_model(path: Path) -> tuple[list[list[int]], list[int]]:
     scale_info = parse_ints(lines[3 + count])
     if len(scale_info) < 3:
         raise ValueError("mamodel scale configuration is incomplete")
-    return rows, scale_info[:3]
+    config_count_index = 4 + count
+    if config_count_index >= len(lines):
+        raise ValueError("mamodel configuration is incomplete")
+    config_count = int(lines[config_count_index])
+    configs: list[list[int]] = []
+    for line in lines[config_count_index + 1:config_count_index + 1 + config_count]:
+        configs.append(parse_leading_ints(line, 6))
+    if len(configs) != config_count:
+        raise ValueError("mamodel configuration is incomplete")
+    return rows, scale_info[:3], configs
 
 
 def parse_animation(path: Path) -> list[AnimationTrack]:
@@ -150,6 +164,31 @@ def value_at_frame_zero(track: AnimationTrack) -> int | None:
                     ratio = 1 - math.sqrt(max(0.0, 1 - ratio ** power))
                 else:
                     ratio = math.sqrt(max(0.0, 1 - (1 - ratio) ** (-power)))
+            elif easing == 3:
+                # BCU's ``ease3`` is a Lagrange interpolation curve across
+                # the adjacent run of easing=3 keys, including the following
+                # non-easing anchor.  Returning the current key (or a linear
+                # endpoint) makes many collaboration units use a wrong idle
+                # pose at frame zero.
+                low = index
+                while low > 0 and moves[low - 1][2] == 3:
+                    low -= 1
+                high = index
+                while high + 1 < len(moves):
+                    high += 1
+                    if moves[high][2] != 3:
+                        break
+                total = 0.0
+                for key_index in range(low, high + 1):
+                    value = moves[key_index][1] * 4096.0
+                    for other_index in range(low, high + 1):
+                        if key_index != other_index:
+                            value *= (
+                                (frame - moves[other_index][0]) /
+                                (moves[key_index][0] - moves[other_index][0])
+                            )
+                    total += value
+                return int(total / 4096.0)
             elif easing == 4:
                 if easing_arg > 0:
                     ratio = 1 - math.cos(ratio * math.pi / 2)
@@ -157,7 +196,7 @@ def value_at_frame_zero(track: AnimationTrack) -> int | None:
                     ratio = math.sin(ratio * math.pi / 2)
                 else:
                     ratio = (1 - math.cos(ratio * math.pi)) / 2
-            elif easing not in (0, 2, 4):
+            elif easing not in (0, 2, 3, 4):
                 ratio = 1.0
         value = current_value + int((next_value - current_value) * ratio)
         if track.modification == 2 and next_value < current_value:
@@ -199,7 +238,7 @@ def transform(matrix: tuple[float, float, float, float, float, float], x: float,
 
 
 def build_template(unit_id: str, form: str, form_dir: Path) -> dict[str, object]:
-    model, model_info = parse_model(form_dir / "mamodel.txt")
+    model, model_info, model_configs = parse_model(form_dir / "mamodel.txt")
     crops = parse_imgcut(form_dir / "imgcut.txt")
     idle_path = form_dir / "maanim_idle.txt"
     # A small number of special units do not ship an idle animation.  Their
@@ -283,13 +322,24 @@ def build_template(unit_id: str, form: str, form_dir: Path) -> dict[str, object]
             parent_size[0] * float(state["scale_x"]) * float(state["global_scale"]) / (normal_scale * normal_scale),
             parent_size[1] * float(state["scale_y"]) * float(state["global_scale"]) / (normal_scale * normal_scale),
         )
+        matrix = parent_matrix
         if index == 0:
-            matrix = multiply(parent_matrix, translate(
+            # BCU applies the first mamodel configuration as an origin shift
+            # before the root pivot.  It usually disappears after centering,
+            # but preserving it keeps every child in the same coordinate space
+            # as BCU for scoring and PNG export.
+            if model_configs:
+                root_config = model_configs[0]
+                matrix = multiply(matrix, translate(
+                    -part_size[0] * root_config[2],
+                    -part_size[1] * root_config[3],
+                ))
+            matrix = multiply(matrix, translate(
                 part_size[0] * float(state["pivot_x"]) * float(state["flip_x"]),
                 part_size[1] * float(state["pivot_y"]) * float(state["flip_y"]),
             ))
         else:
-            matrix = multiply(parent_matrix, translate(
+            matrix = multiply(matrix, translate(
                 parent_size[0] * float(state["x"]),
                 parent_size[1] * float(state["y"]),
             ))
@@ -319,6 +369,7 @@ def build_template(unit_id: str, form: str, form_dir: Path) -> dict[str, object]
         local_center_y = (height / 2 - float(state["pivot_y"])) * part_size[1]
         center_x, center_y = transform(matrix, local_center_x, local_center_y)
         angle = math.degrees(math.atan2(matrix[1], matrix[0]))
+        determinant = matrix[0] * matrix[3] - matrix[1] * matrix[2]
         parts.append({
             "modelIndex": index,
             "cropIndex": image_index,
@@ -327,6 +378,11 @@ def build_template(unit_id: str, form: str, form_dir: Path) -> dict[str, object]
             "angle": round(angle, 5),
             "scaleX": round(abs(part_size[0]), 5),
             "scaleY": round(abs(part_size[1]), 5),
+            # CSS rotation alone cannot represent BCU's reflection matrix.
+            # Keep the signs separately so answer previews and exported PNGs
+            # render the same left/right orientation as the source animation.
+            "flipX": -1 if part_size[0] < 0 else 1,
+            "flipY": -1 if determinant * part_size[1] < 0 else 1,
             "z": int(state["z"]),
             "opacity": round(opacity, 5),
         })
@@ -337,7 +393,7 @@ def build_template(unit_id: str, form: str, form_dir: Path) -> dict[str, object]
     xs = [float(part["x"]) for part in parts]
     ys = [float(part["y"]) for part in parts]
     return {
-        "version": 1,
+        "version": 2,
         "unitId": unit_id,
         "rank": form,
         "frame": 0,
@@ -356,13 +412,15 @@ def main() -> None:
     parser.add_argument("--from", dest="first_id", metavar="ID", help="first unit ID to include")
     parser.add_argument("--to", dest="last_id", metavar="ID", help="last unit ID to include")
     args = parser.parse_args()
-    if not SOURCE_ROOT.is_dir():
-        raise SystemExit(f"Missing source directory: {SOURCE_ROOT}")
+    source_root = next((path for path in SOURCE_ROOT_CANDIDATES if path.is_dir()), None)
+    if source_root is None:
+        expected = " or ".join(str(path) for path in SOURCE_ROOT_CANDIDATES)
+        raise SystemExit(f"Missing source directory: {expected}")
     if not args.all and not args.unit_ids:
         raise SystemExit("Pass --all or one or more unit IDs")
 
     wanted = {unit_id.zfill(3) for unit_id in args.unit_ids}
-    unit_dirs = sorted(path for path in SOURCE_ROOT.iterdir() if path.is_dir() and path.name.isdigit())
+    unit_dirs = sorted(path for path in source_root.iterdir() if path.is_dir() and path.name.isdigit())
     if not args.all:
         unit_dirs = [path for path in unit_dirs if path.name in wanted]
     if args.first_id:

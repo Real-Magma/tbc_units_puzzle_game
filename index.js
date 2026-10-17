@@ -641,6 +641,8 @@ function createScoreAnswerPart(asset, targetPart) {
     const image = document.createElement("img");
     const scaleX = Math.abs(Number(targetPart.scaleX) || 1);
     const scaleY = Math.abs(Number(targetPart.scaleY) || 1);
+    const flipX = Number(targetPart.flipX) === -1 ? -1 : 1;
+    const flipY = Number(targetPart.flipY) === -1 ? -1 : 1;
     const angle = Number(targetPart.angle) || 0;
     const opacity = Number(targetPart.opacity);
 
@@ -649,7 +651,7 @@ function createScoreAnswerPart(asset, targetPart) {
     answerPart.style.top = `${targetPart.y}px`;
     answerPart.style.zIndex = String(Number(targetPart.z) || 0);
     answerPart.style.opacity = String(clamp(Number.isFinite(opacity) ? opacity : 1, 0, 1));
-    answerPart.style.transform = `translate(-50%, -50%) rotate(${angle}deg) scale(${scaleX}, ${scaleY})`;
+    answerPart.style.transform = `translate(-50%, -50%) rotate(${angle}deg) scale(${scaleX * flipX}, ${scaleY * flipY})`;
 
     crop.className = "placed-sprite-crop";
     crop.style.width = `${sprite.width}px`;
@@ -842,7 +844,6 @@ function availablePartsForRank(unit, rank) {
 
 function withoutPlaceholderScoreParts(template, unit, rank) {
     const allowedCropIndexes = new Set(availablePartsForRank(unit, rank)
-        .filter(isScoreEligiblePart)
         .filter(hasVisibleSpritePixels)
         .map((part) => cropIndexFromPartId(part.id))
         .filter((index) => index !== null));
@@ -1077,8 +1078,8 @@ async function scoreImageSimilarity(templateParts, placedParts, pairs) {
             x: Number(targetPart.x),
             y: Number(targetPart.y),
             angle: Number(targetPart.angle) || 0,
-            scaleX: Math.abs(Number(targetPart.scaleX) || 1),
-            scaleY: Math.abs(Number(targetPart.scaleY) || 1),
+            scaleX: Math.abs(Number(targetPart.scaleX) || 1) * (Number(targetPart.flipX) === -1 ? -1 : 1),
+            scaleY: Math.abs(Number(targetPart.scaleY) || 1) * (Number(targetPart.flipY) === -1 ? -1 : 1),
             z: Number(targetPart.z) || 0,
             opacity: clamp(Number.isFinite(Number(targetPart.opacity)) ? Number(targetPart.opacity) : 1, 0, 1),
         };
@@ -2162,8 +2163,8 @@ async function scoreAnswerEntries() {
             sprite,
             x: Number(targetPart.x),
             y: Number(targetPart.y),
-            scaleX: Math.abs(Number(targetPart.scaleX) || 1),
-            scaleY: Math.abs(Number(targetPart.scaleY) || 1),
+            scaleX: Math.abs(Number(targetPart.scaleX) || 1) * (Number(targetPart.flipX) === -1 ? -1 : 1),
+            scaleY: Math.abs(Number(targetPart.scaleY) || 1) * (Number(targetPart.flipY) === -1 ? -1 : 1),
             angle: Number(targetPart.angle) || 0,
             opacity: clamp(Number.isFinite(Number(targetPart.opacity)) ? Number(targetPart.opacity) : 1, 0, 1),
             z: Number(targetPart.z) || 0,

@@ -1,3 +1,7 @@
 # Local build cache; browser uses index.js and per-unit manifests instead.
 /assets/units/catalog.json
 /assets/units/catalog.js
+
+# Python bytecode and interpreter cache.
+__pycache__/
+*.py[cod]
