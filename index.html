@@ -141,13 +141,13 @@
                                         <input id="score-unit-search" type="search" autocomplete="off" placeholder="搜尋編號或名稱" aria-controls="score-unit-results" aria-expanded="false">
                                         <div id="score-unit-results" class="unit-results score-unit-results" role="listbox" aria-label="評分模式角色搜尋結果"></div>
                                     </div>
-                                    <label class="score-rank-label" for="score-fixed-rank">階級</label>
-                                    <select id="score-fixed-rank" aria-label="固定題目階級">
-                                        <option value="f">1 階</option>
-                                        <option value="c">2 階</option>
-                                        <option value="s">3 階</option>
-                                        <option value="u">4 階</option>
-                                    </select>
+                                    <p id="score-fixed-rank-label" class="score-rank-label">階級</p>
+                                    <div id="score-fixed-ranks" class="score-fixed-ranks" role="group" aria-labelledby="score-fixed-rank-label">
+                                        <button class="score-fixed-rank is-selected" type="button" data-rank="f" aria-pressed="true" disabled>1 階</button>
+                                        <button class="score-fixed-rank" type="button" data-rank="c" aria-pressed="false" disabled>2 階</button>
+                                        <button class="score-fixed-rank" type="button" data-rank="s" aria-pressed="false" disabled>3 階</button>
+                                        <button class="score-fixed-rank" type="button" data-rank="u" aria-pressed="false" disabled>4 階</button>
+                                    </div>
                                 </div>
                                 <p id="score-mode-status" class="score-mode-status sr-only" aria-live="polite">選擇一隻角色後即可開始。</p>
                                 <button id="score-start-button" class="score-start-button" type="button"><i class="fa-solid fa-play" aria-hidden="true"></i><span>開始</span></button>

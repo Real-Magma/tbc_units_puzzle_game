@@ -63,7 +63,7 @@ const scoreResultPanel = document.querySelector("#score-result-panel");
 const scoreTimeButtons = [...document.querySelectorAll(".score-time-button")];
 const scoreQuestionModeButtons = [...document.querySelectorAll(".score-question-mode")];
 const scoreFixedPicker = document.querySelector("#score-fixed-picker");
-const scoreFixedRankSelect = document.querySelector("#score-fixed-rank");
+const scoreFixedRankButtons = [...document.querySelectorAll(".score-fixed-rank")];
 const scoreUnitSearch = document.querySelector("#score-unit-search");
 const scoreUnitResults = document.querySelector("#score-unit-results");
 const scoreModeStatus = document.querySelector("#score-mode-status");
@@ -1269,7 +1269,6 @@ async function startScoreRound() {
                 scoreModeStatus.textContent = "請先選擇一隻角色。";
                 return;
             }
-            scoreFixedRank = scoreFixedRankSelect.value;
             const unit = await ensureUnitLoaded(scoreFixedUnitId);
             const ranks = availableRanksForUnit(unit);
             if (!ranks.includes(scoreFixedRank)) {
@@ -3593,13 +3592,28 @@ function availableRanksForUnit(unit) {
 
 function updateScoreFixedRankOptions(unit) {
     const forms = new Set(unit?.parts?.map((part) => part.form) ?? []);
-    for (const option of scoreFixedRankSelect.options) option.disabled = !forms.has(option.value);
-    const selectedRankIsAvailable = forms.has(scoreFixedRankSelect.value);
-    if (!selectedRankIsAvailable) {
-        scoreFixedRankSelect.value = [...scoreFixedRankSelect.options]
-            .find((option) => !option.disabled)?.value ?? "";
+    for (const button of scoreFixedRankButtons) {
+        button.disabled = !forms.has(button.dataset.rank);
     }
-    scoreFixedRank = scoreFixedRankSelect.value;
+    const selectedRankIsAvailable = forms.has(scoreFixedRank);
+    if (!selectedRankIsAvailable) {
+        scoreFixedRank = scoreFixedRankButtons.find((button) => !button.disabled)?.dataset.rank ?? "";
+    }
+    scoreFixedRankButtons.forEach((button) => {
+        const isSelected = button.dataset.rank === scoreFixedRank;
+        button.classList.toggle("is-selected", isSelected);
+        button.setAttribute("aria-pressed", String(isSelected));
+    });
+}
+
+function setScoreFixedRankButtonsDisabled(disabled) {
+    scoreFixedRankButtons.forEach((button) => {
+        button.disabled = disabled;
+        if (disabled) {
+            button.classList.remove("is-selected");
+            button.setAttribute("aria-pressed", "false");
+        }
+    });
 }
 
 function unitLabel(unitId) {
@@ -3653,7 +3667,7 @@ async function chooseFixedScoreUnit(unitId) {
     scoreUnitSearch.placeholder = "搜尋編號或名稱";
     scoreUnitSearch.value = unitLabel(unitId);
     closeScoreUnitResults();
-    scoreFixedRankSelect.disabled = true;
+    setScoreFixedRankButtonsDisabled(true);
     scoreModeStatus.textContent = "正在讀取可用階級…";
     try {
         const unit = await ensureUnitLoaded(unitId);
@@ -3664,9 +3678,8 @@ async function chooseFixedScoreUnit(unitId) {
         console.error(error);
         if (scoreFixedUnitId !== unitId) return;
         scoreFixedUnitId = "";
+        updateScoreFixedRankOptions(null);
         scoreModeStatus.textContent = "角色資料載入失敗，請再選一次。";
-    } finally {
-        if (scoreFixedUnitId === unitId || !scoreFixedUnitId) scoreFixedRankSelect.disabled = false;
     }
 }
 
@@ -3909,10 +3922,16 @@ scoreTimeButtons.forEach((button) => {
 scoreQuestionModeButtons.forEach((button) => {
     button.addEventListener("click", () => setScoreQuestionMode(button.dataset.scoreMode));
 });
-scoreFixedRankSelect.addEventListener("change", () => {
-    scoreFixedRank = scoreFixedRankSelect.value;
+scoreFixedRankButtons.forEach((button) => button.addEventListener("click", () => {
+    if (button.disabled) return;
+    scoreFixedRank = button.dataset.rank;
+    scoreFixedRankButtons.forEach((item) => {
+        const isSelected = item === button;
+        item.classList.toggle("is-selected", isSelected);
+        item.setAttribute("aria-pressed", String(isSelected));
+    });
     if (scoreFixedUnitId) scoreModeStatus.textContent = "角色與階級已選擇，可以開始。";
-});
+}));
 scoreStartButton.addEventListener("click", startScoreRound);
 scoreCancelButton.addEventListener("click", () => finishScoreRound(false));
 scoreGradeButton.addEventListener("click", () => finishScoreRound(true));
@@ -3944,6 +3963,7 @@ scoreUnitSearch.addEventListener("focus", renderScoreUnitResults);
 scoreUnitSearch.addEventListener("input", () => {
     scoreUnitSearch.placeholder = "搜尋編號或名稱";
     scoreFixedUnitId = "";
+    updateScoreFixedRankOptions(null);
     renderScoreUnitResults();
 });
 scoreUnitSearch.addEventListener("keydown", (event) => {
