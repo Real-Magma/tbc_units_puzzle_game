@@ -323,6 +323,49 @@
     }
 }
 
+/* 平板保留雙欄工作區，僅放大觸控目標並收斂右側面板。 */
+@media (min-width: 701px) and (max-width: 1024px) and (pointer: coarse) {
+    :root {
+        --sidebar-width: clamp(248px, 30vw, 320px);
+        --toolbar-gap: 18px;
+    }
+
+    .game-column { padding: 76px 18px 18px; }
+    .rounded-box { padding: 20px; border-radius: 18px; }
+
+    .top-bar { top: 10px; height: 48px; }
+    .top-actions { gap: 5px; }
+    .top-actions .icon-button { width: 46px; height: 46px; font-size: 1.45rem; }
+    #volume-slider { width: 76px; height: 46px; }
+    .undo-button { top: 86px; left: 28px; width: 46px; height: 46px; }
+
+    .layer-controls { top: 14px; right: 14px; gap: 6px; }
+    .layer-controls button { width: 40px; height: 40px; font-size: 0.9rem; }
+    .layers-panel { top: 72px; right: 10px; bottom: 10px; width: 132px; gap: 8px; padding: 8px; }
+    .layer-row { min-height: 64px; padding: 5px 32px 5px 5px; }
+    .layer-row > img { width: 68px; height: 52px; }
+    .layer-visibility, .layer-lock { width: 28px; height: 28px; }
+    .unlock-all-layers { min-height: 40px; font-size: 0.76rem; }
+
+    .mode-tab { min-height: 52px; font-size: 1rem; }
+    .unit-panel { padding: 20px 14px; }
+    .unit-panel label { margin-bottom: 8px; font-size: 0.92rem; }
+    .unit-panel select, .unit-search input { min-height: 48px; font-size: 1rem; }
+    .unit-random-button { min-height: 48px; }
+    .unit-results { max-height: min(330px, 46dvh); }
+    .unit-result { min-height: 46px; }
+
+    .parts-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .part-card { min-height: 98px; padding: 6px; touch-action: manipulation; }
+    .part-card img { max-height: 84px; }
+
+    .score-mode-panel { height: calc(100dvh - 52px); padding: 22px 14px; }
+    .score-time-button, .score-question-mode, .score-fixed-rank { min-height: 46px; font-size: 0.95rem; }
+    .score-start-button { min-height: 48px; font-size: 1rem; }
+    .score-cancel-button, .score-grade-button { min-height: 44px; font-size: 0.86rem; }
+    .score-round-scroll { padding-top: 20px; }
+}
+
 @media (max-width: 390px) and (pointer: coarse) {
     .top-actions .icon-button { width: 31px; }
     #volume-slider { width: 54px; }
