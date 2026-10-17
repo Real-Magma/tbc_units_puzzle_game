@@ -237,11 +237,17 @@
             layerTouchDrag.source?.classList.remove("is-dragging");
             layerTouchDrag = null;
         };
+        const canUseLayerDrag = (event) => ["touch", "pen", "mouse"].includes(event.pointerType);
         const layerDropAt = (clientX, clientY) => {
             const element = document.elementFromPoint(clientX, clientY);
             const row = element?.closest?.(".layer-row");
             const group = element?.closest?.(".layer-group");
-            if (!group || !layersPanel.contains(group)) return null;
+            // Standalone rows do not have a .layer-group parent.  Treat them
+            // as valid targets as well, otherwise most normal layers cannot
+            // receive a mobile drop at all.
+            if (!row && !group) return null;
+            if (row && !layersPanel.contains(row)) return null;
+            if (!row && group && !layersPanel.contains(group)) return null;
             const target = row ?? group;
             const bounds = target.getBoundingClientRect();
             return {
@@ -252,11 +258,12 @@
             };
         };
         layersPanel.addEventListener("pointerdown", (event) => {
-            if (event.pointerType !== "touch" || event.target.closest("button")) return;
+            if (!canUseLayerDrag(event) || event.target.closest("button")) return;
             const row = event.target.closest(".layer-row");
             const groupHeader = event.target.closest(".layer-group-header");
             const group = groupHeader?.closest(".layer-group") ?? row?.closest(".layer-group");
             if (!row && !groupHeader) return;
+            if (row?.classList.contains("is-locked") || group?.querySelector(".layer-row.is-locked")) return;
             layerTouchDrag = {
                 pointerId: event.pointerId,
                 startX: event.clientX,
@@ -313,6 +320,7 @@
         };
         layersPanel.addEventListener("pointerup", stopLayerTouchDrag, true);
         layersPanel.addEventListener("pointercancel", stopLayerTouchDrag, true);
+        layersPanel.addEventListener("lostpointercapture", clearLayerTouchDrag);
     }
 
     initializeMobileControls();
