@@ -82,6 +82,8 @@ const scoreResultOverlayStats = document.querySelector("#score-result-overlay-st
 const scoreResultOverlayBreakdown = document.querySelector("#score-result-overlay-breakdown");
 const scoreResultOverlayScore = document.querySelector("#score-result-overlay-score");
 const scoreImageOverlapButton = document.querySelector("#score-image-overlap-button");
+const scoreCopyCompositionButton = document.querySelector("#score-copy-composition-button");
+const scoreCopyResultButton = document.querySelector("#score-copy-result-button");
 const scoreFinalScore = document.querySelector("#score-final-score");
 const scoreResultMessage = document.querySelector("#score-result-message");
 const scoreResultBreakdown = document.querySelector("#score-result-breakdown");
@@ -349,7 +351,8 @@ function clearScoreImageOverlay() {
     scoreImageOverlayVisible = false;
     scoreImageOverlapButton.hidden = true;
     scoreImageOverlapButton.setAttribute("aria-pressed", "false");
-    scoreImageOverlapButton.querySelector("span").textContent = "影像重疊";
+    scoreImageOverlapButton.setAttribute("aria-label", "影像重疊：關");
+    scoreImageOverlapButton.title = "影像";
 }
 
 function renderScoreImageOverlay() {
@@ -371,7 +374,9 @@ function renderScoreImageOverlay() {
     scoreResultPreview.append(overlay);
     scoreImageOverlapButton.hidden = false;
     scoreImageOverlapButton.setAttribute("aria-pressed", String(scoreImageOverlayVisible));
-    scoreImageOverlapButton.querySelector("span").textContent = scoreImageOverlayVisible ? "重疊：開" : "影像重疊";
+    const overlapLabel = scoreImageOverlayVisible ? "影像重疊：開" : "影像重疊：關";
+    scoreImageOverlapButton.setAttribute("aria-label", overlapLabel);
+    scoreImageOverlapButton.title = "影像";
 }
 
 function openScoreResultOverlay({ result, snapshot, layout, replayScores = false, playIntro = false }) {
@@ -2136,14 +2141,187 @@ async function createScoreCompositionPng() {
     return canvasToPngBlob(output);
 }
 
-function copyScoreCompositionImage() {
+async function scoreAnswerEntries() {
+    if (!scoreRoundTarget || !scoreRoundTemplate) throw new Error("找不到正解資料");
+    const unit = unitCatalog[scoreRoundTarget.unitId] ?? await ensureUnitLoaded(scoreRoundTarget.unitId);
+    const assetsByCrop = new Map(availablePartsForRank(unit, scoreRoundTarget.rank)
+        .map((part) => [cropIndexFromPartId(part.id), part])
+        .filter(([cropIndex]) => cropIndex !== null));
+    const sourceAssets = scoreRoundTemplate.parts
+        .map((targetPart) => ({ targetPart, asset: assetsByCrop.get(targetPart.cropIndex) }))
+        .filter(({ asset }) => asset && normalizeSprite(asset.sprite));
+    await Promise.all([...new Set(sourceAssets.map(({ asset }) => asset.src))].map(ensurePartSourceLoaded));
+    return sourceAssets.map(({ targetPart, asset }) => {
+        const sprite = normalizeSprite(asset.sprite);
+        return {
+            image: loadedPartImages.get(asset.src),
+            sprite,
+            x: Number(targetPart.x),
+            y: Number(targetPart.y),
+            scaleX: Math.abs(Number(targetPart.scaleX) || 1),
+            scaleY: Math.abs(Number(targetPart.scaleY) || 1),
+            angle: Number(targetPart.angle) || 0,
+            opacity: clamp(Number.isFinite(Number(targetPart.opacity)) ? Number(targetPart.opacity) : 1, 0, 1),
+            z: Number(targetPart.z) || 0,
+        };
+    }).filter((entry) => entry.image && entry.sprite);
+}
+
+async function createScoreAnswerPng() {
+    const entries = await scoreAnswerEntries();
+    if (!entries.length) throw new Error("找不到正解圖片");
+    await Promise.all(entries.map((entry) => waitForExportImage(entry.image)));
+    const bounds = scoreImageBounds(entries);
+    const padding = 20;
+    const scale = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
+    const output = document.createElement("canvas");
+    output.width = Math.max(1, Math.ceil((bounds.right - bounds.left + padding * 2) * scale));
+    output.height = Math.max(1, Math.ceil((bounds.bottom - bounds.top + padding * 2) * scale));
+    const context = output.getContext("2d");
+    if (!context) throw new Error("無法建立正解 PNG 繪圖區");
+    context.scale(scale, scale);
+    context.translate(padding - bounds.left, padding - bounds.top);
+    entries.sort((left, right) => left.z - right.z).forEach((entry) => {
+        context.save();
+        context.globalAlpha = entry.opacity;
+        context.translate(entry.x, entry.y);
+        context.rotate(entry.angle * Math.PI / 180);
+        context.scale(entry.scaleX, entry.scaleY);
+        context.drawImage(entry.image, entry.sprite.x, entry.sprite.y, entry.sprite.width, entry.sprite.height, -entry.sprite.width / 2, -entry.sprite.height / 2, entry.sprite.width, entry.sprite.height);
+        context.restore();
+    });
+    return canvasToPngBlob(output);
+}
+
+function roundedCanvasRect(context, x, y, width, height, radius, fillStyle, strokeStyle = "") {
+    const rounded = Math.min(radius, width / 2, height / 2);
+    context.beginPath();
+    context.moveTo(x + rounded, y);
+    context.arcTo(x + width, y, x + width, y + height, rounded);
+    context.arcTo(x + width, y + height, x, y + height, rounded);
+    context.arcTo(x, y + height, x, y, rounded);
+    context.arcTo(x, y, x + width, y, rounded);
+    context.closePath();
+    context.fillStyle = fillStyle;
+    context.fill();
+    if (strokeStyle) {
+        context.strokeStyle = strokeStyle;
+        context.lineWidth = 3;
+        context.stroke();
+    }
+}
+
+function drawContainedImage(context, image, x, y, width, height, padding = 24) {
+    const imageScale = Math.min((width - padding * 2) / image.width, (height - padding * 2) / image.height);
+    const drawWidth = image.width * imageScale;
+    const drawHeight = image.height * imageScale;
+    context.drawImage(image, x + (width - drawWidth) / 2, y + (height - drawHeight) / 2, drawWidth, drawHeight);
+}
+
+async function createScoreResultPng() {
+    const [playerBlob, answerBlob] = await Promise.all([createScoreCompositionPng(), createScoreAnswerPng()]);
+    const [playerImage, answerImage] = await Promise.all([createImageBitmap(playerBlob), createImageBitmap(answerBlob)]);
+    try {
+        const isDark = root.dataset.theme === "dark";
+        const background = isDark ? "#171717" : "#bdbdbd";
+        const panel = isDark ? "#222222" : "#ffffff";
+        const answerPanel = isDark ? "#3c3c3c" : "#eeeeee";
+        const text = isDark ? "#f6f6f6" : "#202020";
+        const muted = isDark ? "#b9b9b9" : "#666666";
+        const output = document.createElement("canvas");
+        output.width = 1200;
+        output.height = 820;
+        const context = output.getContext("2d");
+        if (!context) throw new Error("無法建立結算 PNG 繪圖區");
+        context.fillStyle = background;
+        context.fillRect(0, 0, output.width, output.height);
+
+        const labelWidth = 82;
+        const scenesX = 110;
+        const scenesWidth = 780;
+        const statsX = 912;
+        const statsWidth = 240;
+        const panelHeight = 374;
+        const firstY = 28;
+        const secondY = firstY + panelHeight + 16;
+        roundedCanvasRect(context, scenesX, firstY, scenesWidth, panelHeight, 16, panel, isDark ? "#666" : "#777");
+        roundedCanvasRect(context, scenesX, secondY, scenesWidth, panelHeight, 16, answerPanel, isDark ? "#aaa" : "#888");
+        roundedCanvasRect(context, statsX, firstY, statsWidth, panelHeight * 2 + 16, 16, panel, isDark ? "#666" : "#777");
+
+        context.font = '700 28px "GenJyuuGothic", sans-serif';
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+        [["你", firstY + panelHeight / 2], ["正解", secondY + panelHeight / 2]].forEach(([label, centerY]) => {
+            roundedCanvasRect(context, 12, Number(centerY) - 27, labelWidth, 54, 27, isDark ? "#3c3c3c" : "#f1f1f1", isDark ? "#777" : "#aaa");
+            context.fillStyle = muted;
+            context.fillText(label, 12 + labelWidth / 2, Number(centerY));
+        });
+        drawContainedImage(context, playerImage, scenesX, firstY, scenesWidth, panelHeight);
+        drawContainedImage(context, answerImage, scenesX, secondY, scenesWidth, panelHeight);
+
+        const result = latestScoreResultView?.result;
+        context.fillStyle = text;
+        context.font = '900 78px "GenJyuuGothic", sans-serif';
+        context.fillText(`${result?.total ?? "--"}`, statsX + statsWidth / 2, 116);
+        context.font = '700 18px "GenJyuuGothic", sans-serif';
+        context.fillText("分", statsX + statsWidth / 2 + 56, 130);
+        const metrics = [
+            ["物件", result ? `${result.matched} / ${result.targetCount}` : "--"],
+            ["位置", result ? `${Math.round(result.layout * 100)}%` : "--"],
+            ["角度", result ? `${Math.round(result.transform * 100)}%` : "--"],
+            ["圖層", result ? `${Math.round(result.order * 100)}%` : "--"],
+            ["影像", result ? `+${Math.round(result.imageBonus)} 分` : "--"],
+        ];
+        metrics.forEach(([label, value], index) => {
+            const y = 220 + index * 105;
+            context.fillStyle = muted;
+            context.font = '700 20px "GenJyuuGothic", sans-serif';
+            context.fillText(label, statsX + statsWidth / 2, y);
+            context.fillStyle = text;
+            context.font = '800 28px "GenJyuuGothic", sans-serif';
+            context.fillText(value, statsX + statsWidth / 2, y + 36);
+        });
+        return canvasToPngBlob(output);
+    } finally {
+        playerImage.close();
+        answerImage.close();
+    }
+}
+
+function writeScorePngToClipboard(png) {
     if (!navigator.clipboard?.write || typeof ClipboardItem === "undefined") {
         return Promise.reject(new Error("此瀏覽器不支援複製圖片，請使用 GitHub Pages 或 localhost 網頁。"));
     }
     // Pass the in-progress PNG promise to ClipboardItem immediately. This
     // preserves the right-click user gesture even while the canvas encodes.
-    const png = createScoreCompositionPng();
     return navigator.clipboard.write([new ClipboardItem({ "image/png": png })]);
+}
+
+function copyScoreCompositionImage() {
+    return writeScorePngToClipboard(createScoreCompositionPng());
+}
+
+function copyScoreResultImage() {
+    return writeScorePngToClipboard(createScoreResultPng());
+}
+
+function copyScoreImageWithFeedback(copyImage, button = null) {
+    void copyImage()
+        .then(() => {
+            scoreResultPreview.classList.add("is-image-copied");
+            if (button) button.classList.add("is-copied");
+            window.setTimeout(() => {
+                scoreResultPreview.classList.remove("is-image-copied");
+                button?.classList.remove("is-copied");
+            }, 1_200);
+        })
+        .catch((error) => {
+            console.error("複製結算圖片失敗", error);
+            const message = window.location.protocol === "file:"
+                ? "直接雙擊 index.html 的 file:// 模式無法複製圖片。請使用 GitHub Pages 或「啟動本機網站.cmd」開啟 localhost 網頁。"
+                : "複製圖片失敗，請確認角色圖片已載入完成後再試一次。";
+            window.alert(message);
+        });
 }
 
 async function createPngExport() {
@@ -3747,21 +3925,16 @@ scoreImageOverlapButton.addEventListener("click", () => {
     scoreImageOverlayVisible = !scoreImageOverlayVisible;
     renderScoreImageOverlay();
 });
+scoreCopyCompositionButton.addEventListener("click", () => {
+    copyScoreImageWithFeedback(copyScoreCompositionImage, scoreCopyCompositionButton);
+});
+scoreCopyResultButton.addEventListener("click", () => {
+    copyScoreImageWithFeedback(copyScoreResultImage, scoreCopyResultButton);
+});
 scoreResultPreview.title = "右鍵複製你的組合圖片";
 scoreResultPreview.addEventListener("contextmenu", (event) => {
     event.preventDefault();
-    void copyScoreCompositionImage()
-        .then(() => {
-            scoreResultPreview.classList.add("is-image-copied");
-            window.setTimeout(() => scoreResultPreview.classList.remove("is-image-copied"), 1_200);
-        })
-        .catch((error) => {
-            console.error("複製組合圖片失敗", error);
-            const message = window.location.protocol === "file:"
-                ? "直接雙擊 index.html 的 file:// 模式無法複製圖片。請使用 GitHub Pages 或「啟動本機網站.cmd」開啟 localhost 網頁。"
-                : "複製圖片失敗，請確認角色圖片已載入完成後再試一次。";
-            window.alert(message);
-        });
+    copyScoreImageWithFeedback(copyScoreCompositionImage);
 });
 scoreResultOverlay.addEventListener("pointerdown", (event) => {
     const hasJustOpened = performance.now() - scoreResultOpenedAt < SCORE_RESULT_CLOSE_GUARD_MS;

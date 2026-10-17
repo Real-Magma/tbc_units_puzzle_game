@@ -236,7 +236,11 @@
                 <section id="score-result-overlay-stats" class="score-result-overlay-stats" aria-label="本回合分數">
                     <div id="score-result-overlay-breakdown" class="score-result-overlay-breakdown"></div>
                     <strong id="score-result-overlay-score" class="score-result-overlay-score"><span class="score-reveal-value">--</span><span>分</span></strong>
-                    <button id="score-image-overlap-button" class="score-image-overlap-button" type="button" aria-pressed="false" hidden><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>影像重疊</span></button>
+                    <div class="score-result-actions" aria-label="結算畫面操作">
+                        <button id="score-image-overlap-button" class="score-result-action" type="button" aria-label="影像重疊" title="" aria-pressed="false" hidden><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span class="icon-tooltip" aria-hidden="true">影像</span></button>
+                        <button id="score-copy-composition-button" class="score-result-action" type="button" aria-label="複製你的組合圖片" title=""><i class="fa-regular fa-copy" aria-hidden="true"></i><span class="icon-tooltip" aria-hidden="true">複製你</span></button>
+                        <button id="score-copy-result-button" class="score-result-action" type="button" aria-label="複製整個結算畫面" title=""><i class="fa-regular fa-images" aria-hidden="true"></i><span class="icon-tooltip" aria-hidden="true">複製結算</span></button>
+                    </div>
                 </section>
             </div>
         </div>

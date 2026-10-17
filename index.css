@@ -475,27 +475,36 @@ html.is-score-result-open .score-result-overlay {
 .score-result-image-overlay .score-answer-world {
     filter: brightness(0) saturate(100%) invert(18%) sepia(90%) saturate(4400%) hue-rotate(350deg) brightness(102%) contrast(115%);
 }
-.score-image-overlap-button {
+.score-result-actions {
     position: absolute;
     z-index: 3;
     bottom: 12px;
     left: 50%;
-    display: inline-flex;
+    display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    min-width: 98px;
-    padding: 7px 9px;
-    border: 1px solid color-mix(in srgb, var(--text) 38%, transparent);
-    border-radius: 999px;
-    background: var(--panel-bg);
-    color: color-mix(in srgb, var(--text) 78%, transparent);
-    font-family: "GenJyuuGothic", sans-serif;
-    font-size: 0.72rem;
-    font-weight: 700;
+    gap: 8px;
     transform: translateX(-50%);
 }
-.score-image-overlap-button[aria-pressed="true"] { border-color: #f33; background: color-mix(in srgb, #f33 18%, var(--panel-bg)); color: #f33; }
+.score-result-action {
+    position: relative;
+    display: inline-grid;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    place-items: center;
+    border: 1px solid color-mix(in srgb, var(--text) 38%, transparent);
+    border-radius: 50%;
+    background: var(--panel-bg);
+    color: color-mix(in srgb, var(--text) 78%, transparent);
+    font-size: 0.92rem;
+}
+.score-result-action:hover { border-color: color-mix(in srgb, var(--text) 72%, transparent); color: var(--text); }
+.score-result-action[aria-pressed="true"] { border-color: #f33; background: color-mix(in srgb, #f33 18%, var(--panel-bg)); color: #f33; }
+.score-result-action.is-copied { border-color: #16a34a; background: color-mix(in srgb, #16a34a 18%, var(--panel-bg)); color: #16a34a; }
+.score-result-action .icon-tooltip { top: auto; bottom: calc(100% + 8px); z-index: 6; }
+.score-result-action:hover .icon-tooltip,
+.score-result-action:focus-visible .icon-tooltip { opacity: 1; transform: translate(-50%, 0); }
 
 .score-answer-world {
     position: absolute;
@@ -583,7 +592,7 @@ html.is-score-result-open .score-result-overlay {
     .score-result-overlay-breakdown { position: static; display: contents; }
     .score-result-overlay-breakdown div { display: grid; justify-content: initial; justify-items: center; gap: 3px; }
     .score-result-overlay-score { grid-column: 1 / -1; margin-top: 20px; }
-    .score-image-overlap-button { position: static; grid-column: 1 / -1; margin: 2px auto 0; transform: none; }
+    .score-result-actions { position: static; grid-column: 1 / -1; margin: 2px auto 0; transform: none; }
 }
 
 @keyframes score-scramble-shake {
