@@ -65,8 +65,7 @@
     /* 五個桌面工具改收進底部「更多」選單，避免佔用手機畫布上方。 */
     .layer-controls { display: none; }
 
-    /* 評分作答時底部工具列收起，僅在畫布左上保留回到原點。 */
-    html.is-score-round-active .mobile-toolbar { display: none !important; }
+    /* 評分作答時保留底部工具列；畫布左上另保留回到原點。 */
     html.is-score-round-active .layer-controls {
         position: absolute;
         top: 72px;
