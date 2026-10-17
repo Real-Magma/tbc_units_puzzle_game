@@ -1032,7 +1032,6 @@ html[data-theme="dark"] .rounded-box.is-rotating {
 
 .unlock-all-layers:hover:not(:disabled) { background: var(--button-hover-bg); }
 .unlock-all-layers:disabled { cursor: default; opacity: 0.42; }
-.mobile-unlock-all-layers { display: none; }
 
 .placed-part.is-layer-hidden { display: none; }
 

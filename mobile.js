@@ -252,7 +252,7 @@
             };
         };
         layersPanel.addEventListener("pointerdown", (event) => {
-            if (event.pointerType !== "touch" || event.button !== 0 || event.target.closest("button")) return;
+            if (event.pointerType !== "touch" || event.target.closest("button")) return;
             const row = event.target.closest(".layer-row");
             const groupHeader = event.target.closest(".layer-group-header");
             const group = groupHeader?.closest(".layer-group") ?? row?.closest(".layer-group");
@@ -268,12 +268,15 @@
                 target: null,
             };
             layersPanel.setPointerCapture(event.pointerId);
+            event.preventDefault();
+            event.stopImmediatePropagation();
         }, true);
         layersPanel.addEventListener("pointermove", (event) => {
             if (!layerTouchDrag || event.pointerId !== layerTouchDrag.pointerId) return;
             if (!layerTouchDrag.moved && Math.hypot(event.clientX - layerTouchDrag.startX, event.clientY - layerTouchDrag.startY) < 10) return;
             layerTouchDrag.moved = true;
             event.preventDefault();
+            event.stopImmediatePropagation();
             const nextTarget = layerDropAt(event.clientX, event.clientY);
             if (layerTouchDrag.target && layerTouchDrag.target !== nextTarget?.target) layerTouchDrag.target.classList.remove("is-drop-target");
             layerTouchDrag.target = nextTarget?.target ?? null;
@@ -297,7 +300,14 @@
                     clickEvent.preventDefault();
                     clickEvent.stopImmediatePropagation();
                 }, { capture: true, once: true });
+            } else if (!drag.moved) {
+                api.selectLayerFromTouch({
+                    sourceIndex: drag.sourceIndex,
+                    sourceGroupId: drag.sourceGroupId,
+                });
             }
+            event.preventDefault();
+            event.stopImmediatePropagation();
             if (layersPanel.hasPointerCapture(event.pointerId)) layersPanel.releasePointerCapture(event.pointerId);
             clearLayerTouchDrag();
         };

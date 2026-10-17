@@ -79,7 +79,7 @@
         right: 6px;
         bottom: 8px;
         width: 104px;
-        padding: 7px 5px 56px;
+        padding: 7px 5px;
         border-radius: 10px;
         background: color-mix(in srgb, var(--panel-bg) 94%, transparent);
         box-shadow: var(--shadow);
@@ -105,32 +105,12 @@
         display: flex;
     }
 
-    .layers-panel .unlock-all-layers { display: none; }
-
-    .mobile-unlock-all-layers {
-        position: absolute;
-        z-index: 7;
-        bottom: 8px;
-        left: 8px;
-        display: flex;
+    .layers-panel .unlock-all-layers {
+        bottom: 0;
         min-height: 36px;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        padding: 6px 10px;
-        border: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
-        border-radius: 9px;
-        background: color-mix(in srgb, var(--panel-bg) 94%, transparent);
-        color: var(--text);
-        box-shadow: var(--shadow);
-        font-family: "GenJyuuGothic", sans-serif;
+        margin-top: auto;
         font-size: 0.72rem;
-        font-weight: 700;
     }
-
-    .mobile-unlock-all-layers[hidden] { display: none; }
-    .mobile-unlock-all-layers:disabled { opacity: 0.42; }
-    .mobile-unlock-all-layers:active:not(:disabled) { transform: scale(0.96); }
 
     .side-panel {
         position: fixed;

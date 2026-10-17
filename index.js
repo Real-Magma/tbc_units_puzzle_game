@@ -32,7 +32,6 @@ const selectionFrame = document.querySelector("#selection-frame");
 const selectionRotateHandle = document.querySelector("#selection-rotate-handle");
 const marqueeSelection = document.querySelector("#marquee-selection");
 const layersPanel = document.querySelector("#layers-panel");
-const mobileUnlockAllButton = document.querySelector("#mobile-unlock-all-layers");
 const layerContextMenu = document.querySelector("#layer-context-menu");
 const mergeLayersButton = document.querySelector("#merge-layers-button");
 const ungroupLayersButton = document.querySelector("#ungroup-layers-button");
@@ -2492,8 +2491,6 @@ function renderLayersPanel() {
         ? orderedParts().filter((part) => part.dataset.scoreRoundPart === "true")
         : orderedParts();
     layersPanel.hidden = parts.length === 0;
-    mobileUnlockAllButton.hidden = parts.length === 0;
-    mobileUnlockAllButton.disabled = !parts.some((part) => part.classList.contains("is-layer-locked"));
     layersPanel.replaceChildren();
     if (!parts.length) return;
 
@@ -4134,7 +4131,6 @@ showLayersButton.addEventListener("click", () => {
     setLayerVisibility(contextMenuParts(), false);
     closeLayerContextMenu();
 });
-mobileUnlockAllButton.addEventListener("click", unlockAllLayers);
 importProjectButton.addEventListener("click", () => importProjectInput.click());
 importProjectInput.addEventListener("change", importLayerProject);
 saveProjectButton.addEventListener("click", saveLayerProject);
@@ -4309,6 +4305,18 @@ window.tbcPuzzleMobile = Object.freeze({
             ? allParts.filter((part) => part.dataset.groupId === targetId)
             : [targetPart];
         moveLayerBlock(sourceParts, targetParts, Boolean(insertAbove));
+    },
+    selectLayerFromTouch({ sourceIndex, sourceGroupId = "" }) {
+        const visibleParts = isScoreRoundCanvasActive
+            ? orderedParts().filter((part) => part.dataset.scoreRoundPart === "true")
+            : orderedParts();
+        if (sourceGroupId) {
+            const groupParts = visibleParts.filter((part) => part.dataset.groupId === sourceGroupId);
+            setSelectedParts(groupParts, groupParts.at(-1));
+            return;
+        }
+        const part = Number.isInteger(sourceIndex) ? visibleParts[sourceIndex] : null;
+        if (part) setSelectedParts([part], part, { expandGroups: false });
     },
     showPartMenu(part, clientX, clientY) {
         if (!part?.isConnected) return;
