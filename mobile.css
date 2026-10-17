@@ -65,6 +65,25 @@
     /* 五個桌面工具改收進底部「更多」選單，避免佔用手機畫布上方。 */
     .layer-controls { display: none; }
 
+    /* 評分作答時底部工具列收起，僅在畫布左上保留回到原點。 */
+    html.is-score-round-active .mobile-toolbar { display: none !important; }
+    html.is-score-round-active .layer-controls {
+        position: absolute;
+        top: 72px;
+        right: auto;
+        left: 18px;
+        display: flex;
+        width: 40px;
+        flex-direction: column;
+        align-items: center;
+        gap: 0;
+    }
+    html.is-score-round-active .layer-controls > #view-home-button {
+        width: 40px;
+        height: 40px;
+        font-size: 0.85rem;
+    }
+
     .layers-panel {
         display: none;
         top: 6px;
@@ -381,7 +400,10 @@
     }
 
     .game-column { padding: 76px 14px 14px; }
-    .rounded-box { padding: 16px; border-radius: 16px; }
+    .rounded-box { padding: 16px; border-radius: 16px; touch-action: none; }
+
+    /* 平板使用桌面雙欄與左側工具列；底部手機工具列只建立手勢事件、不顯示。 */
+    .mobile-toolbar { display: none; }
 
     .github-logo-link { top: 16px; left: 14px; height: 44px; }
     .top-bar { top: 18px; height: 40px; }
@@ -428,6 +450,12 @@
     .score-start-button { min-height: 48px; font-size: 1rem; }
     .score-cancel-button, .score-grade-button { min-height: 44px; font-size: 0.86rem; }
     .score-round-scroll { padding-top: 20px; }
+}
+
+/* 手指使用圖層欄：避免瀏覽器攔走單一物件的拖曳。 */
+@media (max-width: 1024px) and (pointer: coarse) {
+    .layers-panel .layer-row,
+    .layers-panel .layer-group-header { touch-action: none; }
 }
 
 @media (max-width: 390px) and (pointer: coarse) {

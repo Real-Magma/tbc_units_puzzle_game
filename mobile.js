@@ -1,5 +1,7 @@
 (() => {
-    const touchLayout = window.matchMedia("(max-width: 700px) and (pointer: coarse)");
+    // 平板沿用雙欄畫面，但也需要手機的手指拖曳、雙指縮放與平移邏輯。
+    // 工具列是否顯示仍由 CSS 區分：只有窄螢幕手機顯示底部工具列。
+    const touchLayout = window.matchMedia("(max-width: 1024px) and (pointer: coarse)");
     let initialized = false;
 
     function makeAction(icon, label, action) {
@@ -251,20 +253,21 @@
             };
         };
         layersPanel.addEventListener("pointerdown", (event) => {
-            if (!canUseLayerDrag(event) || event.target.closest("button")) return;
             const row = event.target.closest(".layer-row");
-            const groupHeader = event.target.closest(".layer-group-header");
-            const group = groupHeader?.closest(".layer-group") ?? row?.closest(".layer-group");
-            if (!row && !groupHeader) return;
+            if (!canUseLayerDrag(event) || event.target.closest("button")) return;
+            // 收合按鈕只處理收合／展開。群組排序從群組中的任一物件開始，
+            // 讓手勢與一般單物件拖曳一致。
+            if (!row) return;
+            const group = row.closest(".layer-group");
             if (row?.classList.contains("is-locked") || group?.querySelector(".layer-row.is-locked")) return;
             layerTouchDrag = {
                 pointerId: event.pointerId,
                 startX: event.clientX,
                 startY: event.clientY,
                 moved: false,
-                source: row ?? group,
-                sourceIndex: row ? Number.parseInt(row.dataset.layerIndex, 10) : null,
-                sourceGroupId: groupHeader ? (group?.dataset.layerGroupId ?? "") : "",
+                source: row,
+                sourceIndex: Number.parseInt(row.dataset.layerIndex, 10),
+                sourceGroupId: "",
                 target: null,
             };
             layersPanel.setPointerCapture(event.pointerId);
@@ -275,6 +278,7 @@
             if (!layerTouchDrag || event.pointerId !== layerTouchDrag.pointerId) return;
             if (!layerTouchDrag.moved && Math.hypot(event.clientX - layerTouchDrag.startX, event.clientY - layerTouchDrag.startY) < 10) return;
             layerTouchDrag.moved = true;
+            if (!layersPanel.hasPointerCapture(event.pointerId)) layersPanel.setPointerCapture(event.pointerId);
             event.preventDefault();
             event.stopImmediatePropagation();
             const nextTarget = layerDropAt(event.clientX, event.clientY);

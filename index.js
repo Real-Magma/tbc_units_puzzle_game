@@ -121,6 +121,7 @@ let viewY = 0;
 let partsRenderVersion = 0;
 let palettePartDrag = null;
 let palettePointerGrab = null;
+let layerGroupPointerGrab = null;
 let selectedScoreDuration = 60;
 let scoreRoundStartedAt = 0;
 let scoreTimerId = null;
@@ -293,6 +294,7 @@ function setActiveMode(mode) {
 
 function setScoreRoundCanvasState(isActive) {
     isScoreRoundCanvasActive = isActive;
+    root.classList.toggle("is-score-round-active", isActive);
     canvas.classList.toggle("is-score-round", isActive);
     importProjectButton.hidden = isActive;
     saveProjectButton.hidden = isActive;
@@ -1377,6 +1379,7 @@ async function finishScoreRound(finished = false, { clearCanvas = true } = {}) {
     scoreSetup.hidden = false;
     scoreResultPanel.hidden = true;
     if (clearCanvas) clearScoreRoundParts();
+    else promoteScoreRoundPartsToNormalGroup();
     setScoreRoundCanvasState(false);
     tryPlayMusic();
     scoreGradeButton.disabled = false;
@@ -1721,17 +1724,23 @@ function draggedLayerParts() {
 function clearLayerDragState() {
     delete layersPanel.dataset.draggingLayer;
     delete layersPanel.dataset.draggingGroupId;
+    layerGroupPointerGrab = null;
     layersPanel.querySelectorAll(".layer-row, .layer-group").forEach((item) => item.classList.remove("is-dragging", "is-drop-target"));
 }
 
-function setGroupDragImage(event, groupContainer) {
+function setGroupDragImage(event, groupContainer, pointerGrab = null) {
     const bounds = groupContainer.getBoundingClientRect();
     const preview = groupContainer.cloneNode(true);
     preview.classList.remove("is-dragging", "is-drop-target");
     preview.classList.add("layer-group-drag-preview");
     preview.style.width = `${bounds.width}px`;
     document.body.append(preview);
-    event.dataTransfer.setDragImage(preview, Math.min(bounds.width / 2, 70), 20);
+    const clientX = pointerGrab?.clientX ?? event.clientX;
+    const clientY = pointerGrab?.clientY ?? event.clientY;
+    // 拖曳預覽以按下群組的位置為游標熱點，避免固定抓在中央造成跳動。
+    const grabX = clamp(clientX - bounds.left, 0, bounds.width);
+    const grabY = clamp(clientY - bounds.top, 0, bounds.height);
+    event.dataTransfer.setDragImage(preview, grabX, grabY);
     requestAnimationFrame(() => preview.remove());
 }
 
@@ -2936,6 +2945,11 @@ function renderLayersPanel() {
             groupContainer.append(header);
             groupContainer.addEventListener("pointerdown", (event) => {
                 if (event.button !== 0 || event.target.closest(".layer-row, button")) return;
+                layerGroupPointerGrab = {
+                    groupId: part.dataset.groupId,
+                    clientX: event.clientX,
+                    clientY: event.clientY,
+                };
                 if (event.ctrlKey || event.metaKey) {
                     const nextSelection = new Set(selectedParts);
                     const isGroupSelected = groupParts.every((item) => nextSelection.has(item));
@@ -2963,7 +2977,8 @@ function renderLayersPanel() {
                 event.dataTransfer.effectAllowed = "move";
                 event.dataTransfer.setData("text/plain", "layer-group");
                 layersPanel.dataset.draggingGroupId = part.dataset.groupId;
-                setGroupDragImage(event, groupContainer);
+                const pointerGrab = layerGroupPointerGrab?.groupId === part.dataset.groupId ? layerGroupPointerGrab : null;
+                setGroupDragImage(event, groupContainer, pointerGrab);
             });
             groupContainer.addEventListener("dragend", clearLayerDragState);
             groupContainer.addEventListener("dragover", (event) => {

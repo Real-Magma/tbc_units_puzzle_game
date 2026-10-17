@@ -880,6 +880,13 @@ html[data-theme="dark"] .rounded-box.is-rotating {
     color: #16a34a;
 }
 
+/* 評分作答時只留下回到原點，避免一般模式工具干擾畫布。 */
+html.is-score-round-active .layer-controls .layer-control-row,
+html.is-score-round-active .layers-panel,
+html.is-score-round-active .trash-zone {
+    display: none !important;
+}
+
 .layers-panel {
     position: absolute;
     top: 18px;
