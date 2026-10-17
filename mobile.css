@@ -178,16 +178,55 @@
         box-sizing: border-box;
         height: 100%;
         min-height: 0;
-        padding-bottom: 88px;
+        padding: 28px 18px 118px;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
+    }
+
+    .score-result-kicker { font-size: 0.8rem; }
+    .score-final-score { font-size: clamp(4.2rem, 18vw, 5.7rem); }
+    .score-final-score span { font-size: 1.1rem; }
+    .score-result-message { margin: 16px 0 28px; font-size: 1rem; }
+    .score-result-breakdown { width: min(100%, 330px); }
+    .score-result-breakdown div { padding: 11px 3px; font-size: 0.9rem; }
+
+    .score-result-history-button {
+        display: grid;
+        width: min(100%, 330px);
+        height: 142px;
+        flex: 0 0 142px;
+        grid-template-columns: 28px minmax(0, 1fr) minmax(0, 1fr);
+        gap: 5px;
+        margin-top: 20px;
+        padding: 6px;
+    }
+
+    .score-result-history-label {
+        grid-row: 1;
+        grid-column: 1;
+        align-self: stretch;
+        width: auto;
+        padding: 3px 0;
+        font-size: 0.8rem;
+        line-height: 1.1;
+        text-align: center;
+        text-orientation: upright;
+        writing-mode: vertical-rl;
+    }
+
+    .score-result-history-preview {
+        grid-row: 1;
+        grid-column: 2 / span 2;
+        min-width: 0;
+        min-height: 0;
     }
 
     .score-result-panel .score-retry-button {
         position: relative;
         z-index: 2;
         flex: 0 0 auto;
-        margin: 28px 0 12px;
+        min-height: 52px;
+        margin: 46px 0 18px;
     }
 
 

@@ -591,8 +591,8 @@ html.is-score-result-open .score-result-overlay {
     .score-result-overlay-stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin-top: 0; }
     .score-result-overlay-breakdown { position: static; display: contents; }
     .score-result-overlay-breakdown div { display: grid; justify-content: initial; justify-items: center; gap: 3px; }
-    .score-result-overlay-score { grid-column: 1 / -1; margin-top: 20px; }
-    .score-result-actions { position: static; grid-column: 1 / -1; margin: 2px auto 0; transform: none; }
+    .score-result-overlay-score { grid-column: 1 / -1; margin: 20px 0 22px; }
+    .score-result-actions { position: static; grid-column: 1 / -1; margin: 0 auto; transform: none; }
 }
 
 @keyframes score-scramble-shake {
