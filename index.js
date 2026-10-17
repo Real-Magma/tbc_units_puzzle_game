@@ -349,8 +349,10 @@ function renderScoreResultHistory(snapshot, layout) {
     requestAnimationFrame(() => {
         [player, answer].forEach(({ pane, stage, width, height }) => {
             const bounds = pane.getBoundingClientRect();
-            const scale = Math.min(bounds.width / width, bounds.height / height);
-            stage.style.transform = `scale(${Math.max(scale, 0.01)})`;
+            const scale = Math.max(bounds.width / width, bounds.height / height, 0.01);
+            const offsetX = (bounds.width - width * scale) / 2;
+            const offsetY = (bounds.height - height * scale) / 2;
+            stage.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
         });
     });
 }
@@ -427,7 +429,9 @@ function showScoreResultOverlay(result) {
         maximumSceneHeight * aspectRatio,
     ));
     const previewHeight = sceneWidth / aspectRatio;
-    const statsWidth = narrowLayout ? sceneWidth * 2 + 10 : clamp(sceneWidth * 0.32, 156, 230);
+    const statsWidth = narrowLayout
+        ? Math.min(window.innerWidth * 0.94, sceneWidth * 2 + 26)
+        : clamp(sceneWidth * 0.32, 156, 230);
     const layout = {
         sceneWidth,
         previewHeight,
@@ -474,7 +478,6 @@ function showScoreResultOverlay(result) {
     latestScoreResultView = { result, snapshot: snapshot.cloneNode(true), layout };
     renderScoreResultHistory(snapshot, layout);
     openScoreResultOverlay({ result, snapshot, layout, replayScores: true, playIntro: true });
-    precomputeAndroidScoreShares();
     void renderScoreAnswer(scoreRoundTarget, scoreRoundTemplate, layout);
 }
 
@@ -741,6 +744,7 @@ async function renderScoreAnswer(target, template, layout) {
         scoreResultAnswer.replaceChildren(world);
         renderScoreImageOverlay();
         if (latestScoreResultView) renderScoreResultHistory(latestScoreResultView.snapshot, layout);
+        precomputeAndroidScoreShares();
     } catch (error) {
         console.error(error);
         if (renderVersion !== scoreAnswerRenderVersion) return;
@@ -748,6 +752,7 @@ async function renderScoreAnswer(target, template, layout) {
         scoreResultAnswer.replaceChildren(loading);
         clearScoreImageOverlay();
         if (latestScoreResultView) renderScoreResultHistory(latestScoreResultView.snapshot, layout);
+        precomputeAndroidScoreShares();
     }
 }
 
@@ -2421,11 +2426,15 @@ function usesAndroidScoreShare() {
 
 function updateScoreImageActionLabels() {
     const isAndroidShare = usesAndroidScoreShare();
-    const compositionLabel = isAndroidShare ? "分享你" : "複製你";
-    const resultLabel = isAndroidShare ? "分享結算" : "複製結算";
-    [[scoreCopyCompositionButton, compositionLabel], [scoreCopyResultButton, resultLabel]].forEach(([button, label]) => {
+    const actions = [
+        [scoreCopyCompositionButton, isAndroidShare ? "分享你" : "複製你", isAndroidShare ? "fa-solid fa-share-nodes" : "fa-regular fa-copy"],
+        [scoreCopyResultButton, isAndroidShare ? "分享結算" : "複製結算", isAndroidShare ? "fa-solid fa-share-nodes" : "fa-regular fa-images"],
+    ];
+    actions.forEach(([button, label, iconClass]) => {
         button.setAttribute("aria-label", label);
+        button.title = label;
         button.querySelector(".icon-tooltip").textContent = label;
+        button.querySelector("i").className = iconClass;
     });
 }
 
@@ -2471,13 +2480,13 @@ function precomputeAndroidScoreShares() {
         ["result", scoreCopyResultButton],
     ];
     exports.forEach(([kind, button]) => {
-        button.disabled = true;
+        button.setAttribute("aria-busy", "true");
         void prepareScoreImageExport(kind)
             .catch((error) => {
                 console.warn("預先建立分享圖片失敗", error);
             })
             .finally(() => {
-                button.disabled = false;
+                button.removeAttribute("aria-busy");
             });
     });
 }

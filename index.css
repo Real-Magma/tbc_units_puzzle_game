@@ -604,9 +604,15 @@ html.is-score-result-open .score-result-overlay {
     .score-result-scenes { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding-left: 0; }
     .score-result-scene { display: grid; gap: 8px; }
     .score-result-scene-label { position: static; margin: 0; justify-self: center; transform: none; }
-    .score-result-overlay-stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin-top: 0; }
+    .score-result-overlay-stats {
+        display: grid;
+        grid-template-columns: repeat(5, max-content);
+        justify-content: center;
+        column-gap: clamp(8px, 2.4vw, 14px);
+        margin-top: 0;
+    }
     .score-result-overlay-breakdown { position: static; display: contents; }
-    .score-result-overlay-breakdown div { display: grid; justify-content: initial; justify-items: center; gap: 3px; }
+    .score-result-overlay-breakdown div { display: grid; width: auto; justify-content: initial; justify-items: center; gap: 3px; }
     .score-result-overlay-score { grid-column: 1 / -1; margin: 20px 0 22px; }
     .score-result-actions { position: static; grid-column: 1 / -1; margin: 0 auto; transform: none; }
 }
