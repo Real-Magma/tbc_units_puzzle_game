@@ -21,6 +21,9 @@ const volumeSlider = document.querySelector("#volume-slider");
 const helpButton = document.querySelector("#help-button");
 const helpDialog = document.querySelector("#help-dialog");
 const closeHelpButton = document.querySelector("#close-help-button");
+const newsButton = document.querySelector("#news-button");
+const newsDialog = document.querySelector("#news-dialog");
+const closeNewsButton = document.querySelector("#close-news-button");
 const undoButton = document.querySelector("#undo-button");
 const layerBackButton = document.querySelector("#layer-back-button");
 const layerFrontButton = document.querySelector("#layer-front-button");
@@ -2077,6 +2080,25 @@ function canvasToPngBlob(output) {
     });
 }
 
+async function pngBlobToDrawable(blob) {
+    if (typeof createImageBitmap === "function") return createImageBitmap(blob);
+    const url = URL.createObjectURL(blob);
+    try {
+        return await new Promise((resolve, reject) => {
+            const image = new Image();
+            image.onload = () => resolve(image);
+            image.onerror = () => reject(new Error("無法讀取 PNG 圖片"));
+            image.src = url;
+        });
+    } finally {
+        URL.revokeObjectURL(url);
+    }
+}
+
+function releasePngDrawable(drawable) {
+    drawable?.close?.();
+}
+
 function scoreCompositionEntries() {
     return currentScoreRoundParts()
         .filter((part) => !part.classList.contains("is-layer-hidden"))
@@ -2225,7 +2247,7 @@ function drawContainedImage(context, image, x, y, width, height, padding = 24) {
 
 async function createScoreResultPng() {
     const [playerBlob, answerBlob] = await Promise.all([createScoreCompositionPng(), createScoreAnswerPng()]);
-    const [playerImage, answerImage] = await Promise.all([createImageBitmap(playerBlob), createImageBitmap(answerBlob)]);
+    const [playerImage, answerImage] = await Promise.all([pngBlobToDrawable(playerBlob), pngBlobToDrawable(answerBlob)]);
     try {
         const isDark = root.dataset.theme === "dark";
         const background = isDark ? "#171717" : "#bdbdbd";
@@ -2288,8 +2310,8 @@ async function createScoreResultPng() {
         });
         return canvasToPngBlob(output);
     } finally {
-        playerImage.close();
-        answerImage.close();
+        releasePngDrawable(playerImage);
+        releasePngDrawable(answerImage);
     }
 }
 
@@ -2303,29 +2325,85 @@ function writeScorePngToClipboard(png) {
 }
 
 function copyScoreCompositionImage() {
-    return writeScorePngToClipboard(createScoreCompositionPng());
+    return createScoreCompositionPng();
 }
 
 function copyScoreResultImage() {
-    return writeScorePngToClipboard(createScoreResultPng());
+    return createScoreResultPng();
 }
 
-function copyScoreImageWithFeedback(copyImage, button = null) {
-    void copyImage()
+function markScoreImageCopied(button = null) {
+    scoreResultPreview.classList.add("is-image-copied");
+    if (button) button.classList.add("is-copied");
+    window.setTimeout(() => {
+        scoreResultPreview.classList.remove("is-image-copied");
+        button?.classList.remove("is-copied");
+    }, 1_200);
+}
+
+function openScoreImageCopyFallback(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const dialog = document.createElement("dialog");
+    dialog.className = "score-copy-fallback";
+    dialog.innerHTML = `
+        <button class="score-copy-fallback-close" type="button" aria-label="關閉">×</button>
+        <p>長按圖片後選擇「複製」或「儲存圖片」</p>
+        <img alt="可複製的結算圖片">
+        <a download="${filename}" href="${url}">儲存圖片</a>
+    `;
+    const close = () => dialog.close();
+    dialog.querySelector("img").src = url;
+    dialog.querySelector(".score-copy-fallback-close").addEventListener("click", close);
+    dialog.addEventListener("click", (event) => {
+        if (event.target === dialog) close();
+    });
+    dialog.addEventListener("close", () => {
+        URL.revokeObjectURL(url);
+        dialog.remove();
+    }, { once: true });
+    document.body.append(dialog);
+    dialog.showModal();
+}
+
+async function shareScorePng(blob, filename) {
+    if (!navigator.share || typeof File === "undefined") throw new Error("此瀏覽器不支援系統分享");
+    const file = new File([blob], filename, { type: "image/png" });
+    if (navigator.canShare && !navigator.canShare({ files: [file] })) throw new Error("此瀏覽器無法分享圖片檔案");
+    await navigator.share({ files: [file], title: "貓咪拼圖結算" });
+}
+
+function copyScoreImageWithFeedback(createPng, button = null, filename = "battle-cats-puzzle.png") {
+    let png;
+    try {
+        png = Promise.resolve(createPng());
+    } catch (error) {
+        console.error("建立結算圖片失敗", error);
+        window.alert("無法建立圖片，請確認角色圖片已載入完成後再試一次。");
+        return;
+    }
+
+    void writeScorePngToClipboard(png)
         .then(() => {
-            scoreResultPreview.classList.add("is-image-copied");
-            if (button) button.classList.add("is-copied");
-            window.setTimeout(() => {
-                scoreResultPreview.classList.remove("is-image-copied");
-                button?.classList.remove("is-copied");
-            }, 1_200);
+            markScoreImageCopied(button);
         })
-        .catch((error) => {
-            console.error("複製結算圖片失敗", error);
-            const message = window.location.protocol === "file:"
-                ? "直接雙擊 index.html 的 file:// 模式無法複製圖片。請使用 GitHub Pages 或「啟動本機網站.cmd」開啟 localhost 網頁。"
-                : "複製圖片失敗，請確認角色圖片已載入完成後再試一次。";
-            window.alert(message);
+        .catch(async (clipboardError) => {
+            console.warn("直接複製圖片不可用，改用手機相容流程。", clipboardError);
+            try {
+                const blob = await png;
+                try {
+                    await shareScorePng(blob, filename);
+                    markScoreImageCopied(button);
+                } catch (shareError) {
+                    if (shareError?.name === "AbortError") return;
+                    openScoreImageCopyFallback(blob, filename);
+                }
+            } catch (imageError) {
+                console.error("建立結算圖片失敗", imageError);
+                const message = window.location.protocol === "file:"
+                    ? "直接雙擊 index.html 的 file:// 模式無法複製圖片。請使用 GitHub Pages 或「啟動本機網站.cmd」開啟 localhost 網頁。"
+                    : "無法建立圖片，請確認角色圖片已載入完成後再試一次。";
+                window.alert(message);
+            }
         });
 }
 
@@ -4000,15 +4078,15 @@ scoreImageOverlapButton.addEventListener("click", () => {
     renderScoreImageOverlay();
 });
 scoreCopyCompositionButton.addEventListener("click", () => {
-    copyScoreImageWithFeedback(copyScoreCompositionImage, scoreCopyCompositionButton);
+    copyScoreImageWithFeedback(copyScoreCompositionImage, scoreCopyCompositionButton, "battle-cats-your-composition.png");
 });
 scoreCopyResultButton.addEventListener("click", () => {
-    copyScoreImageWithFeedback(copyScoreResultImage, scoreCopyResultButton);
+    copyScoreImageWithFeedback(copyScoreResultImage, scoreCopyResultButton, "battle-cats-puzzle-result.png");
 });
 scoreResultPreview.title = "右鍵複製你的組合圖片";
 scoreResultPreview.addEventListener("contextmenu", (event) => {
     event.preventDefault();
-    copyScoreImageWithFeedback(copyScoreCompositionImage);
+    copyScoreImageWithFeedback(copyScoreCompositionImage, null, "battle-cats-your-composition.png");
 });
 scoreResultOverlay.addEventListener("pointerdown", (event) => {
     const hasJustOpened = performance.now() - scoreResultOpenedAt < SCORE_RESULT_CLOSE_GUARD_MS;
@@ -4062,6 +4140,11 @@ document.addEventListener("click", (event) => {
 helpButton.addEventListener("click", () => {
     playSecretAreaSound();
     helpDialog.showModal();
+});
+newsButton.addEventListener("click", () => newsDialog.showModal());
+closeNewsButton.addEventListener("click", () => newsDialog.close());
+newsDialog.addEventListener("click", (event) => {
+    if (event.target === newsDialog) newsDialog.close();
 });
 closeHelpButton.addEventListener("click", () => helpDialog.close());
 undoButton.addEventListener("click", undo);
