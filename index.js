@@ -139,6 +139,11 @@ let scoreAnswerRenderVersion = 0;
 let scoreHistoryStart = null;
 let latestScoreResultView = null;
 let scoreImageOverlayVisible = false;
+let scoreImageExportVersion = 0;
+let scoreCompositionPngBlob = null;
+let scoreResultPngBlob = null;
+let scoreCompositionPngPromise = null;
+let scoreResultPngPromise = null;
 const scoreTemplateCache = new Map();
 
 const savedTheme = localStorage.getItem("theme");
@@ -469,6 +474,7 @@ function showScoreResultOverlay(result) {
     latestScoreResultView = { result, snapshot: snapshot.cloneNode(true), layout };
     renderScoreResultHistory(snapshot, layout);
     openScoreResultOverlay({ result, snapshot, layout, replayScores: true, playIntro: true });
+    precomputeAndroidScoreShares();
     void renderScoreAnswer(scoreRoundTarget, scoreRoundTemplate, layout);
 }
 
@@ -476,6 +482,7 @@ function reopenLatestScoreResultOverlay() {
     if (!latestScoreResultView) return;
     const { result, snapshot, layout } = latestScoreResultView;
     openScoreResultOverlay({ result, snapshot: snapshot.cloneNode(true), layout });
+    precomputeAndroidScoreShares();
 }
 
 function closeScoreResultOverlay() {
@@ -1264,6 +1271,7 @@ function clearScoreRoundParts() {
 async function startScoreRound() {
     let target = null;
     scoreStartButton.disabled = true;
+    resetScoreImageExports();
     setScoreRoundInputLocked(false);
     scoreModeStatus.textContent = "正在準備題目…";
     try {
@@ -2405,6 +2413,88 @@ async function shareScorePng(blob, filename) {
     const file = new File([blob], filename, { type: "image/png" });
     if (navigator.canShare && !navigator.canShare({ files: [file] })) throw new Error("此瀏覽器無法分享圖片檔案");
     await navigator.share({ files: [file], title: "貓咪拼圖結算" });
+}
+
+function usesAndroidScoreShare() {
+    return /Android/i.test(navigator.userAgent) && typeof navigator.share === "function" && typeof File !== "undefined";
+}
+
+function updateScoreImageActionLabels() {
+    const isAndroidShare = usesAndroidScoreShare();
+    const compositionLabel = isAndroidShare ? "分享你" : "複製你";
+    const resultLabel = isAndroidShare ? "分享結算" : "複製結算";
+    [[scoreCopyCompositionButton, compositionLabel], [scoreCopyResultButton, resultLabel]].forEach(([button, label]) => {
+        button.setAttribute("aria-label", label);
+        button.querySelector(".icon-tooltip").textContent = label;
+    });
+}
+
+function resetScoreImageExports() {
+    scoreImageExportVersion += 1;
+    scoreCompositionPngBlob = null;
+    scoreResultPngBlob = null;
+    scoreCompositionPngPromise = null;
+    scoreResultPngPromise = null;
+    scoreCopyCompositionButton.disabled = false;
+    scoreCopyResultButton.disabled = false;
+}
+
+function prepareScoreImageExport(kind) {
+    const isComposition = kind === "composition";
+    const blob = isComposition ? scoreCompositionPngBlob : scoreResultPngBlob;
+    const pending = isComposition ? scoreCompositionPngPromise : scoreResultPngPromise;
+    if (blob) return Promise.resolve(blob);
+    if (pending) return pending;
+
+    const version = scoreImageExportVersion;
+    const factory = isComposition ? createScoreCompositionPng : createScoreResultPng;
+    const promise = factory().then((createdBlob) => {
+        if (version === scoreImageExportVersion) {
+            if (isComposition) scoreCompositionPngBlob = createdBlob;
+            else scoreResultPngBlob = createdBlob;
+        }
+        return createdBlob;
+    }).finally(() => {
+        if (version !== scoreImageExportVersion) return;
+        if (isComposition) scoreCompositionPngPromise = null;
+        else scoreResultPngPromise = null;
+    });
+    if (isComposition) scoreCompositionPngPromise = promise;
+    else scoreResultPngPromise = promise;
+    return promise;
+}
+
+function precomputeAndroidScoreShares() {
+    if (!usesAndroidScoreShare()) return;
+    const exports = [
+        ["composition", scoreCopyCompositionButton],
+        ["result", scoreCopyResultButton],
+    ];
+    exports.forEach(([kind, button]) => {
+        button.disabled = true;
+        void prepareScoreImageExport(kind)
+            .catch((error) => {
+                console.warn("預先建立分享圖片失敗", error);
+            })
+            .finally(() => {
+                button.disabled = false;
+            });
+    });
+}
+
+function sharePreparedScoreImage(kind, button, filename) {
+    const blob = kind === "composition" ? scoreCompositionPngBlob : scoreResultPngBlob;
+    if (!blob) {
+        window.alert("圖片正在準備中，請稍後再點一次。");
+        return;
+    }
+    void shareScorePng(blob, filename)
+        .then(() => markScoreImageCopied(button))
+        .catch((error) => {
+            if (error?.name === "AbortError") return;
+            console.warn("系統分享失敗，改顯示可儲存圖片。", error);
+            openScoreImageCopyFallback(blob, filename);
+        });
 }
 
 function copyScoreImageWithFeedback(createPng, button = null, filename = "battle-cats-puzzle.png") {
@@ -4071,6 +4161,7 @@ setTheme(initialTheme);
 setVolume(initialVolume);
 setMuted(initialMuted);
 setEffectsMuted(initialEffectsMuted);
+updateScoreImageActionLabels();
 initializeUnitIndex();
 window.addEventListener("unitindexready", initializeUnitIndex);
 resetCanvasView();
@@ -4116,9 +4207,17 @@ scoreImageOverlapButton.addEventListener("click", () => {
     renderScoreImageOverlay();
 });
 scoreCopyCompositionButton.addEventListener("click", () => {
+    if (usesAndroidScoreShare()) {
+        sharePreparedScoreImage("composition", scoreCopyCompositionButton, "battle-cats-your-composition.png");
+        return;
+    }
     copyScoreImageWithFeedback(copyScoreCompositionImage, scoreCopyCompositionButton, "battle-cats-your-composition.png");
 });
 scoreCopyResultButton.addEventListener("click", () => {
+    if (usesAndroidScoreShare()) {
+        sharePreparedScoreImage("result", scoreCopyResultButton, "battle-cats-puzzle-result.png");
+        return;
+    }
     copyScoreImageWithFeedback(copyScoreResultImage, scoreCopyResultButton, "battle-cats-puzzle-result.png");
 });
 scoreResultPreview.title = "右鍵複製你的組合圖片";
