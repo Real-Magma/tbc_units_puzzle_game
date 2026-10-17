@@ -42,7 +42,8 @@
     .trash-zone { display: none; }
 
     .top-bar {
-        top: 6px;
+        /* 手機工作區從 62px 開始，40px 工具列上下各留 11px。 */
+        top: 11px;
         right: 6px;
         height: 40px;
     }
@@ -61,21 +62,12 @@
         padding: 0 6px;
     }
 
-    .layer-controls {
-        top: 8px;
-        right: 8px;
-        gap: 4px;
-    }
-
-    .layer-controls button {
-        width: 32px;
-        height: 32px;
-        font-size: 0.75rem;
-    }
+    /* 五個桌面工具改收進底部「更多」選單，避免佔用手機畫布上方。 */
+    .layer-controls { display: none; }
 
     .layers-panel {
         display: none;
-        top: 48px;
+        top: 6px;
         right: 6px;
         bottom: 8px;
         width: 104px;
@@ -268,7 +260,7 @@
         justify-content: space-around;
         gap: 3px;
         padding: 4px;
-        overflow-x: auto;
+        overflow: visible;
         border: 1px solid var(--border);
         border-radius: 14px;
         background: color-mix(in srgb, var(--panel-bg) 94%, transparent);
@@ -277,6 +269,34 @@
     }
 
     .mobile-toolbar::-webkit-scrollbar { display: none; }
+
+    .mobile-more-menu {
+        position: absolute;
+        right: 4px;
+        bottom: calc(100% + 8px);
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 6px;
+        border-radius: 14px;
+        background: color-mix(in srgb, var(--panel-bg) 94%, transparent);
+        box-shadow: var(--shadow);
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transform: translateY(10px) scale(0.96);
+        transform-origin: bottom right;
+        transition: opacity 160ms ease, transform 160ms ease, visibility 160ms step-end;
+    }
+
+    .mobile-more-menu.is-open {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transform: translateY(0) scale(1);
+        transition: opacity 160ms ease, transform 160ms ease;
+    }
 
     .mobile-action {
         display: grid;
@@ -356,29 +376,43 @@
 /* 平板保留雙欄工作區，僅放大觸控目標並收斂右側面板。 */
 @media (min-width: 701px) and (max-width: 1024px) and (pointer: coarse) {
     :root {
-        --sidebar-width: clamp(248px, 30vw, 320px);
-        --toolbar-gap: 18px;
+        --sidebar-width: clamp(238px, 27vw, 296px);
+        --toolbar-gap: 14px;
     }
 
-    .game-column { padding: 76px 18px 18px; }
-    .rounded-box { padding: 20px; border-radius: 18px; }
+    .game-column { padding: 76px 14px 14px; }
+    .rounded-box { padding: 16px; border-radius: 16px; }
 
-    .top-bar { top: 10px; height: 48px; }
-    .top-actions { gap: 5px; }
-    .top-actions .icon-button { width: 46px; height: 46px; font-size: 1.45rem; }
-    #volume-slider { width: 76px; height: 46px; }
+    .github-logo-link { top: 16px; left: 14px; height: 44px; }
+    .top-bar { top: 18px; height: 40px; }
+    .top-actions { gap: 3px; }
+    .sound-controls { gap: 2px; }
+    .top-actions .icon-button { width: 38px; height: 40px; font-size: 1.25rem; }
+    #volume-slider { width: 56px; height: 40px; padding: 0 4px; }
     .undo-button { top: 86px; left: 28px; width: 46px; height: 46px; }
 
-    .layer-controls { top: 14px; right: 14px; gap: 6px; }
-    .layer-controls button { width: 40px; height: 40px; font-size: 0.9rem; }
-    .layers-panel { top: 72px; right: 10px; bottom: 10px; width: 132px; gap: 8px; padding: 8px; }
-    .layer-row { min-height: 64px; padding: 5px 32px 5px 5px; }
-    .layer-row > img { width: 68px; height: 52px; }
-    .layer-visibility, .layer-lock { width: 28px; height: 28px; }
-    .unlock-all-layers { min-height: 40px; font-size: 0.76rem; }
+    /* 工具改回畫布左側直列，避免與右欄的一般／評分頁籤重疊。 */
+    .layer-controls { top: 86px; right: auto; left: 28px; width: 52px; flex-direction: column; align-items: center; gap: 6px; }
+    .layer-controls .layer-control-row {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 5px;
+        border-radius: 13px;
+        background: color-mix(in srgb, var(--text) 10%, transparent);
+    }
+    .layer-controls button .icon-tooltip { top: 50%; left: calc(100% + 10px); transform: translate(-5px, -50%); }
+    .layer-controls button:not(:disabled):hover .icon-tooltip,
+    .layer-controls button:not(:disabled):focus-visible .icon-tooltip { transform: translate(0, -50%); }
+    .layer-controls button { width: 42px; height: 42px; font-size: 0.92rem; }
+    .layers-panel { top: 10px; right: 8px; bottom: 8px; width: 124px; gap: 7px; padding: 7px; }
+    .layer-row { min-height: 60px; padding: 5px 30px 5px 5px; }
+    .layer-row > img { width: 62px; height: 48px; }
+    .layer-visibility, .layer-lock { width: 26px; height: 26px; }
+    .unlock-all-layers { min-height: 38px; font-size: 0.72rem; }
 
-    .mode-tab { min-height: 52px; font-size: 1rem; }
-    .unit-panel { padding: 20px 14px; }
+    .mode-tab { min-height: 48px; font-size: 0.94rem; }
+    .unit-panel { padding: 18px 12px; }
     .unit-panel label { margin-bottom: 8px; font-size: 0.92rem; }
     .unit-panel select, .unit-search input { min-height: 48px; font-size: 1rem; }
     .unit-random-button { min-height: 48px; }

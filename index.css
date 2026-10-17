@@ -107,7 +107,8 @@ html.is-score-result-open .score-result-overlay {
 
 .top-bar {
     position: absolute;
-    top: 12px;
+    /* 工作區從 82px 開始，42px 工具列上下各留 20px。 */
+    top: 20px;
     right: calc(var(--sidebar-width) + var(--toolbar-gap));
     z-index: 2;
     display: flex;
@@ -809,11 +810,23 @@ html[data-theme="dark"] .rounded-box.is-rotating {
 
 .layer-controls {
     position: absolute;
-    top: 18px;
-    right: 18px;
+    top: 94px;
+    left: clamp(42px, 3.5vw, 58px);
     display: flex;
+    width: 46px;
+    flex-direction: column;
+    align-items: center;
     z-index: 4;
     gap: 6px;
+}
+
+.layer-control-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 5px;
+    border-radius: 13px;
+    background: color-mix(in srgb, var(--text) 10%, transparent);
 }
 
 .layer-controls button {
@@ -844,14 +857,32 @@ html[data-theme="dark"] .rounded-box.is-rotating {
     transform: translate(-50%, 0);
 }
 
+/* 左側直列工具列的提示文字固定向畫布右側展開。 */
+.layer-controls button .icon-tooltip {
+    top: 50%;
+    left: calc(100% + 10px);
+    transform: translate(-5px, -50%);
+}
+
+.layer-controls button:not(:disabled):hover .icon-tooltip,
+.layer-controls button:not(:disabled):focus-visible .icon-tooltip {
+    transform: translate(0, -50%);
+}
+
 .layer-controls button:disabled {
     cursor: default;
     opacity: 0.4;
 }
 
+.layer-controls button.is-action-complete {
+    border-color: #16a34a;
+    background: color-mix(in srgb, #16a34a 18%, var(--panel-bg));
+    color: #16a34a;
+}
+
 .layers-panel {
     position: absolute;
-    top: 72px;
+    top: 18px;
     right: 18px;
     bottom: 18px;
     z-index: 2;

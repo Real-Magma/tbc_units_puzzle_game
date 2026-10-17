@@ -46,6 +46,8 @@ const importProjectButton = document.querySelector("#import-project-button");
 const importProjectInput = document.querySelector("#import-project-input");
 const saveProjectButton = document.querySelector("#save-project-button");
 const exportPngButton = document.querySelector("#export-png-button");
+const copyCanvasImageButton = document.querySelector("#copy-canvas-image-button");
+const shareCanvasImageButton = document.querySelector("#share-canvas-image-button");
 const pngExportEnabled = window.TBC_PUZZLE_CONFIG?.showPngExport === true;
 const PART_DRAG_TYPE = "application/x-tbc-part";
 const trashZone = document.querySelector("#trash-zone");
@@ -94,7 +96,7 @@ const scoreResultHistoryButton = document.querySelector("#score-result-history-b
 const scoreResultHistoryPreview = document.querySelector("#score-result-history-preview");
 const scoreRetryButton = document.querySelector("#score-retry-button");
 
-exportPngButton.hidden = !pngExportEnabled;
+if (exportPngButton) exportPngButton.hidden = !pngExportEnabled;
 
 let unitCatalog = {};
 let unitIndex = globalThis.UNIT_INDEX ?? {};
@@ -1561,7 +1563,7 @@ function snapAngle(angle) {
 }
 
 function updateUndoButton() {
-    undoButton.disabled = history.length === 0;
+    if (undoButton) undoButton.disabled = history.length === 0;
     window.dispatchEvent(new CustomEvent("tbcPuzzleHistoryChange", {
         detail: { canUndo: history.length > 0, canRedo: redoHistory.length > 0 },
     }));
@@ -1578,6 +1580,7 @@ function hasMovementLockedPart(parts) {
 }
 
 function updateLayerButtons() {
+    if (!layerBackButton || !layerFrontButton) return;
     if (!selectedPart?.isConnected || isPartMovementLocked(selectedPart)) {
         layerBackButton.disabled = true;
         layerFrontButton.disabled = true;
@@ -2413,11 +2416,11 @@ function openScoreImageCopyFallback(blob, filename) {
     dialog.showModal();
 }
 
-async function shareScorePng(blob, filename) {
+async function shareScorePng(blob, filename, title = "貓咪拼圖結算") {
     if (!navigator.share || typeof File === "undefined") throw new Error("此瀏覽器不支援系統分享");
     const file = new File([blob], filename, { type: "image/png" });
     if (navigator.canShare && !navigator.canShare({ files: [file] })) throw new Error("此瀏覽器無法分享圖片檔案");
-    await navigator.share({ files: [file], title: "貓咪拼圖結算" });
+    await navigator.share({ files: [file], title });
 }
 
 function usesAndroidScoreShare() {
@@ -2588,7 +2591,63 @@ async function createPngExport() {
     return canvasToPngBlob(output);
 }
 
+function markCanvasImageActionComplete(button) {
+    if (!button) return;
+    button.classList.add("is-action-complete");
+    window.setTimeout(() => button.classList.remove("is-action-complete"), 1200);
+}
+
+function showCanvasImageError(error) {
+    console.error("主畫面圖片建立失敗", error);
+    const message = window.location.protocol === "file:"
+        ? "直接雙擊 index.html 的 file:// 模式無法複製或分享圖片。請使用 GitHub Pages 或「啟動本機網站.cmd」開啟 localhost 網頁。"
+        : "無法建立主畫面圖片，請確認角色圖片已載入完成後再試一次。";
+    window.alert(message);
+}
+
+function copyCurrentCanvasImage() {
+    const png = createPngExport();
+    void writeScorePngToClipboard(png)
+        .then(() => markCanvasImageActionComplete(copyCanvasImageButton))
+        .catch(async (clipboardError) => {
+            console.warn("直接複製主畫面圖片不可用，改用分享或儲存流程。", clipboardError);
+            try {
+                const blob = await png;
+                await shareScorePng(blob, "battle-cats-current-canvas.png", "貓咪拼圖");
+                markCanvasImageActionComplete(copyCanvasImageButton);
+            } catch (shareError) {
+                if (shareError?.name === "AbortError") return;
+                try {
+                    openScoreImageCopyFallback(await png, "battle-cats-current-canvas.png");
+                } catch (imageError) {
+                    showCanvasImageError(imageError);
+                }
+            }
+        });
+}
+
+function shareCurrentCanvasImage() {
+    const png = createPngExport();
+    if (shareCanvasImageButton) shareCanvasImageButton.disabled = true;
+    void (async () => {
+        try {
+            await shareScorePng(await png, "battle-cats-current-canvas.png", "貓咪拼圖");
+            markCanvasImageActionComplete(shareCanvasImageButton);
+        } catch (error) {
+            if (error?.name === "AbortError") return;
+            try {
+                openScoreImageCopyFallback(await png, "battle-cats-current-canvas.png");
+            } catch (imageError) {
+                showCanvasImageError(imageError);
+            }
+        } finally {
+            if (shareCanvasImageButton) shareCanvasImageButton.disabled = false;
+        }
+    })();
+}
+
 async function exportTransparentPng() {
+    if (!exportPngButton) return;
     if (window.location.protocol === "file:") {
         window.alert("直接雙擊 index.html 的 file:// 模式無法安全匯出角色圖片。請雙擊「啟動本機網站.cmd」，並在開啟的 localhost 網頁中再匯出 PNG。");
         return;
@@ -2939,6 +2998,7 @@ function renderLayersPanel() {
 }
 
 function flashLayerButton(button) {
+    if (!button) return;
     button.classList.remove("is-layer-jump");
     void button.offsetWidth;
     button.classList.add("is-layer-jump");
@@ -4293,10 +4353,13 @@ newsDialog.addEventListener("click", (event) => {
     if (event.target === newsDialog) newsDialog.close();
 });
 closeHelpButton.addEventListener("click", () => helpDialog.close());
-undoButton.addEventListener("click", undo);
+helpDialog.addEventListener("click", (event) => {
+    if (event.target === helpDialog) helpDialog.close();
+});
+if (undoButton) undoButton.addEventListener("click", undo);
 viewHomeButton.addEventListener("click", resetCanvasView);
-layerBackButton.addEventListener("click", (event) => moveSelectedLayer(-1, event.shiftKey));
-layerFrontButton.addEventListener("click", (event) => moveSelectedLayer(1, event.shiftKey));
+if (layerBackButton) layerBackButton.addEventListener("click", (event) => moveSelectedLayer(-1, event.shiftKey));
+if (layerFrontButton) layerFrontButton.addEventListener("click", (event) => moveSelectedLayer(1, event.shiftKey));
 trashZone.addEventListener("pointerdown", startClearHold);
 unitSearch.addEventListener("pointerdown", () => {
     // Restore focus before document-level canvas interactions can close the picker.
@@ -4364,7 +4427,9 @@ showLayersButton.addEventListener("click", () => {
 importProjectButton.addEventListener("click", () => importProjectInput.click());
 importProjectInput.addEventListener("change", importLayerProject);
 saveProjectButton.addEventListener("click", saveLayerProject);
-if (pngExportEnabled) exportPngButton.addEventListener("click", exportTransparentPng);
+if (pngExportEnabled && exportPngButton) exportPngButton.addEventListener("click", exportTransparentPng);
+copyCanvasImageButton.addEventListener("click", copyCurrentCanvasImage);
+shareCanvasImageButton.addEventListener("click", shareCurrentCanvasImage);
 rankSelect.addEventListener("change", renderParts);
 canvas.addEventListener("pointerdown", (event) => {
     if (event.button !== 0) return;

@@ -18,10 +18,6 @@
             <a class="github-logo-link" href="https://github.com/Real-Magma/tbc_units_puzzle_game" target="_blank" rel="noopener noreferrer" aria-label="前往 TBC Units Puzzle Game GitHub 專案">
                 <img src="image/battle cats puzzle.png" alt="Battle Cats Puzzle">
             </a>
-            <button id="undo-button" class="icon-button undo-button" type="button" aria-label="返回上一步" disabled>
-                <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
-                <span class="icon-tooltip" aria-hidden="true">返回</span>
-            </button>
             <header class="top-bar">
                 <h1 class="sr-only">TBC Units Puzzle Game</h1>
                 <nav class="top-actions" aria-label="工具">
@@ -35,6 +31,32 @@
                     </div>
                 </nav>
             </header>
+            <nav class="layer-controls" aria-label="主畫面工具">
+                <button id="view-home-button" class="layer-button" type="button" aria-label="回到畫布原點" title="回到原點">
+                    <i class="fa-solid fa-house" aria-hidden="true"></i>
+                    <span class="icon-tooltip" aria-hidden="true">回到原點</span>
+                </button>
+                <div class="layer-control-row">
+                    <button id="save-project-button" class="layer-button" type="button" aria-label="儲存圖層專案">
+                        <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+                        <span class="icon-tooltip" aria-hidden="true">儲存圖層</span>
+                    </button>
+                    <button id="import-project-button" class="layer-button" type="button" aria-label="匯入圖層專案">
+                        <i class="fa-solid fa-folder-open" aria-hidden="true"></i>
+                        <span class="icon-tooltip" aria-hidden="true">匯入圖層</span>
+                    </button>
+                </div>
+                <div class="layer-control-row">
+                    <button id="copy-canvas-image-button" class="layer-button" type="button" aria-label="複製目前主畫面圖片">
+                        <i class="fa-regular fa-copy" aria-hidden="true"></i>
+                        <span class="icon-tooltip" aria-hidden="true">複製主畫面</span>
+                    </button>
+                    <button id="share-canvas-image-button" class="layer-button" type="button" aria-label="分享目前主畫面圖片">
+                        <i class="fa-solid fa-share-nodes" aria-hidden="true"></i>
+                        <span class="icon-tooltip" aria-hidden="true">分享主畫面</span>
+                    </button>
+                </div>
+            </nav>
 
             <div class="workspace">
                 <section class="game-column" aria-label="遊戲主畫面">
@@ -50,32 +72,6 @@
                                 </div>
                             </div>
                             <div id="marquee-selection" class="marquee-selection" aria-hidden="true"></div>
-                            <div class="layer-controls" aria-label="圖層控制">
-                                <button id="import-project-button" class="layer-button" type="button" aria-label="匯入圖層專案">
-                                    <i class="fa-solid fa-folder-open" aria-hidden="true"></i>
-                                    <span class="icon-tooltip" aria-hidden="true">匯入圖層</span>
-                                </button>
-                                <button id="save-project-button" class="layer-button" type="button" aria-label="儲存圖層專案">
-                                    <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
-                                    <span class="icon-tooltip" aria-hidden="true">儲存圖層</span>
-                                </button>
-                                <button id="export-png-button" class="layer-button" type="button" aria-label="下載透明 PNG">
-                                    <i class="fa-solid fa-file-export" aria-hidden="true"></i>
-                                    <span class="icon-tooltip" aria-hidden="true">下載透明 PNG</span>
-                                </button>
-                                <button id="view-home-button" class="layer-button" type="button" aria-label="回到畫布原點" title="回到原點">
-                                    <i class="fa-solid fa-house" aria-hidden="true"></i>
-                                    <span class="icon-tooltip" aria-hidden="true">回到原點</span>
-                                </button>
-                                <button id="layer-front-button" class="layer-button" type="button" aria-label="上移一層（↑）" title="上移一層（↑）" disabled>
-                                    <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
-                                    <span class="icon-tooltip" aria-hidden="true">上層</span>
-                                </button>
-                                <button id="layer-back-button" class="layer-button" type="button" aria-label="下移一層（↓）" title="下移一層（↓）" disabled>
-                                    <i class="fa-solid fa-arrow-down" aria-hidden="true"></i>
-                                    <span class="icon-tooltip" aria-hidden="true">下層</span>
-                                </button>
-                            </div>
                             <input id="import-project-input" type="file" accept=".tbc-puzzle,application/json" hidden>
                             <aside id="layers-panel" class="layers-panel" aria-label="圖層面板"></aside>
                             <div id="layer-context-menu" class="layer-context-menu" role="menu" hidden>

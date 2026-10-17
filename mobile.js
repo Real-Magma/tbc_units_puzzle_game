@@ -25,9 +25,7 @@
         toolbar.className = "mobile-toolbar";
         toolbar.setAttribute("aria-label", "手機版工具列");
 
-        let panMode = false;
         let multiSelectMode = false;
-        let activePan = null;
         let longPress = null;
         let pinch = null;
         let layerTouchDrag = null;
@@ -38,11 +36,6 @@
             window.clearTimeout(longPress.timer);
             longPress = null;
         };
-        const stopMobilePan = () => {
-            activePan = null;
-            canvas.classList.remove("is-mobile-panning");
-        };
-
         let drawerButton;
         const closeDrawer = () => {
             game.classList.remove("is-mobile-panel-open");
@@ -54,13 +47,6 @@
             game.classList.toggle("is-mobile-panel-open", willOpen);
             drawerButton.classList.toggle("is-active", willOpen);
             drawerButton.setAttribute("aria-label", willOpen ? "關閉角色與部件" : "開啟角色與部件");
-        });
-
-        const panButton = makeAction("fa-hand", "開啟畫布平移", () => {
-            panMode = !panMode;
-            panButton.classList.toggle("is-active", panMode);
-            canvas.classList.toggle("is-mobile-pan-mode", panMode);
-            panButton.setAttribute("aria-label", panMode ? "關閉畫布平移" : "開啟畫布平移");
         });
 
         const layersButton = makeAction("fa-layer-group", "開啟圖層面板", () => {
@@ -124,7 +110,40 @@
         trashButton.addEventListener("pointercancel", stopTrashHold);
         trashButton.addEventListener("lostpointercapture", stopTrashHold);
 
-        toolbar.append(drawerButton, panButton, undoAction, redoAction, layersButton, multiSelectButton, trashButton);
+        const moreMenu = document.createElement("div");
+        moreMenu.id = "mobile-more-menu";
+        moreMenu.className = "mobile-more-menu";
+        moreMenu.setAttribute("aria-label", "更多主畫面工具");
+        const desktopTools = [
+            ["#view-home-button", "fa-house", "回到原點"],
+            ["#save-project-button", "fa-floppy-disk", "儲存圖層"],
+            ["#import-project-button", "fa-folder-open", "匯入圖層"],
+            ["#copy-canvas-image-button", "fa-copy", "複製主畫面"],
+            ["#share-canvas-image-button", "fa-share-nodes", "分享主畫面"],
+        ];
+        let moreButton;
+        const closeMoreMenu = () => {
+            moreMenu.classList.remove("is-open");
+            moreButton?.classList.remove("is-active");
+            moreButton?.setAttribute("aria-expanded", "false");
+        };
+        desktopTools.forEach(([selector, icon, label]) => {
+            const action = makeAction(icon, label, () => {
+                closeMoreMenu();
+                document.querySelector(selector)?.click();
+            });
+            moreMenu.append(action);
+        });
+        moreButton = makeAction("fa-ellipsis", "更多工具", () => {
+            const willOpen = !moreMenu.classList.contains("is-open");
+            moreMenu.classList.toggle("is-open", willOpen);
+            moreButton.classList.toggle("is-active", willOpen);
+            moreButton.setAttribute("aria-expanded", String(willOpen));
+        });
+        moreButton.setAttribute("aria-controls", "mobile-more-menu");
+        moreButton.setAttribute("aria-expanded", "false");
+
+        toolbar.append(drawerButton, undoAction, redoAction, layersButton, multiSelectButton, trashButton, moreMenu, moreButton);
         game.append(toolbar);
 
         const touchPair = () => [...touchPoints.values()].slice(0, 2);
@@ -135,7 +154,6 @@
             touchPoints.set(event.pointerId, { x: event.clientX, y: event.clientY });
             if (touchPoints.size < 2) return;
             cancelLongPress();
-            stopMobilePan();
             const pair = touchPair();
             pinch = {
                 distance: Math.max(distanceBetween(pair), 1),
@@ -170,32 +188,7 @@
         canvas.addEventListener("pointercancel", finishTouchPoint, true);
 
         canvas.addEventListener("pointerdown", (event) => {
-            if (event.pointerType !== "touch") return;
-            closeDrawer();
-            if (!panMode || pinch) return;
-            event.preventDefault();
-            event.stopImmediatePropagation();
-            activePan = { pointerId: event.pointerId, x: event.clientX, y: event.clientY };
-            canvas.setPointerCapture(event.pointerId);
-            canvas.classList.add("is-mobile-panning");
-        }, true);
-
-        canvas.addEventListener("pointermove", (event) => {
-            if (!activePan || event.pointerId !== activePan.pointerId || pinch) return;
-            event.preventDefault();
-            api.panCanvasBy(event.clientX - activePan.x, event.clientY - activePan.y);
-            activePan.x = event.clientX;
-            activePan.y = event.clientY;
-        }, true);
-        const stopPan = (event) => {
-            if (!activePan || event.pointerId !== activePan.pointerId) return;
-            stopMobilePan();
-        };
-        canvas.addEventListener("pointerup", stopPan, true);
-        canvas.addEventListener("pointercancel", stopPan, true);
-
-        canvas.addEventListener("pointerdown", (event) => {
-            if (event.pointerType !== "touch" || panMode || pinch) return;
+            if (event.pointerType !== "touch" || pinch) return;
             const part = event.target.closest?.(".placed-part");
             if (!part) return;
             if (multiSelectMode) {
