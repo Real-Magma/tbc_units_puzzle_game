@@ -1554,8 +1554,18 @@ function updateUndoButton() {
     }));
 }
 
+function isPartMovementLocked(part) {
+    if (!part?.isConnected || part.classList.contains("is-layer-locked")) return true;
+    const groupId = part.dataset.groupId;
+    return Boolean(groupId && orderedParts().some((member) => member.dataset.groupId === groupId && member.classList.contains("is-layer-locked")));
+}
+
+function hasMovementLockedPart(parts) {
+    return parts.some((part) => isPartMovementLocked(part));
+}
+
 function updateLayerButtons() {
-    if (!selectedPart?.isConnected) {
+    if (!selectedPart?.isConnected || isPartMovementLocked(selectedPart)) {
         layerBackButton.disabled = true;
         layerFrontButton.disabled = true;
         return;
@@ -1572,6 +1582,29 @@ function updateLayerButtons() {
     layerFrontButton.disabled = index === -1 || index === parts.length - 1;
 }
 
+function selectionBoundsInWorld(part) {
+    const state = positionOf(part);
+    const image = part.querySelector("img");
+    const width = Number.parseFloat(part.style.width) || part.offsetWidth || image?.naturalWidth || 0;
+    const height = Number.parseFloat(part.style.height) || part.offsetHeight || image?.naturalHeight || 0;
+    const scale = Number.parseFloat(state.scale);
+    const centerX = Number.parseFloat(state.left);
+    const centerY = Number.parseFloat(state.top);
+    const angle = Number.parseFloat(state.rotation) * Math.PI / 180;
+    if (![width, height, scale, centerX, centerY, angle].every(Number.isFinite)) return null;
+
+    const scaledWidth = width * Math.abs(scale);
+    const scaledHeight = height * Math.abs(scale);
+    const boundWidth = Math.abs(scaledWidth * Math.cos(angle)) + Math.abs(scaledHeight * Math.sin(angle));
+    const boundHeight = Math.abs(scaledWidth * Math.sin(angle)) + Math.abs(scaledHeight * Math.cos(angle));
+    return {
+        left: centerX - boundWidth / 2,
+        top: centerY - boundHeight / 2,
+        right: centerX + boundWidth / 2,
+        bottom: centerY + boundHeight / 2,
+    };
+}
+
 function updateSelectionFrame() {
     const parts = [...selectedParts].filter((part) => part.isConnected);
     if (!parts.length) {
@@ -1586,17 +1619,19 @@ function updateSelectionFrame() {
     selectionFrame.style.setProperty("--selection-ui-scale", selectionUiScale.toFixed(3));
 
     if (parts.length > 1) {
-        const bounds = parts.map((part) => part.getBoundingClientRect());
+        // Hidden layers use display:none, so getBoundingClientRect() would
+        // collapse them to zero. Calculate from stored transform data instead.
+        const bounds = parts.map(selectionBoundsInWorld).filter(Boolean);
+        if (!bounds.length) return;
         const left = Math.min(...bounds.map((bound) => bound.left));
         const top = Math.min(...bounds.map((bound) => bound.top));
         const right = Math.max(...bounds.map((bound) => bound.right));
         const bottom = Math.max(...bounds.map((bound) => bound.bottom));
         const padding = 10;
-        const center = clientToWorld((left + right) / 2, (top + bottom) / 2);
-        selectionFrame.style.left = `${center.x}px`;
-        selectionFrame.style.top = `${center.y}px`;
-        selectionFrame.style.width = `${(right - left) / viewScale + padding}px`;
-        selectionFrame.style.height = `${(bottom - top) / viewScale + padding}px`;
+        selectionFrame.style.left = `${(left + right) / 2}px`;
+        selectionFrame.style.top = `${(top + bottom) / 2}px`;
+        selectionFrame.style.width = `${right - left + padding}px`;
+        selectionFrame.style.height = `${bottom - top + padding}px`;
         selectionFrame.style.setProperty("--rotation", "0deg");
         selectionFrame.classList.add("is-group-selection");
         canvasWorld.classList.add("has-group-selection");
@@ -2586,7 +2621,7 @@ function renderLayersPanel() {
         const lock = document.createElement("button");
         row.className = "layer-row";
         row.dataset.layerIndex = String(parts.indexOf(part));
-        row.draggable = !part.classList.contains("is-layer-locked");
+        row.draggable = !isPartMovementLocked(part);
         row.title = part.dataset.name;
         row.tabIndex = 0;
         row.setAttribute("role", "button");
@@ -2639,7 +2674,7 @@ function renderLayersPanel() {
         });
         row.addEventListener("dragstart", (event) => {
             event.stopPropagation();
-            if (part.classList.contains("is-layer-locked")) {
+            if (isPartMovementLocked(part)) {
                 event.preventDefault();
                 return;
             }
@@ -3094,7 +3129,10 @@ function topOpaquePartAt(clientX, clientY) {
 }
 
 function beginPlacedPartDrag(image, event) {
-    if (image.classList.contains("is-layer-locked")) return;
+    if (isPartMovementLocked(image)) {
+        if (!image.classList.contains("is-layer-locked")) selectPlacedPart(image);
+        return;
+    }
     if (event.ctrlKey || event.metaKey) {
         event.preventDefault();
         const nextSelection = new Set(selectedParts);
@@ -3389,7 +3427,7 @@ function startCanvasPan(event) {
 function makePlacedPartRotatable(image) {
     const handle = image.querySelector(".rotate-handle");
     handle.addEventListener("pointerdown", (event) => {
-        if (image.classList.contains("is-layer-locked")) return;
+        if (isPartMovementLocked(image)) return;
         event.preventDefault();
         event.stopPropagation();
         selectPlacedPart(image);
@@ -3420,7 +3458,7 @@ function makePlacedPartRotatable(image) {
 function makeSelectedGroupRotatable() {
     selectionRotateHandle.addEventListener("pointerdown", (event) => {
         const parts = [...selectedParts].filter((part) => part.isConnected);
-        if (!parts.length) return;
+        if (!parts.length || hasMovementLockedPart(parts)) return;
         event.preventDefault();
         event.stopPropagation();
         const frameBounds = selectionFrame.getBoundingClientRect();
@@ -3468,7 +3506,7 @@ function makeSelectionScalable() {
     selectionFrame.querySelectorAll(".selection-corner").forEach((corner) => {
         corner.addEventListener("pointerdown", (event) => {
             const parts = [...selectedParts].filter((part) => part.isConnected);
-            if (!parts.length) return;
+            if (!parts.length || hasMovementLockedPart(parts)) return;
             event.preventDefault();
             event.stopPropagation();
             const bounds = selectionFrame.getBoundingClientRect();
@@ -4377,6 +4415,7 @@ window.tbcPuzzleMobile = Object.freeze({
         if (!targetPart && !targetId) return;
 
         if (sourcePart && sourceId && sourceId === targetId && !sourceGroupId) {
+            if (isPartMovementLocked(sourcePart)) return;
             placePartWithinGroup(sourcePart, targetPart, Boolean(insertAbove));
             return;
         }
@@ -4388,6 +4427,7 @@ window.tbcPuzzleMobile = Object.freeze({
         const targetParts = targetId
             ? allParts.filter((part) => part.dataset.groupId === targetId)
             : [targetPart];
+        if (hasMovementLockedPart(sourceParts)) return;
         moveLayerBlock(sourceParts, targetParts, Boolean(insertAbove));
     },
     selectLayerFromTouch({ sourceIndex, sourceGroupId = "" }) {
