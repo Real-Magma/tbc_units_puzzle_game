@@ -63,12 +63,16 @@ const scoreModeTab = document.querySelector("#score-mode-tab");
 const normalModePanel = document.querySelector("#normal-mode-panel");
 const scoreModePanel = document.querySelector("#score-mode-panel");
 const scoreSetup = document.querySelector("#score-setup");
+const sidePanel = document.querySelector(".side-panel");
+const scoreSetupScroll = document.querySelector(".score-setup-scroll");
 const scoreRunning = document.querySelector("#score-running");
+const scoreRoundScroll = document.querySelector(".score-round-scroll");
 const scoreResultPanel = document.querySelector("#score-result-panel");
 const scoreTimeButtons = [...document.querySelectorAll(".score-time-button")];
 const scoreQuestionModeButtons = [...document.querySelectorAll(".score-question-mode")];
 const scoreFixedPicker = document.querySelector("#score-fixed-picker");
 const scoreFixedRankButtons = [...document.querySelectorAll(".score-fixed-rank")];
+const rankButtons = [...document.querySelectorAll(".rank-option")];
 const scoreUnitSearch = document.querySelector("#score-unit-search");
 const scoreUnitResults = document.querySelector("#score-unit-results");
 const scoreModeStatus = document.querySelector("#score-mode-status");
@@ -1277,6 +1281,12 @@ function clearScoreRoundParts() {
     updateSelectionFrame();
 }
 
+function resetScorePanelScrollPositions() {
+    sidePanel.scrollTop = 0;
+    scoreSetupScroll.scrollTop = 0;
+    scoreRoundScroll.scrollTop = 0;
+}
+
 async function startScoreRound() {
     let target = null;
     scoreStartButton.disabled = true;
@@ -1325,6 +1335,8 @@ async function startScoreRound() {
         scoreActiveRank.value = target.rank;
         scoreSetup.hidden = true;
         scoreRunning.hidden = false;
+        resetScorePanelScrollPositions();
+        requestAnimationFrame(resetScorePanelScrollPositions);
         normalModeTab.disabled = true;
         const rendered = await renderScoreParts(target, usableTemplate);
         if (scoreRoundTarget !== target) return;
@@ -1377,6 +1389,7 @@ async function finishScoreRound(finished = false, { clearCanvas = true } = {}) {
     scoreRoundTemplate = null;
     scoreRunning.hidden = true;
     scoreSetup.hidden = false;
+    resetScorePanelScrollPositions();
     scoreResultPanel.hidden = true;
     if (clearCanvas) clearScoreRoundParts();
     else promoteScoreRoundPartsToNormalGroup();
@@ -3926,6 +3939,13 @@ function updateRankOptions() {
     const forms = new Set(unit.parts.map((part) => part.form));
     for (const option of rankSelect.options) option.disabled = !forms.has(option.value);
     if (!forms.has(rankSelect.value)) rankSelect.value = [...forms][0] ?? "f";
+    rankButtons.forEach((button) => {
+        const isAvailable = forms.has(button.dataset.rank);
+        const isSelected = button.dataset.rank === rankSelect.value;
+        button.disabled = !isAvailable;
+        button.classList.toggle("is-selected", isSelected);
+        button.setAttribute("aria-pressed", String(isSelected));
+    });
 }
 
 function availableRanksForUnit(unit) {
@@ -3964,6 +3984,13 @@ function setScoreFixedRankButtonsDisabled(disabled) {
 function unitLabel(unitId) {
     const name = unitIndex[unitId]?.name ?? unitCatalog[unitId]?.name;
     return name && name !== unitId ? `${unitId} ${name}` : unitId;
+}
+
+function unitMatchesSearch(unitId, query) {
+    if (!query) return true;
+    const entry = unitIndex[unitId] ?? {};
+    const searchTerms = [unitId, entry.name, ...(entry.aliases ?? [])];
+    return searchTerms.some((term) => String(term ?? "").toLocaleLowerCase().includes(query));
 }
 
 function ensureUnitLoaded(unitId) {
@@ -4032,7 +4059,7 @@ function renderScoreUnitResults() {
     const query = scoreUnitSearch.value.trim().toLocaleLowerCase();
     const allUnitIds = Object.keys(unitIndex).sort();
     const suggestions = query
-        ? allUnitIds.filter((unitId) => unitLabel(unitId).toLocaleLowerCase().includes(query))
+        ? allUnitIds.filter((unitId) => unitMatchesSearch(unitId, query))
         : allUnitIds;
     const remaining = query ? allUnitIds.filter((unitId) => !suggestions.includes(unitId)) : [];
     scoreUnitResults.replaceChildren();
@@ -4140,6 +4167,7 @@ async function chooseUnit(unitId, preferredRank = null) {
     if (preferredRank && [...rankSelect.options].some((option) => option.value === preferredRank && !option.disabled)) {
         rankSelect.value = preferredRank;
     }
+    updateRankOptions();
     await renderParts();
     return unitSelect.value === unitId;
 }
@@ -4165,7 +4193,7 @@ function renderUnitResults() {
     const query = unitSearch.value.trim().toLocaleLowerCase();
     const allUnitIds = Object.keys(unitIndex).sort();
     const suggestedUnitIds = query
-        ? allUnitIds.filter((unitId) => unitLabel(unitId).toLocaleLowerCase().includes(query))
+        ? allUnitIds.filter((unitId) => unitMatchesSearch(unitId, query))
         : allUnitIds;
     const remainingUnitIds = query
         ? allUnitIds.filter((unitId) => !suggestedUnitIds.includes(unitId))
@@ -4277,6 +4305,12 @@ scoreFixedRankButtons.forEach((button) => button.addEventListener("click", () =>
         item.setAttribute("aria-pressed", String(isSelected));
     });
     if (scoreFixedUnitId) scoreModeStatus.textContent = "角色與階級已選擇，可以開始。";
+}));
+rankButtons.forEach((button) => button.addEventListener("click", () => {
+    if (button.disabled || button.dataset.rank === rankSelect.value) return;
+    rankSelect.value = button.dataset.rank;
+    updateRankOptions();
+    renderParts();
 }));
 scoreStartButton.addEventListener("click", startScoreRound);
 scoreCancelButton.addEventListener("click", () => finishScoreRound(false));
@@ -4445,7 +4479,10 @@ saveProjectButton.addEventListener("click", saveLayerProject);
 if (pngExportEnabled && exportPngButton) exportPngButton.addEventListener("click", exportTransparentPng);
 copyCanvasImageButton.addEventListener("click", copyCurrentCanvasImage);
 shareCanvasImageButton.addEventListener("click", shareCurrentCanvasImage);
-rankSelect.addEventListener("change", renderParts);
+rankSelect.addEventListener("change", () => {
+    updateRankOptions();
+    renderParts();
+});
 canvas.addEventListener("pointerdown", (event) => {
     if (event.button !== 0) return;
     if (canvas.classList.contains("is-mobile-pan-mode")) return;

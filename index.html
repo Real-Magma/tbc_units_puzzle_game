@@ -107,8 +107,14 @@
                             <div id="unit-results" class="unit-results" role="listbox" aria-label="角色搜尋結果"></div>
                         </div>
                         <select id="unit-select" hidden></select>
-                        <label for="rank-select">階級</label>
-                        <select id="rank-select" aria-describedby="unit-status">
+                        <p id="rank-label" class="rank-label">階級</p>
+                        <div id="rank-options" class="rank-options" role="group" aria-labelledby="rank-label">
+                            <button class="rank-option is-selected" type="button" data-rank="f" aria-pressed="true">1 階</button>
+                            <button class="rank-option" type="button" data-rank="c" aria-pressed="false">2 階</button>
+                            <button class="rank-option" type="button" data-rank="s" aria-pressed="false">3 階</button>
+                            <button class="rank-option" type="button" data-rank="u" aria-pressed="false">4 階</button>
+                        </div>
+                        <select id="rank-select" hidden aria-describedby="unit-status">
                             <option value="f">1 階</option>
                             <option value="c">2 階</option>
                             <option value="s">3 階</option>
@@ -119,14 +125,14 @@
                     </div>
                     <section id="score-mode-panel" class="score-mode-panel" role="tabpanel" aria-labelledby="score-mode-tab" hidden>
                         <div id="score-setup" class="score-setup">
-                            <p class="score-section-label">時間</p>
-                            <div class="score-time-options" role="group" aria-label="評分時間">
-                                <button class="score-time-button is-selected" type="button" data-duration="60" aria-pressed="true">1:00</button>
-                                <button class="score-time-button" type="button" data-duration="180" aria-pressed="false">3:00</button>
-                                <button class="score-time-button" type="button" data-duration="300" aria-pressed="false">5:00</button>
-                                <button class="score-time-button" type="button" data-duration="0" aria-pressed="false" aria-label="不限時間">∞</button>
-                            </div>
                             <div class="score-setup-scroll">
+                                <p class="score-section-label">時間</p>
+                                <div class="score-time-options" role="group" aria-label="評分時間">
+                                    <button class="score-time-button is-selected" type="button" data-duration="60" aria-pressed="true">1:00</button>
+                                    <button class="score-time-button" type="button" data-duration="180" aria-pressed="false">3:00</button>
+                                    <button class="score-time-button" type="button" data-duration="300" aria-pressed="false">5:00</button>
+                                    <button class="score-time-button" type="button" data-duration="0" aria-pressed="false" aria-label="不限時間">∞</button>
+                                </div>
                                 <p class="score-section-label score-mode-label">模式</p>
                                 <div class="score-question-modes" role="group" aria-label="題目模式">
                                     <button class="score-question-mode is-selected" type="button" data-score-mode="fixed" aria-pressed="true"><i class="fa-solid fa-thumbtack" aria-hidden="true"></i>固定</button>

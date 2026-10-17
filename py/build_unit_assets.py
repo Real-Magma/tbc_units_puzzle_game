@@ -47,6 +47,22 @@ def read_unit_names(path: Path) -> dict[str, str]:
     return names
 
 
+def read_unit_name_aliases(path: Path) -> dict[str, list[str]]:
+    """Read every available evolution name for use as browser search aliases."""
+    if not path.is_file():
+        return {}
+
+    aliases: dict[str, list[str]] = {}
+    for line in path.read_text(encoding="utf-8-sig").splitlines():
+        columns = line.split("\t")
+        if not columns or not re.fullmatch(r"\d{3}", columns[0].strip()):
+            continue
+        names = list(dict.fromkeys(name.strip() for name in columns[1:] if name.strip()))
+        if names:
+            aliases[columns[0].strip()] = names
+    return aliases
+
+
 def read_preferred_unit_names() -> dict[str, str]:
     """Prefer Traditional Chinese names, then fall back to Japanese and Korean."""
     names: dict[str, str] = {}
@@ -206,7 +222,10 @@ def crop_unit(
     return {"id": unit_id, "name": unit_name or unit_id, "folder": folder_name, "parts": parts}
 
 
-def write_browser_catalogs(catalog: dict[str, dict[str, object]]) -> None:
+def write_browser_catalogs(
+    catalog: dict[str, dict[str, object]],
+    unit_name_aliases: dict[str, list[str]],
+) -> None:
     """Write the legacy catalog plus lightweight index and per-unit manifests."""
     catalog_path = ASSET_ROOT / "catalog.json"
     catalog_path.write_text(json.dumps(catalog, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -227,6 +246,7 @@ def write_browser_catalogs(catalog: dict[str, dict[str, object]]) -> None:
             "name": entry.get("name", unit_id),
             "folder": entry.get("folder", unit_id),
             "forms": sorted({part["form"] for part in parts if "form" in part}),
+            "aliases": unit_name_aliases.get(unit_id, []),
         }
         (manifests_root / f"{unit_id}.json").write_text(
             json.dumps(entry, ensure_ascii=False, separators=(",", ":")),
@@ -267,6 +287,8 @@ def main() -> None:
     catalog = json.loads(catalog_path.read_text(encoding="utf-8")) if catalog_path.exists() else {}
 
     unit_names = read_preferred_unit_names()
+    # 搜尋只使用繁中資料庫的各階名稱，畫面仍顯示第一階名稱。
+    unit_name_aliases = read_unit_name_aliases(PROJECT_ROOT / "assets" / "UnitName_tw.txt")
     for unit_id, entry in catalog.items():
         if unit_id in unit_names:
             entry["name"] = unit_names[unit_id]
@@ -287,7 +309,7 @@ def main() -> None:
             print(f"已處理角色 {unit_id}：{len(catalog[unit_id]['parts'])} 個部件")
     finally:
         # Keep the successfully processed units available even if a later file is broken.
-        write_browser_catalogs(catalog)
+        write_browser_catalogs(catalog, unit_name_aliases)
 
 
 if __name__ == "__main__":
