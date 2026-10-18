@@ -42,6 +42,8 @@ const flipHorizontalButton = document.querySelector("#flip-horizontal-button");
 const lockLayerButton = document.querySelector("#lock-layer-button");
 const hideLayersButton = document.querySelector("#hide-layers-button");
 const showLayersButton = document.querySelector("#show-layers-button");
+const moveLayersToBackButton = document.querySelector("#move-layers-to-back-button");
+const moveLayersToFrontButton = document.querySelector("#move-layers-to-front-button");
 const focusLayerButton = document.querySelector("#focus-layer-button");
 const importProjectButton = document.querySelector("#import-project-button");
 const importProjectInput = document.querySelector("#import-project-input");
@@ -2005,6 +2007,29 @@ function contextMenuParts() {
     return orderedParts().filter((part) => selected.includes(part) || selectedGroupIds.has(part.dataset.groupId));
 }
 
+function isLayersPanelContext(fromLayersPanel) {
+    return Boolean(fromLayersPanel);
+}
+
+function moveContextPartsToEdge(toFront) {
+    const before = orderedParts();
+    const contextParts = contextMenuParts().filter((part) => part?.isConnected);
+    if (!contextParts.length || contextParts.some((part) => part.classList.contains("is-layer-locked"))) return;
+
+    const contextSet = new Set(contextParts);
+    const movingParts = before.filter((part) => contextSet.has(part));
+    const remainingParts = before.filter((part) => !contextSet.has(part));
+    const after = toFront
+        ? [...remainingParts, ...movingParts]
+        : [...movingParts, ...remainingParts];
+    if (after.every((part, index) => part === before[index])) return;
+
+    setLayerOrder(after);
+    remember({ type: "layers", order: before });
+    updateLayerButtons();
+    renderLayersPanel();
+}
+
 function showLayerContextMenu(event, part, { fromLayersPanel = false } = {}) {
     event.preventDefault();
     event.stopPropagation();
@@ -2022,15 +2047,16 @@ function showLayerContextMenu(event, part, { fromLayersPanel = false } = {}) {
     const isSingleGroup = Boolean(part.dataset.groupId)
         && contextParts.length > 0
         && contextParts.every((item) => item.dataset.groupId === part.dataset.groupId);
+    const usesLayersPanelControls = isLayersPanelContext(fromLayersPanel);
     mergeLayersButton.hidden = !canGroup;
     ungroupLayersButton.hidden = groupIds.size === 0;
     flipHorizontalButton.disabled = contextParts.some((item) => item.classList.contains("is-layer-locked"));
-    lockLayerButton.hidden = isSingleGroup;
+    lockLayerButton.hidden = usesLayersPanelControls || isSingleGroup;
     lockLayerButton.querySelector("i").className = `fa-solid ${hasLockedPart ? "fa-lock-open" : "fa-lock"}`;
     lockLayerButton.querySelector("span").textContent = hasLockedPart ? "解除鎖定" : "鎖定";
     const canToggleSelectedVisibility = fromLayersPanel && contextParts.length > 1 && !isSingleGroup;
-    hideLayersButton.hidden = isSingleGroup;
-    showLayersButton.hidden = !canToggleSelectedVisibility;
+    hideLayersButton.hidden = usesLayersPanelControls || isSingleGroup;
+    showLayersButton.hidden = usesLayersPanelControls || !canToggleSelectedVisibility;
     layerContextMenu.hidden = false;
     const margin = 8;
     const menuWidth = layerContextMenu.offsetWidth;
@@ -4732,6 +4758,14 @@ hideLayersButton.addEventListener("click", () => {
 });
 showLayersButton.addEventListener("click", () => {
     setLayerVisibility(contextMenuParts(), false);
+    closeLayerContextMenu();
+});
+moveLayersToBackButton.addEventListener("click", () => {
+    moveContextPartsToEdge(false);
+    closeLayerContextMenu();
+});
+moveLayersToFrontButton.addEventListener("click", () => {
+    moveContextPartsToEdge(true);
     closeLayerContextMenu();
 });
 focusLayerButton.addEventListener("click", () => {

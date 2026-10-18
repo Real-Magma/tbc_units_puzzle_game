@@ -20,7 +20,8 @@
 
 @font-face {
     font-family: "GenJyuuGothic";
-    src: url("image/fonts/GENJYUUGOTHIC-BOLD.woff2") format("woff2");
+    /* WOFF2 是裁切版，敵人名稱大量漢字未包含；使用完整 TTF 保留所有字形。 */
+    src: url("image/fonts/GENJYUUGOTHIC-BOLD.TTF") format("truetype");
     /* 同一份專屬粗體檔供清單的所有文字權重使用，避免 400 被瀏覽器換成系統字型。 */
     font-weight: 400 900;
     font-style: normal;
@@ -1068,6 +1069,7 @@ html.is-score-round-active .layer-controls .layer-control-row {
     cursor: pointer;
     font-family: "GenJyuuGothic", sans-serif;
     font-size: 0.78rem;
+    font-weight: 700;
     text-align: left;
 }
 
@@ -1730,6 +1732,13 @@ html.is-score-round-active .layer-controls .layer-control-row {
 
 .unit-result:last-child { border-bottom: 0; }
 .unit-result:hover, .unit-result.is-active { background: var(--button-hover-bg); }
+.unit-results,
+.unit-results .unit-result,
+.unit-results .unit-result-id,
+.unit-results .unit-result-name {
+    font-family: var(--catalog-font) !important;
+    font-weight: 700 !important;
+}
 .unit-result-id { flex: 0 0 32px; }
 .unit-result-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .unit-result-empty { padding: 10px; color: color-mix(in srgb, var(--text) 65%, transparent); font-family: var(--catalog-font); font-size: 0.78rem; font-weight: 700; }
