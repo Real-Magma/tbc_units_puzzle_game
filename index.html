@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>TBC Units Puzzle Game</title>
     <link rel="stylesheet" href="index.css">
     <link rel="stylesheet" href="mobile.css">
@@ -15,13 +15,12 @@
 <body>
     <main id="game" aria-label="TBC Units Puzzle Game">
         <section class="app-frame">
-            <a class="github-logo-link" href="https://github.com/Real-Magma/tbc_units_puzzle_game" target="_blank" rel="noopener noreferrer" aria-label="前往 TBC Units Puzzle Game GitHub 專案">
+            <button id="news-button" class="github-logo-link" type="button" aria-label="消息">
                 <img src="image/battle cats puzzle.png" alt="Battle Cats Puzzle">
-            </a>
+            </button>
             <header class="top-bar">
                 <h1 class="sr-only">TBC Units Puzzle Game</h1>
                 <nav class="top-actions" aria-label="工具">
-                    <button id="news-button" class="icon-button news-button" type="button" aria-label="消息"><i class="fa-regular fa-newspaper" aria-hidden="true"></i><span class="icon-tooltip" aria-hidden="true">消息</span></button>
                     <button id="help-button" class="icon-button" type="button" aria-label="遊戲說明"><i class="fa-solid fa-circle-info" aria-hidden="true"></i><span class="icon-tooltip" aria-hidden="true">說明</span></button>
                     <button id="theme-button" class="icon-button" type="button" aria-label="切換深色模式"><i class="fa-regular fa-moon" aria-hidden="true"></i><span id="theme-tooltip" class="icon-tooltip" aria-hidden="true">關燈</span></button>
                     <button id="effects-button" class="icon-button" type="button" aria-label="關閉音效" aria-pressed="false"><i class="fa-solid fa-music" aria-hidden="true"></i><span id="effects-tooltip" class="icon-tooltip" aria-hidden="true">關音效</span></button>
@@ -72,7 +71,7 @@
                                 </div>
                             </div>
                             <div id="marquee-selection" class="marquee-selection" aria-hidden="true"></div>
-                            <input id="import-project-input" type="file" accept=".tbc-puzzle,application/json" hidden>
+                            <input id="import-project-input" class="sr-only" type="file" accept=".tbc-puzzle,.json,application/json">
                             <aside id="layers-panel" class="layers-panel" aria-label="圖層面板"></aside>
                             <div id="layer-context-menu" class="layer-context-menu" role="menu" hidden>
                                 <button id="merge-layers-button" type="button" role="menuitem"><i class="fa-solid fa-object-group" aria-hidden="true"></i><span>群組</span></button>
@@ -81,6 +80,7 @@
                                 <button id="lock-layer-button" type="button" role="menuitem"><i class="fa-solid fa-lock" aria-hidden="true"></i><span>鎖定</span></button>
                                 <button id="hide-layers-button" type="button" role="menuitem"><i class="fa-solid fa-eye-slash" aria-hidden="true"></i><span>消失</span></button>
                                 <button id="show-layers-button" type="button" role="menuitem"><i class="fa-solid fa-eye" aria-hidden="true"></i><span>出現</span></button>
+                                <button id="focus-layer-button" type="button" role="menuitem"><i class="fa-solid fa-crosshairs" aria-hidden="true"></i><span>傳送到物件</span></button>
                             </div>
                             <button id="trash-zone" class="trash-zone" type="button" aria-label="長按三秒清空主畫面">
                                 <i class="fa-solid fa-trash-can" aria-hidden="true"></i>

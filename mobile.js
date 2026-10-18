@@ -1,22 +1,35 @@
 (() => {
     // 平板沿用雙欄畫面，但也需要手機的手指拖曳、雙指縮放與平移邏輯。
     // 工具列是否顯示仍由 CSS 區分：只有窄螢幕手機顯示底部工具列。
-    const touchLayout = window.matchMedia("(max-width: 1024px) and (pointer: coarse)");
+    const touchLayout = window.matchMedia("(pointer: coarse)");
+    const isAppleTablet = /iPad/.test(navigator.userAgent)
+        || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    document.documentElement.classList.toggle("is-apple-tablet", isAppleTablet);
     let initialized = false;
 
-    function makeAction(icon, label, action) {
+    // Prevent browser-level zoom on touch devices. Canvas pinch zoom is handled
+    // separately below with Pointer Events, so the game interaction remains intact.
+    const preventViewportZoom = (event) => event.preventDefault();
+    document.addEventListener("gesturestart", preventViewportZoom, { passive: false });
+    document.addEventListener("gesturechange", preventViewportZoom, { passive: false });
+    document.addEventListener("gestureend", preventViewportZoom, { passive: false });
+    document.addEventListener("dblclick", (event) => {
+        if (touchLayout.matches || isAppleTablet) event.preventDefault();
+    }, { passive: false });
+
+    function makeAction(icon, label, action, { persistentLabel = false } = {}) {
         const button = document.createElement("button");
         button.className = "mobile-action";
         button.type = "button";
         button.setAttribute("aria-label", label);
         button.title = label;
-        button.innerHTML = `<i class="fa-solid ${icon}" aria-hidden="true"></i>`;
+        button.innerHTML = `<i class="fa-solid ${icon}" aria-hidden="true"></i>${persistentLabel ? `<span class="icon-tooltip mobile-more-tooltip" aria-hidden="true">${label}</span>` : ""}`;
         button.addEventListener("click", action);
         return button;
     }
 
     function initializeMobileControls() {
-        if (initialized || !touchLayout.matches || !window.tbcPuzzleMobile) return;
+        if (initialized || (!touchLayout.matches && !isAppleTablet) || !window.tbcPuzzleMobile) return;
         initialized = true;
 
         const game = document.querySelector("#game");
@@ -66,9 +79,17 @@
 
         const undoAction = makeAction("fa-arrow-rotate-left", "上一步", () => api.undo());
         const redoAction = makeAction("fa-arrow-rotate-right", "下一步", () => api.redo());
+        const tabletHistoryControls = document.createElement("nav");
+        tabletHistoryControls.className = "tablet-history-controls";
+        tabletHistoryControls.setAttribute("aria-label", "平板版歷史紀錄工具");
+        const tabletUndoAction = makeAction("fa-arrow-rotate-left", "上一步", () => api.undo());
+        const tabletRedoAction = makeAction("fa-arrow-rotate-right", "下一步", () => api.redo());
+        tabletHistoryControls.append(tabletUndoAction, tabletRedoAction);
         const syncHistoryActions = (state = api.historyState()) => {
             undoAction.disabled = !state.canUndo;
             redoAction.disabled = !state.canRedo;
+            tabletUndoAction.disabled = !state.canUndo;
+            tabletRedoAction.disabled = !state.canRedo;
         };
         window.addEventListener("tbcPuzzleHistoryChange", (event) => syncHistoryActions(event.detail));
         syncHistoryActions();
@@ -132,8 +153,12 @@
         desktopTools.forEach(([selector, icon, label]) => {
             const action = makeAction(icon, label, () => {
                 closeMoreMenu();
-                document.querySelector(selector)?.click();
-            });
+                // iPad Safari 對連續轉發的合成 click 較嚴格；匯入時直接開啟檔案欄位。
+                const target = selector === "#import-project-button"
+                    ? document.querySelector("#import-project-input")
+                    : document.querySelector(selector);
+                target?.click();
+            }, { persistentLabel: true });
             moreMenu.append(action);
         });
         moreButton = makeAction("fa-ellipsis", "更多工具", () => {
@@ -146,7 +171,7 @@
         moreButton.setAttribute("aria-expanded", "false");
 
         toolbar.append(drawerButton, undoAction, redoAction, layersButton, multiSelectButton, trashButton, moreMenu, moreButton);
-        game.append(toolbar);
+        game.append(toolbar, tabletHistoryControls);
 
         const touchPair = () => [...touchPoints.values()].slice(0, 2);
         const distanceBetween = ([first, second]) => Math.hypot(first.x - second.x, first.y - second.y);

@@ -1,4 +1,6 @@
 /* Touch layout only. Desktop keeps using index.css without these overrides. */
+.tablet-history-controls { display: none; }
+
 @media (max-width: 700px) and (pointer: coarse) {
     html,
     body {
@@ -84,15 +86,21 @@
     }
 
     .layers-panel {
-        display: none;
-        top: 6px;
-        right: 6px;
-        bottom: 8px;
+        position: fixed;
+        top: 68px;
+        right: 0;
+        bottom: 74px;
+        display: flex;
         width: 104px;
         padding: 7px 5px;
         border-radius: 10px;
         background: color-mix(in srgb, var(--panel-bg) 94%, transparent);
         box-shadow: var(--shadow);
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transform: translateX(calc(100% + env(safe-area-inset-right)));
+        transition: transform 220ms ease, opacity 180ms ease, visibility 0s linear 220ms;
         -webkit-mask-image: none;
         mask-image: none;
     }
@@ -112,7 +120,11 @@
     }
 
     .rounded-box.is-mobile-layers-open .layers-panel {
-        display: flex;
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transform: translateX(0);
+        transition: transform 220ms ease, opacity 180ms ease;
     }
 
     .layers-panel .unlock-all-layers {
@@ -131,7 +143,7 @@
         width: auto;
         height: min(62dvh, 540px);
         min-height: 0;
-        padding-bottom: 60px;
+        padding-bottom: 0;
         border: 2px solid var(--border);
         border-bottom: 0;
         border-radius: 18px 18px 0 0;
@@ -142,6 +154,10 @@
 
     #game.is-mobile-panel-open .side-panel {
         transform: translateY(0);
+    }
+
+    #game.is-mobile-panel-open .mobile-toolbar {
+        bottom: calc(min(62dvh, 540px) + 8px);
     }
 
     .mode-tabs {
@@ -168,7 +184,7 @@
         box-sizing: border-box;
         height: 100%;
         min-height: 0;
-        padding: 28px 18px 118px;
+        padding: 28px 18px 20px;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
     }
@@ -279,11 +295,12 @@
         gap: 3px;
         padding: 4px;
         overflow: visible;
-        border: 1px solid var(--border);
+        border: 2px solid var(--border);
         border-radius: 14px;
         background: color-mix(in srgb, var(--panel-bg) 94%, transparent);
         box-shadow: var(--shadow);
         scrollbar-width: none;
+        transition: bottom 220ms ease;
     }
 
     .mobile-toolbar::-webkit-scrollbar { display: none; }
@@ -317,6 +334,7 @@
     }
 
     .mobile-action {
+        position: relative;
         display: grid;
         width: 42px;
         min-width: 42px;
@@ -329,6 +347,15 @@
         color: var(--text);
         cursor: pointer;
         font-size: 1.1rem;
+    }
+
+    /* 「更多」展開時固定顯示與桌面 hover 相同的工具提示。 */
+    .mobile-more-menu .mobile-more-tooltip {
+        top: 50%;
+        right: calc(100% + 10px);
+        left: auto;
+        opacity: 1;
+        transform: translate(0, -50%);
     }
 
     .mobile-action:active,
@@ -392,7 +419,7 @@
 }
 
 /* 平板保留雙欄工作區，僅放大觸控目標並收斂右側面板。 */
-@media (min-width: 701px) and (max-width: 1024px) and (pointer: coarse) {
+@media (min-width: 701px) and (pointer: coarse) {
     :root {
         --sidebar-width: clamp(238px, 27vw, 296px);
         --toolbar-gap: 14px;
@@ -403,6 +430,46 @@
 
     /* 平板使用桌面雙欄與左側工具列；底部手機工具列只建立手勢事件、不顯示。 */
     .mobile-toolbar { display: none; }
+
+    .tablet-history-controls {
+        position: absolute;
+        top: 86px;
+        right: calc(var(--sidebar-width) + 28px);
+        z-index: 4;
+        display: flex;
+        gap: 6px;
+    }
+
+    .tablet-history-controls .mobile-action {
+        display: grid;
+        width: 42px;
+        min-width: 42px;
+        height: 40px;
+        padding: 0;
+        place-items: center;
+        border: 0;
+        border-radius: 10px;
+        background: transparent;
+        color: var(--text);
+        cursor: pointer;
+        font-size: 1.1rem;
+    }
+
+    .tablet-history-controls .mobile-action:active,
+    .tablet-history-controls .mobile-action.is-active {
+        background: var(--button-hover-bg);
+        transform: scale(0.94);
+    }
+
+    .tablet-history-controls .mobile-action:disabled {
+        cursor: default;
+        opacity: 0.32;
+        transform: none;
+    }
+
+    #game:has(#layers-panel:not([hidden])) .tablet-history-controls {
+        right: calc(var(--sidebar-width) + 156px);
+    }
 
     .github-logo-link { top: 16px; left: 14px; height: 44px; }
     .top-bar { top: 18px; height: 40px; }
@@ -452,9 +519,110 @@
 }
 
 /* 手指使用圖層欄：避免瀏覽器攔走單一物件的拖曳。 */
-@media (max-width: 1024px) and (pointer: coarse) {
+@media (pointer: coarse) {
     .layers-panel .layer-row,
     .layers-panel .layer-group-header { touch-action: none; }
+}
+
+/* Chrome 裝置模擬與 iPad 桌面版 UA 未回報 coarse pointer 時，仍採用平板觸控控制。 */
+@media (min-width: 701px) {
+    html.is-apple-tablet {
+        --sidebar-width: clamp(238px, 27vw, 296px);
+        --toolbar-gap: 14px;
+    }
+
+    html.is-apple-tablet .game-column { padding: 76px 14px 14px; }
+    html.is-apple-tablet .rounded-box { padding: 16px; border-radius: 16px; touch-action: none; }
+    html.is-apple-tablet .mobile-toolbar { display: none; }
+    html.is-apple-tablet .github-logo-link { top: 16px; left: 14px; height: 44px; }
+    html.is-apple-tablet .top-bar { top: 18px; height: 40px; }
+    html.is-apple-tablet .top-actions { gap: 3px; }
+    html.is-apple-tablet .sound-controls { gap: 2px; }
+    html.is-apple-tablet .top-actions .icon-button { width: 38px; height: 40px; font-size: 1.25rem; }
+    html.is-apple-tablet #volume-slider { width: 56px; height: 40px; padding: 0 4px; }
+    html.is-apple-tablet .undo-button { top: 86px; left: 28px; width: 46px; height: 46px; }
+
+    html.is-apple-tablet .layer-controls { top: 86px; right: auto; left: 28px; width: 52px; flex-direction: column; align-items: center; gap: 6px; }
+    html.is-apple-tablet .layer-controls .layer-control-row {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 5px;
+        border-radius: 13px;
+        background: color-mix(in srgb, var(--text) 10%, transparent);
+    }
+    html.is-apple-tablet .layer-controls button .icon-tooltip { top: 50%; left: calc(100% + 10px); transform: translate(-5px, -50%); }
+    html.is-apple-tablet .layer-controls button:not(:disabled):hover .icon-tooltip,
+    html.is-apple-tablet .layer-controls button:not(:disabled):focus-visible .icon-tooltip { transform: translate(0, -50%); }
+    html.is-apple-tablet .layer-controls button { width: 42px; height: 42px; font-size: 0.92rem; }
+    html.is-apple-tablet .layers-panel { top: 10px; right: 8px; bottom: 8px; width: 124px; gap: 7px; padding: 7px; }
+    html.is-apple-tablet .layer-row { min-height: 60px; padding: 5px 30px 5px 5px; }
+    html.is-apple-tablet .layer-row > img { width: 62px; height: 48px; }
+    html.is-apple-tablet .layer-visibility,
+    html.is-apple-tablet .layer-lock { width: 26px; height: 26px; }
+    html.is-apple-tablet .unlock-all-layers { min-height: 38px; font-size: 0.72rem; }
+
+    html.is-apple-tablet .mode-tab { min-height: 48px; font-size: 0.94rem; }
+    html.is-apple-tablet .unit-panel { padding: 18px 12px; }
+    html.is-apple-tablet .unit-panel label { margin-bottom: 8px; font-size: 0.92rem; }
+    html.is-apple-tablet .unit-panel select,
+    html.is-apple-tablet .unit-search input { min-height: 48px; font-size: 1rem; }
+    html.is-apple-tablet .unit-random-button { min-height: 48px; }
+    html.is-apple-tablet .unit-results { max-height: min(330px, 46dvh); }
+    html.is-apple-tablet .unit-result { min-height: 46px; }
+    html.is-apple-tablet .parts-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    html.is-apple-tablet .part-card { min-height: 98px; padding: 6px; touch-action: manipulation; }
+    html.is-apple-tablet .part-card img { max-height: 84px; }
+    html.is-apple-tablet .score-mode-panel { height: calc(100dvh - 52px); padding: 22px 14px; }
+    html.is-apple-tablet .score-time-button,
+    html.is-apple-tablet .score-question-mode,
+    html.is-apple-tablet .score-fixed-rank,
+    html.is-apple-tablet .rank-option { min-height: 46px; font-size: 0.95rem; }
+    html.is-apple-tablet .score-start-button { min-height: 48px; font-size: 1rem; }
+    html.is-apple-tablet .score-cancel-button,
+    html.is-apple-tablet .score-grade-button { min-height: 44px; font-size: 0.86rem; }
+    html.is-apple-tablet .score-round-scroll { padding-top: 20px; }
+
+    html.is-apple-tablet .tablet-history-controls {
+        position: absolute;
+        top: 86px;
+        right: calc(var(--sidebar-width) + 28px);
+        z-index: 4;
+        display: flex;
+        gap: 6px;
+    }
+
+    html.is-apple-tablet .tablet-history-controls .mobile-action {
+        display: grid;
+        width: 42px;
+        min-width: 42px;
+        height: 40px;
+        padding: 0;
+        place-items: center;
+        border: 0;
+        border-radius: 10px;
+        background: transparent;
+        color: var(--text);
+        cursor: pointer;
+        font-size: 1.1rem;
+    }
+
+    html.is-apple-tablet .tablet-history-controls .mobile-action:active {
+        background: var(--button-hover-bg);
+        transform: scale(0.94);
+    }
+
+    html.is-apple-tablet .tablet-history-controls .mobile-action:disabled {
+        cursor: default;
+        opacity: 0.32;
+    }
+
+    html.is-apple-tablet #game:has(#layers-panel:not([hidden])) .tablet-history-controls {
+        right: calc(var(--sidebar-width) + 156px);
+    }
+
+    html.is-apple-tablet .layers-panel .layer-row,
+    html.is-apple-tablet .layers-panel .layer-group-header { touch-action: none; }
 }
 
 @media (max-width: 390px) and (pointer: coarse) {

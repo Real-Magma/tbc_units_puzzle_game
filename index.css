@@ -125,7 +125,11 @@ html.is-score-result-open .score-result-overlay {
     z-index: 3;
     display: block;
     height: 58px;
+    padding: 0;
+    border: 0;
     border-radius: 8px;
+    background: transparent;
+    cursor: pointer;
     transition: transform 160ms ease, filter 160ms ease;
 }
 

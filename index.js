@@ -42,6 +42,7 @@ const flipHorizontalButton = document.querySelector("#flip-horizontal-button");
 const lockLayerButton = document.querySelector("#lock-layer-button");
 const hideLayersButton = document.querySelector("#hide-layers-button");
 const showLayersButton = document.querySelector("#show-layers-button");
+const focusLayerButton = document.querySelector("#focus-layer-button");
 const importProjectButton = document.querySelector("#import-project-button");
 const importProjectInput = document.querySelector("#import-project-input");
 const saveProjectButton = document.querySelector("#save-project-button");
@@ -1934,6 +1935,23 @@ function setLayerVisibility(parts, hidden) {
     setSelectedParts(remaining, remaining.includes(selectedPart) ? selectedPart : remaining.at(-1));
 }
 
+function focusCanvasOnParts(parts) {
+    const bounds = parts
+        .filter((part) => part?.isConnected)
+        .map(selectionBoundsInWorld)
+        .filter(Boolean);
+    if (!bounds.length) return;
+
+    const left = Math.min(...bounds.map((bound) => bound.left));
+    const top = Math.min(...bounds.map((bound) => bound.top));
+    const right = Math.max(...bounds.map((bound) => bound.right));
+    const bottom = Math.max(...bounds.map((bound) => bound.bottom));
+    viewX = canvas.clientWidth / 2 - ((left + right) / 2) * viewScale;
+    viewY = canvas.clientHeight / 2 - ((top + bottom) / 2) * viewScale;
+    updateViewTransform();
+    updateSelectionFrame();
+}
+
 function flipPartHorizontally(part) {
     if (!part?.isConnected) return;
     const from = positionOf(part);
@@ -2727,13 +2745,27 @@ async function saveLayerProject() {
     downloadBlob(blob, fileName);
 }
 
+function readLayerProjectText(file) {
+    if (typeof file.text === "function") return file.text();
+    return new Promise((resolve, reject) => {
+        if (typeof FileReader === "undefined") {
+            reject(new Error("此瀏覽器不支援讀取匯入檔案"));
+            return;
+        }
+        const reader = new FileReader();
+        reader.addEventListener("load", () => resolve(String(reader.result ?? "")), { once: true });
+        reader.addEventListener("error", () => reject(reader.error ?? new Error("讀取檔案失敗")), { once: true });
+        reader.readAsText(file);
+    });
+}
+
 async function importLayerProject(event) {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
 
     try {
-        const project = JSON.parse(await file.text());
+        const project = JSON.parse(await readLayerProjectText(file));
         if (project?.format !== "tbc-units-puzzle" || !Array.isArray(project.layers)) throw new Error("檔案格式不正確");
         const layers = project.layers.filter((layer) => typeof layer?.src === "string" && layer.src.length > 0);
 
@@ -4281,6 +4313,29 @@ updateUndoButton();
 makeSelectedGroupRotatable();
 makeSelectionScalable();
 
+let lastCanvasSize = { width: canvas.clientWidth, height: canvas.clientHeight };
+let pendingCanvasResize = 0;
+function keepCanvasViewStableAfterResize() {
+    pendingCanvasResize = 0;
+    const nextSize = { width: canvas.clientWidth, height: canvas.clientHeight };
+    if (nextSize.width <= 0 || nextSize.height <= 0) return;
+    if (lastCanvasSize.width > 0 && lastCanvasSize.height > 0) {
+        // 旋轉平板時維持同一個世界中心，避免畫面與選取框沿用舊的長寬座標。
+        viewX += (nextSize.width - lastCanvasSize.width) / 2;
+        viewY += (nextSize.height - lastCanvasSize.height) / 2;
+        updateViewTransform();
+        updateSelectionFrame();
+    }
+    lastCanvasSize = nextSize;
+}
+function scheduleCanvasResizeSync() {
+    if (pendingCanvasResize) return;
+    pendingCanvasResize = window.requestAnimationFrame(keepCanvasViewStableAfterResize);
+}
+if ("ResizeObserver" in window) new ResizeObserver(scheduleCanvasResizeSync).observe(canvas);
+window.addEventListener("resize", scheduleCanvasResizeSync);
+window.addEventListener("orientationchange", scheduleCanvasResizeSync);
+
 normalModeTab.addEventListener("click", () => setActiveMode("normal"));
 scoreModeTab.addEventListener("click", () => setActiveMode("score"));
 scoreTimeButtons.forEach((button) => {
@@ -4471,6 +4526,10 @@ hideLayersButton.addEventListener("click", () => {
 });
 showLayersButton.addEventListener("click", () => {
     setLayerVisibility(contextMenuParts(), false);
+    closeLayerContextMenu();
+});
+focusLayerButton.addEventListener("click", () => {
+    focusCanvasOnParts(contextMenuParts());
     closeLayerContextMenu();
 });
 importProjectButton.addEventListener("click", () => importProjectInput.click());
