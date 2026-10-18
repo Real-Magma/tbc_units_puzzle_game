@@ -4532,7 +4532,6 @@ focusLayerButton.addEventListener("click", () => {
     focusCanvasOnParts(contextMenuParts());
     closeLayerContextMenu();
 });
-importProjectButton.addEventListener("click", () => importProjectInput.click());
 importProjectInput.addEventListener("change", importLayerProject);
 saveProjectButton.addEventListener("click", saveLayerProject);
 if (pngExportEnabled && exportPngButton) exportPngButton.addEventListener("click", exportTransparentPng);

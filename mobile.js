@@ -28,6 +28,17 @@
         return button;
     }
 
+    function makeImportAction(label, action, { persistentLabel = false } = {}) {
+        const control = document.createElement("label");
+        control.className = "mobile-action file-import-action";
+        control.htmlFor = "import-project-input";
+        control.setAttribute("aria-label", label);
+        control.title = label;
+        control.innerHTML = `<i class="fa-solid fa-folder-open" aria-hidden="true"></i>${persistentLabel ? `<span class="icon-tooltip mobile-more-tooltip" aria-hidden="true">${label}</span>` : ""}`;
+        control.addEventListener("click", action);
+        return control;
+    }
+
     function initializeMobileControls() {
         if (initialized || (!touchLayout.matches && !isAppleTablet) || !window.tbcPuzzleMobile) return;
         initialized = true;
@@ -151,13 +162,11 @@
             moreButton?.setAttribute("aria-expanded", "false");
         };
         desktopTools.forEach(([selector, icon, label]) => {
-            const action = makeAction(icon, label, () => {
+            const action = selector === "#import-project-button"
+                ? makeImportAction(label, closeMoreMenu, { persistentLabel: true })
+                : makeAction(icon, label, () => {
                 closeMoreMenu();
-                // iPad Safari 對連續轉發的合成 click 較嚴格；匯入時直接開啟檔案欄位。
-                const target = selector === "#import-project-button"
-                    ? document.querySelector("#import-project-input")
-                    : document.querySelector(selector);
-                target?.click();
+                document.querySelector(selector)?.click();
             }, { persistentLabel: true });
             moreMenu.append(action);
         });

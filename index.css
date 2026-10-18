@@ -846,7 +846,7 @@ html[data-theme="dark"] .rounded-box.is-rotating {
     background: color-mix(in srgb, var(--text) 10%, transparent);
 }
 
-.layer-controls button {
+.layer-controls .layer-button {
     position: relative;
     display: grid;
     width: 36px;
@@ -862,36 +862,49 @@ html[data-theme="dark"] .rounded-box.is-rotating {
     transition: transform 150ms ease, background-color 150ms ease;
 }
 
-.layer-controls button[hidden] { display: none !important; }
+.file-import-button > input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+}
 
-.layer-controls button:not(:disabled):hover {
+.layer-controls .layer-button[hidden] { display: none !important; }
+
+.layer-controls .layer-button:not(:disabled):hover,
+.layer-controls .file-import-button:focus-within {
     transform: translateY(-2px);
 }
 
-.layer-controls button:not(:disabled):hover .icon-tooltip,
-.layer-controls button:not(:disabled):focus-visible .icon-tooltip {
+.layer-controls .layer-button:not(:disabled):hover .icon-tooltip,
+.layer-controls .layer-button:not(:disabled):focus-visible .icon-tooltip,
+.layer-controls .file-import-button:focus-within .icon-tooltip {
     opacity: 1;
     transform: translate(-50%, 0);
 }
 
 /* 左側直列工具列的提示文字固定向畫布右側展開。 */
-.layer-controls button .icon-tooltip {
+.layer-controls .layer-button .icon-tooltip {
     top: 50%;
     left: calc(100% + 10px);
     transform: translate(-5px, -50%);
 }
 
-.layer-controls button:not(:disabled):hover .icon-tooltip,
-.layer-controls button:not(:disabled):focus-visible .icon-tooltip {
+.layer-controls .layer-button:not(:disabled):hover .icon-tooltip,
+.layer-controls .layer-button:not(:disabled):focus-visible .icon-tooltip,
+.layer-controls .file-import-button:focus-within .icon-tooltip {
     transform: translate(0, -50%);
 }
 
-.layer-controls button:disabled {
+.layer-controls .layer-button:disabled {
     cursor: default;
     opacity: 0.4;
 }
 
-.layer-controls button.is-action-complete {
+.layer-controls .layer-button.is-action-complete {
     border-color: #16a34a;
     background: color-mix(in srgb, #16a34a 18%, var(--panel-bg));
     color: #16a34a;
@@ -1157,7 +1170,7 @@ html.is-score-round-active .trash-zone {
     animation: trash-cleared 420ms ease-in-out;
 }
 
-.layer-controls button.is-layer-jump { animation: layer-jump-flash 360ms ease-out; }
+.layer-controls .layer-button.is-layer-jump { animation: layer-jump-flash 360ms ease-out; }
 
 @keyframes trash-cleared {
     0%, 100% { transform: translateX(0) scale(1); }

@@ -278,7 +278,7 @@
         touch-action: manipulation;
     }
 
-    .part-card img {
+    .part-card > img {
         max-height: 58px;
     }
 
@@ -489,10 +489,11 @@
         border-radius: 13px;
         background: color-mix(in srgb, var(--text) 10%, transparent);
     }
-    .layer-controls button .icon-tooltip { top: 50%; left: calc(100% + 10px); transform: translate(-5px, -50%); }
-    .layer-controls button:not(:disabled):hover .icon-tooltip,
-    .layer-controls button:not(:disabled):focus-visible .icon-tooltip { transform: translate(0, -50%); }
-    .layer-controls button { width: 42px; height: 42px; font-size: 0.92rem; }
+    .layer-controls .layer-button .icon-tooltip { top: 50%; left: calc(100% + 10px); transform: translate(-5px, -50%); }
+    .layer-controls .layer-button:not(:disabled):hover .icon-tooltip,
+    .layer-controls .layer-button:not(:disabled):focus-visible .icon-tooltip,
+    .layer-controls .file-import-button:focus-within .icon-tooltip { transform: translate(0, -50%); }
+    .layer-controls .layer-button { width: 42px; height: 42px; font-size: 0.92rem; }
     .layers-panel { top: 10px; right: 8px; bottom: 8px; width: 124px; gap: 7px; padding: 7px; }
     .layer-row { min-height: 60px; padding: 5px 30px 5px 5px; }
     .layer-row > img { width: 62px; height: 48px; }
@@ -509,7 +510,7 @@
 
     .parts-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
     .part-card { min-height: 98px; padding: 6px; touch-action: manipulation; }
-    .part-card img { max-height: 84px; }
+    .part-card > img { max-height: 84px; }
 
     .score-mode-panel { height: calc(100dvh - 52px); padding: 22px 14px; }
     .score-time-button, .score-question-mode, .score-fixed-rank, .rank-option { min-height: 46px; font-size: 0.95rem; }
@@ -551,10 +552,11 @@
         border-radius: 13px;
         background: color-mix(in srgb, var(--text) 10%, transparent);
     }
-    html.is-apple-tablet .layer-controls button .icon-tooltip { top: 50%; left: calc(100% + 10px); transform: translate(-5px, -50%); }
-    html.is-apple-tablet .layer-controls button:not(:disabled):hover .icon-tooltip,
-    html.is-apple-tablet .layer-controls button:not(:disabled):focus-visible .icon-tooltip { transform: translate(0, -50%); }
-    html.is-apple-tablet .layer-controls button { width: 42px; height: 42px; font-size: 0.92rem; }
+    html.is-apple-tablet .layer-controls .layer-button .icon-tooltip { top: 50%; left: calc(100% + 10px); transform: translate(-5px, -50%); }
+    html.is-apple-tablet .layer-controls .layer-button:not(:disabled):hover .icon-tooltip,
+    html.is-apple-tablet .layer-controls .layer-button:not(:disabled):focus-visible .icon-tooltip,
+    html.is-apple-tablet .layer-controls .file-import-button:focus-within .icon-tooltip { transform: translate(0, -50%); }
+    html.is-apple-tablet .layer-controls .layer-button { width: 42px; height: 42px; font-size: 0.92rem; }
     html.is-apple-tablet .layers-panel { top: 10px; right: 8px; bottom: 8px; width: 124px; gap: 7px; padding: 7px; }
     html.is-apple-tablet .layer-row { min-height: 60px; padding: 5px 30px 5px 5px; }
     html.is-apple-tablet .layer-row > img { width: 62px; height: 48px; }
@@ -572,7 +574,7 @@
     html.is-apple-tablet .unit-result { min-height: 46px; }
     html.is-apple-tablet .parts-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
     html.is-apple-tablet .part-card { min-height: 98px; padding: 6px; touch-action: manipulation; }
-    html.is-apple-tablet .part-card img { max-height: 84px; }
+    html.is-apple-tablet .part-card > img { max-height: 84px; }
     html.is-apple-tablet .score-mode-panel { height: calc(100dvh - 52px); padding: 22px 14px; }
     html.is-apple-tablet .score-time-button,
     html.is-apple-tablet .score-question-mode,

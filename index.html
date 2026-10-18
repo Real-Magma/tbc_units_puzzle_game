@@ -40,10 +40,11 @@
                         <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
                         <span class="icon-tooltip" aria-hidden="true">儲存圖層</span>
                     </button>
-                    <button id="import-project-button" class="layer-button" type="button" aria-label="匯入圖層專案">
+                    <label id="import-project-button" class="layer-button file-import-button" aria-label="匯入圖層專案">
+                        <input id="import-project-input" type="file" accept=".tbc-puzzle,.json,application/json" aria-label="選擇圖層專案檔案">
                         <i class="fa-solid fa-folder-open" aria-hidden="true"></i>
                         <span class="icon-tooltip" aria-hidden="true">匯入圖層</span>
-                    </button>
+                    </label>
                 </div>
                 <div class="layer-control-row">
                     <button id="copy-canvas-image-button" class="layer-button" type="button" aria-label="複製目前主畫面圖片">
@@ -71,7 +72,6 @@
                                 </div>
                             </div>
                             <div id="marquee-selection" class="marquee-selection" aria-hidden="true"></div>
-                            <input id="import-project-input" class="sr-only" type="file" accept=".tbc-puzzle,.json,application/json">
                             <aside id="layers-panel" class="layers-panel" aria-label="圖層面板"></aside>
                             <div id="layer-context-menu" class="layer-context-menu" role="menu" hidden>
                                 <button id="merge-layers-button" type="button" role="menuitem"><i class="fa-solid fa-object-group" aria-hidden="true"></i><span>群組</span></button>
