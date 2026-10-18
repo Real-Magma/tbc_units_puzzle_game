@@ -74,14 +74,14 @@
         right: auto;
         left: 18px;
         display: flex;
-        width: 40px;
+        width: 36px;
         flex-direction: column;
         align-items: center;
         gap: 0;
     }
     html.is-score-round-active .layer-controls > #view-home-button {
-        width: 40px;
-        height: 40px;
+        width: 36px;
+        height: 36px;
         font-size: 0.85rem;
     }
 
@@ -171,7 +171,8 @@
 
     .unit-panel { padding: 18px 12px 14px; }
 
-    .score-mode-panel { height: calc(min(62dvh, 540px) - 74px); min-height: 0; padding: 20px 12px 14px; }
+    /* 評分面板不再替已移除的底部工具列預留空白。 */
+    .score-mode-panel { height: calc(min(62dvh, 540px) - 46px); min-height: 0; padding: 20px 12px 14px; }
     .score-setup { height: 100%; min-height: 0; }
     .score-time-button { min-height: 44px; font-size: 1rem; }
     .score-running { height: 100%; min-height: 0; }
@@ -180,6 +181,60 @@
     .score-running { overflow: hidden; }
     .score-running-fixed { position: relative; z-index: 1; flex: 0 0 auto; }
     .score-round-scroll { touch-action: pan-y; overscroll-behavior: contain; }
+
+    /* 作答時仍保留手機工具列；評分控制改由主畫面上方的獨立控制列呈現。 */
+    .score-mobile-controls {
+        position: fixed;
+        inset: 0;
+        z-index: 45;
+        pointer-events: none;
+    }
+
+    .score-mobile-controls[hidden] { display: none; }
+
+    .score-mobile-controls .score-running-fixed {
+        display: contents;
+    }
+
+    .score-mobile-controls .score-round-actions {
+        position: fixed;
+        top: 72px;
+        left: 60px;
+        display: grid;
+        grid-template-columns: repeat(2, 36px);
+        gap: 6px;
+        pointer-events: auto;
+    }
+
+    .score-mobile-controls .score-cancel-button,
+    .score-mobile-controls .score-grade-button {
+        width: 36px;
+        min-width: 36px;
+        height: 36px;
+        min-height: 36px;
+        padding: 0;
+        border-radius: 50%;
+        font-size: 0;
+    }
+
+    .score-mobile-controls .score-cancel-button i,
+    .score-mobile-controls .score-grade-button i {
+        display: block;
+        font-size: .92rem;
+        line-height: 1;
+        transform: translate(2.5px, 1px);
+    }
+
+    .score-mobile-controls .score-timer-window {
+        position: fixed;
+        top: 72px;
+        left: 50%;
+        margin: 0;
+        transform: translateX(-50%);
+        pointer-events: auto;
+    }
+
+    .score-mobile-controls .score-countdown { font-size: 1.5rem; }
     .score-result-panel {
         box-sizing: border-box;
         height: 100%;
@@ -368,6 +423,26 @@
         cursor: default;
         opacity: 0.32;
         transform: none;
+    }
+
+    /* 評分作答時，「更多」內的桌面工具不可使用。 */
+    .mobile-action.is-score-locked {
+        position: relative;
+        opacity: 0.5;
+    }
+
+    .mobile-action.is-score-locked::after {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        color: #d73a49;
+        content: "\f05e";
+        font-family: "Font Awesome 6 Free";
+        font-size: 2rem;
+        font-weight: 900;
+        pointer-events: none;
+        transform: translateY(-1px);
     }
 
     .mobile-action.is-clearing {

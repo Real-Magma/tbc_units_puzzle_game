@@ -67,6 +67,8 @@ const scoreSetup = document.querySelector("#score-setup");
 const sidePanel = document.querySelector(".side-panel");
 const scoreSetupScroll = document.querySelector(".score-setup-scroll");
 const scoreRunning = document.querySelector("#score-running");
+const scoreRunningFixed = document.querySelector(".score-running-fixed");
+const scoreMobileControls = document.querySelector("#score-mobile-controls");
 const scoreRoundScroll = document.querySelector(".score-round-scroll");
 const scoreResultPanel = document.querySelector("#score-result-panel");
 const scoreTimeButtons = [...document.querySelectorAll(".score-time-button")];
@@ -100,6 +102,7 @@ const scoreResultBreakdown = document.querySelector("#score-result-breakdown");
 const scoreResultHistoryButton = document.querySelector("#score-result-history-button");
 const scoreResultHistoryPreview = document.querySelector("#score-result-history-preview");
 const scoreRetryButton = document.querySelector("#score-retry-button");
+const mobileScoreControlsMedia = window.matchMedia("(max-width: 700px) and (pointer: coarse)");
 
 if (exportPngButton) exportPngButton.hidden = !pngExportEnabled;
 
@@ -143,6 +146,8 @@ let scoreRoundInputLocked = false;
 let scoreResultCloseTimer = null;
 let scoreResultOpenedAt = 0;
 let scoreResultRevealVersion = 0;
+let scoreActionConfirmation = null;
+let scoreActionConfirmationTimer = null;
 let scoreAnswerRenderVersion = 0;
 let scoreHistoryStart = null;
 let latestScoreResultView = null;
@@ -300,6 +305,9 @@ function setActiveMode(mode) {
 function setScoreRoundCanvasState(isActive) {
     isScoreRoundCanvasActive = isActive;
     root.classList.toggle("is-score-round-active", isActive);
+    window.dispatchEvent(new CustomEvent("tbcPuzzleScoreRoundStateChange", {
+        detail: { active: isActive },
+    }));
     canvas.classList.toggle("is-score-round", isActive);
     importProjectButton.hidden = isActive;
     saveProjectButton.hidden = isActive;
@@ -318,6 +326,53 @@ function setScoreRoundCanvasState(isActive) {
 
     renderLayersPanel();
     updateSelectionFrame();
+    refreshMobileScoreControls();
+}
+
+function refreshMobileScoreControls() {
+    if (!scoreRunningFixed || !scoreMobileControls) return;
+    const shouldFloat = mobileScoreControlsMedia.matches
+        && isScoreRoundCanvasActive
+        && !scoreRunning.hidden;
+
+    if (shouldFloat) {
+        scoreMobileControls.append(scoreRunningFixed);
+        scoreMobileControls.hidden = false;
+        return;
+    }
+
+    scoreRunning.prepend(scoreRunningFixed);
+    scoreMobileControls.hidden = true;
+}
+
+mobileScoreControlsMedia.addEventListener("change", refreshMobileScoreControls);
+
+function resetScoreActionConfirmation() {
+    window.clearTimeout(scoreActionConfirmationTimer);
+    scoreActionConfirmationTimer = null;
+    scoreActionConfirmation = null;
+    [scoreCancelButton, scoreGradeButton].forEach((button) => {
+        button.classList.remove("is-confirming");
+        button.removeAttribute("aria-pressed");
+        button.removeAttribute("aria-label");
+    });
+}
+
+function requestScoreActionConfirmation(action) {
+    if (scoreRunning.hidden || scoreRoundFinished) return;
+    if (scoreActionConfirmation === action) {
+        resetScoreActionConfirmation();
+        finishScoreRound(action === "grade");
+        return;
+    }
+
+    resetScoreActionConfirmation();
+    scoreActionConfirmation = action;
+    const button = action === "cancel" ? scoreCancelButton : scoreGradeButton;
+    button.classList.add("is-confirming");
+    button.setAttribute("aria-pressed", "true");
+    button.setAttribute("aria-label", action === "cancel" ? "確認取消，再按一次" : "確認評分，再按一次");
+    scoreActionConfirmationTimer = window.setTimeout(resetScoreActionConfirmation, 3000);
 }
 
 function playScoreStartFlash() {
@@ -1289,6 +1344,7 @@ function resetScorePanelScrollPositions() {
 }
 
 async function startScoreRound() {
+    resetScoreActionConfirmation();
     let target = null;
     scoreStartButton.disabled = true;
     resetScoreImageExports();
@@ -1336,6 +1392,7 @@ async function startScoreRound() {
         scoreActiveRank.value = target.rank;
         scoreSetup.hidden = true;
         scoreRunning.hidden = false;
+        refreshMobileScoreControls();
         resetScorePanelScrollPositions();
         requestAnimationFrame(resetScorePanelScrollPositions);
         normalModeTab.disabled = true;
@@ -1365,6 +1422,7 @@ async function startScoreRound() {
 }
 
 async function finishScoreRound(finished = false, { clearCanvas = true } = {}) {
+    resetScoreActionConfirmation();
     window.clearInterval(scoreTimerId);
     scoreTimerId = null;
     scoreRoundFinished = finished;
@@ -1377,6 +1435,10 @@ async function finishScoreRound(finished = false, { clearCanvas = true } = {}) {
         scoreGradeButton.disabled = true;
         scoreRoundStartedAt = 0;
         scoreRunning.hidden = true;
+        refreshMobileScoreControls();
+        window.dispatchEvent(new CustomEvent("tbcPuzzleScoreRoundStateChange", {
+            detail: { active: false }
+        }));
         scoreSetup.hidden = true;
         scoreResultPanel.hidden = false;
         scoreResultPanel.classList.add("is-summary-pending");
@@ -1389,6 +1451,7 @@ async function finishScoreRound(finished = false, { clearCanvas = true } = {}) {
     scoreRoundTarget = null;
     scoreRoundTemplate = null;
     scoreRunning.hidden = true;
+    refreshMobileScoreControls();
     scoreSetup.hidden = false;
     resetScorePanelScrollPositions();
     scoreResultPanel.hidden = true;
@@ -4368,8 +4431,8 @@ rankButtons.forEach((button) => button.addEventListener("click", () => {
     renderParts();
 }));
 scoreStartButton.addEventListener("click", startScoreRound);
-scoreCancelButton.addEventListener("click", () => finishScoreRound(false));
-scoreGradeButton.addEventListener("click", () => finishScoreRound(true));
+scoreCancelButton.addEventListener("click", () => requestScoreActionConfirmation("cancel"));
+scoreGradeButton.addEventListener("click", () => requestScoreActionConfirmation("grade"));
 scoreRetryButton.addEventListener("click", () => {
     closeScoreResultOverlay();
     finishScoreRound(false, { clearCanvas: false });

@@ -178,6 +178,15 @@
         });
         moreButton.setAttribute("aria-controls", "mobile-more-menu");
         moreButton.setAttribute("aria-expanded", "false");
+        const setMoreButtonScoreLock = (isLocked) => {
+            moreButton.disabled = isLocked;
+            moreButton.classList.toggle("is-score-locked", isLocked);
+            if (isLocked) closeMoreMenu();
+        };
+        window.addEventListener("tbcPuzzleScoreRoundStateChange", (event) => {
+            setMoreButtonScoreLock(Boolean(event.detail?.active));
+        });
+        setMoreButtonScoreLock(document.documentElement.classList.contains("is-score-round-active"));
 
         toolbar.append(drawerButton, undoAction, redoAction, layersButton, multiSelectButton, trashButton, moreMenu, moreButton);
         game.append(toolbar, tabletHistoryControls);
