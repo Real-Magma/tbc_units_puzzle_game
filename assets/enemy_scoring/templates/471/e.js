@@ -1,0 +1,1 @@
+window.ENEMY_SCORE_TEMPLATES ??= {};window.ENEMY_SCORE_TEMPLATES["471/e"]={"version":2,"unitId":"471","rank":"e","frame":0,"parts":[{"modelIndex":1,"cropIndex":0,"x":-46.54,"y":-78.76,"angle":0.0,"scaleX":1.79,"scaleY":1.79,"flipX":1,"flipY":1,"z":4,"opacity":1.0}],"bounds":{"minX":-46.54,"maxX":-46.54,"minY":-78.76,"maxY":-78.76}};

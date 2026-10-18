@@ -95,7 +95,12 @@
                         <button id="score-mode-tab" class="mode-tab" type="button" role="tab" aria-selected="false" aria-controls="score-mode-panel">評分模式</button>
                     </div>
                     <div id="normal-mode-panel" class="unit-panel" role="tabpanel" aria-labelledby="normal-mode-tab">
-                        <label for="unit-search">角色</label>
+                        <p id="normal-entity-type-label" class="entity-type-label">類別</p>
+                        <div class="entity-type-options" role="group" aria-labelledby="normal-entity-type-label">
+                            <button class="entity-type-option is-selected" type="button" data-entity-type="unit" aria-pressed="true" aria-label="貓咪" title="貓咪"><img src="image/kitty.png" alt="" aria-hidden="true"></button>
+                            <button class="entity-type-option" type="button" data-entity-type="enemy" aria-pressed="false" aria-label="敵人" title="敵人"><img src="image/puppy.png" alt="" aria-hidden="true"></button>
+                        </div>
+                        <label id="normal-entity-label" for="unit-search">角色</label>
                         <div class="unit-search">
                             <div class="unit-search-row">
                                 <input id="unit-search" type="search" autocomplete="off" placeholder="搜尋編號或名稱" aria-describedby="unit-status" aria-controls="unit-results" aria-expanded="false">
@@ -119,6 +124,7 @@
                             <option value="c">2 階</option>
                             <option value="s">3 階</option>
                             <option value="u">4 階</option>
+                            <option value="e">敵人</option>
                         </select>
                         <p id="unit-status" class="sr-only" role="status"></p>
                         <div id="parts-list" class="parts-list" aria-label="可拖曳部件"></div>
@@ -126,6 +132,11 @@
                     <section id="score-mode-panel" class="score-mode-panel" role="tabpanel" aria-labelledby="score-mode-tab" hidden>
                         <div id="score-setup" class="score-setup">
                             <div class="score-setup-scroll">
+                                <p id="score-entity-type-label" class="entity-type-label">類別</p>
+                                <div class="entity-type-options" role="group" aria-labelledby="score-entity-type-label">
+                                    <button class="entity-type-option is-selected" type="button" data-entity-type="unit" aria-pressed="true" aria-label="貓咪" title="貓咪"><img src="image/kitty.png" alt="" aria-hidden="true"></button>
+                                    <button class="entity-type-option" type="button" data-entity-type="enemy" aria-pressed="false" aria-label="敵人" title="敵人"><img src="image/puppy.png" alt="" aria-hidden="true"></button>
+                                </div>
                                 <p class="score-section-label">時間</p>
                                 <div class="score-time-options" role="group" aria-label="評分時間">
                                     <button class="score-time-button is-selected" type="button" data-duration="60" aria-pressed="true">1:00</button>
@@ -139,7 +150,7 @@
                                     <button class="score-question-mode" type="button" data-score-mode="random" aria-pressed="false"><i class="fa-solid fa-shuffle" aria-hidden="true"></i>隨機</button>
                                 </div>
                                 <div id="score-fixed-picker" class="score-fixed-picker">
-                                    <label for="score-unit-search">角色</label>
+                                    <label id="score-entity-label" for="score-unit-search">角色</label>
                                     <div class="unit-search score-unit-search">
                                         <input id="score-unit-search" type="search" autocomplete="off" placeholder="搜尋編號或名稱" aria-controls="score-unit-results" aria-expanded="false">
                                         <div id="score-unit-results" class="unit-results score-unit-results" role="listbox" aria-label="評分模式角色搜尋結果"></div>
@@ -166,14 +177,15 @@
                             </div>
                             <div class="score-round-scroll">
                                 <div class="score-active-unit-panel">
-                                    <label for="score-active-unit">角色</label>
+                                    <label id="score-active-entity-label" for="score-active-unit">角色</label>
                                     <input id="score-active-unit" type="text" readonly aria-readonly="true">
-                                    <label for="score-active-rank">階級</label>
+                                    <label id="score-active-rank-label" for="score-active-rank">階級</label>
                                     <select id="score-active-rank" disabled aria-label="本回合階級">
                                         <option value="f">1 階</option>
                                         <option value="c">2 階</option>
                                         <option value="s">3 階</option>
                                         <option value="u">4 階</option>
+                                        <option value="e">敵人</option>
                                     </select>
                                 </div>
                                 <div id="score-parts-list" class="parts-list score-parts-list" aria-label="本回合可拖曳部件"></div>
@@ -341,6 +353,7 @@
         </article>
     </dialog>
     <script async src="assets/units/index.js" onload="window.dispatchEvent(new Event('unitindexready'))"></script>
+    <script async src="assets/enemies/index.js" onload="window.dispatchEvent(new Event('enemyindexready'))"></script>
     <script src="index.js"></script>
     <script src="mobile.js"></script>
 </body>

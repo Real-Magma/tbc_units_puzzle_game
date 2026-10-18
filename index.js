@@ -57,6 +57,9 @@ const unitSearch = document.querySelector("#unit-search");
 const unitResults = document.querySelector("#unit-results");
 const randomUnitButton = document.querySelector("#random-unit-button");
 const rankSelect = document.querySelector("#rank-select");
+const rankLabel = document.querySelector("#rank-label");
+const rankOptions = document.querySelector("#rank-options");
+const normalEntityLabel = document.querySelector("#normal-entity-label");
 const unitStatus = document.querySelector("#unit-status");
 const partsList = document.querySelector("#parts-list");
 const normalModeTab = document.querySelector("#normal-mode-tab");
@@ -76,6 +79,10 @@ const scoreQuestionModeButtons = [...document.querySelectorAll(".score-question-
 const scoreFixedPicker = document.querySelector("#score-fixed-picker");
 const scoreFixedRankButtons = [...document.querySelectorAll(".score-fixed-rank")];
 const rankButtons = [...document.querySelectorAll(".rank-option")];
+const entityTypeButtons = [...document.querySelectorAll(".entity-type-option")];
+const scoreFixedRankLabel = document.querySelector("#score-fixed-rank-label");
+const scoreFixedRanks = document.querySelector("#score-fixed-ranks");
+const scoreEntityLabel = document.querySelector("#score-entity-label");
 const scoreUnitSearch = document.querySelector("#score-unit-search");
 const scoreUnitResults = document.querySelector("#score-unit-results");
 const scoreModeStatus = document.querySelector("#score-mode-status");
@@ -85,6 +92,8 @@ const scoreGradeButton = document.querySelector("#score-grade-button");
 const scoreCountdown = document.querySelector("#score-countdown");
 const scoreActiveUnit = document.querySelector("#score-active-unit");
 const scoreActiveRank = document.querySelector("#score-active-rank");
+const scoreActiveEntityLabel = document.querySelector("#score-active-entity-label");
+const scoreActiveRankLabel = document.querySelector("#score-active-rank-label");
 const scorePartsList = document.querySelector("#score-parts-list");
 const scoreResultOverlay = document.querySelector("#score-result-overlay");
 const scoreResultCard = document.querySelector("#score-result-card");
@@ -108,6 +117,8 @@ if (exportPngButton) exportPngButton.hidden = !pngExportEnabled;
 
 let unitCatalog = {};
 let unitIndex = globalThis.UNIT_INDEX ?? {};
+let enemyIndex = globalThis.ENEMY_INDEX ?? {};
+let activeEntityType = "unit";
 const loadingUnits = new Map();
 const loadingPartSources = new Map();
 const loadedPartImages = new Map();
@@ -136,6 +147,7 @@ let scoreTimerId = null;
 let scoreRoundFinished = false;
 let scoreQuestionMode = "fixed";
 let scoreFixedUnitId = "";
+let scoreFixedEntityType = "unit";
 let scoreFixedRank = "f";
 let scoreRandomTarget = null;
 let scoreRandomPreparation = null;
@@ -650,6 +662,30 @@ function formatScoreTime(milliseconds) {
     return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
+function entityCatalogKey(entityType, unitId) {
+    return entityType + ":" + unitId;
+}
+
+function entityIndexFor(entityType = activeEntityType) {
+    return entityType === "enemy" ? enemyIndex : unitIndex;
+}
+
+function entityNoun(entityType = activeEntityType) {
+    return entityType === "enemy" ? "敵人" : "角色";
+}
+
+function entityRank(entityType, rank = "f") {
+    return entityType === "enemy" ? "e" : rank;
+}
+
+function targetEntityType(target) {
+    return target?.entityType === "enemy" ? "enemy" : "unit";
+}
+
+function loadedEntity(entityType, unitId) {
+    return unitCatalog[entityCatalogKey(entityType, unitId)];
+}
+
 function updateScoreRound() {
     if (!scoreRoundStartedAt || scoreRoundFinished) return;
     if (selectedScoreDuration === 0) {
@@ -666,13 +702,14 @@ function updateScoreRound() {
 }
 
 async function prepareRandomScoreTarget() {
-    const unitIds = Object.keys(unitIndex);
+    const entityType = activeEntityType;
+    const unitIds = Object.keys(entityIndexFor(entityType));
     if (!unitIds.length) return null;
     const unitId = unitIds[Math.floor(Math.random() * unitIds.length)];
-    const unit = await ensureUnitLoaded(unitId);
+    const unit = await ensureUnitLoaded(unitId, entityType);
     const ranks = availableRanksForUnit(unit);
     if (!ranks.length) return null;
-    return { unitId, rank: ranks[Math.floor(Math.random() * ranks.length)] };
+    return { entityType, unitId, rank: ranks[Math.floor(Math.random() * ranks.length)] };
 }
 
 function showScorePartsLoading() {
@@ -686,7 +723,8 @@ function showScorePartsLoading() {
 
 async function renderScoreParts(target, template) {
     const renderVersion = ++partsRenderVersion;
-    const unit = unitCatalog[target.unitId] ?? await ensureUnitLoaded(target.unitId);
+    const entityType = targetEntityType(target);
+    const unit = loadedEntity(entityType, target.unitId) ?? await ensureUnitLoaded(target.unitId, entityType);
     const requiredCropIndexes = new Set((template?.parts ?? []).map((part) => part.cropIndex));
     const candidateParts = availablePartsForRank(unit, target.rank)
         .filter((part) => requiredCropIndexes.has(cropIndexFromPartId(part.id)));
@@ -697,7 +735,7 @@ async function renderScoreParts(target, template) {
         console.error(error);
         if (renderVersion === partsRenderVersion) {
             scorePartsList.replaceChildren();
-            scoreModeStatus.textContent = "角色圖片載入失敗，請取消後再試一次。";
+            scoreModeStatus.textContent = entityNoun(entityType) + "圖片載入失敗，請取消後再試一次。";
         }
         return false;
     }
@@ -776,7 +814,8 @@ async function renderScoreAnswer(target, template, layout) {
     if (!target || !template?.parts?.length) return;
 
     try {
-        const unit = unitCatalog[target.unitId] ?? await ensureUnitLoaded(target.unitId);
+        const entityType = targetEntityType(target);
+        const unit = loadedEntity(entityType, target.unitId) ?? await ensureUnitLoaded(target.unitId, entityType);
         const assetsByCrop = new Map(availablePartsForRank(unit, target.rank)
             .map((part) => [cropIndexFromPartId(part.id), part])
             .filter(([cropIndex]) => cropIndex !== null));
@@ -827,12 +866,15 @@ function scoreTemplateKey(target) {
 async function ensureScoreTemplateLoaded(target) {
     const key = scoreTemplateKey(target);
     if (scoreTemplateCache.has(key)) return scoreTemplateCache.get(key);
+    const entityType = targetEntityType(target);
+    const templateRoot = entityType === "enemy" ? "assets/enemy_scoring/templates" : "assets/unit_scoring/templates";
+    const templateStore = entityType === "enemy" ? "ENEMY_SCORE_TEMPLATES" : "SCORE_TEMPLATES";
     const template = await new Promise((resolve, reject) => {
         const script = document.createElement("script");
         script.async = true;
-        script.src = `assets/unit_scoring/templates/${encodeURIComponent(target.unitId)}/${encodeURIComponent(target.rank)}.js`;
+        script.src = templateRoot + "/" + encodeURIComponent(target.unitId) + "/" + encodeURIComponent(target.rank) + ".js";
         script.onload = () => {
-            const loaded = globalThis.SCORE_TEMPLATES?.[key];
+            const loaded = globalThis[templateStore]?.[key];
             script.remove();
             if (!loaded) {
                 reject(new Error(`正確答案資料格式無效：${key}`));
@@ -852,7 +894,7 @@ async function ensureScoreTemplateLoaded(target) {
 }
 
 function cropIndexFromPartId(id) {
-    const match = (id ?? "").match(/^[fcsu]-(\d+)$/i);
+    const match = (id ?? "").match(/^[fcsue]-(\d+)$/i);
     return match ? Number.parseInt(match[1], 10) : null;
 }
 
@@ -1142,7 +1184,8 @@ function rasterizeScoreEntries(entries, bounds, scale, canvasSize, padding) {
 async function scoreImageSimilarity(templateParts, placedParts, pairs) {
     if (!scoreRoundTarget || !templateParts.length || !pairs.length) return 0;
 
-    const unit = unitCatalog[scoreRoundTarget.unitId] ?? await ensureUnitLoaded(scoreRoundTarget.unitId);
+    const scoreEntityType = targetEntityType(scoreRoundTarget);
+    const unit = loadedEntity(scoreEntityType, scoreRoundTarget.unitId) ?? await ensureUnitLoaded(scoreRoundTarget.unitId, scoreEntityType);
     const assetsByCrop = new Map(availablePartsForRank(unit, scoreRoundTarget.rank)
         .map((part) => [cropIndexFromPartId(part.id), part])
         .filter(([cropIndex]) => cropIndex !== null));
@@ -1354,18 +1397,18 @@ async function startScoreRound() {
         if (scoreQuestionMode === "fixed") {
             if (!scoreFixedUnitId) {
                 scoreUnitSearch.value = "";
-                scoreUnitSearch.placeholder = "請先選擇一隻角色";
+                scoreUnitSearch.placeholder = "請先選擇一隻" + entityNoun();
                 scoreUnitSearch.focus();
-                scoreModeStatus.textContent = "請先選擇一隻角色。";
+                scoreModeStatus.textContent = "請先選擇一隻" + entityNoun() + "。";
                 return;
             }
-            const unit = await ensureUnitLoaded(scoreFixedUnitId);
+            const unit = await ensureUnitLoaded(scoreFixedUnitId, scoreFixedEntityType);
             const ranks = availableRanksForUnit(unit);
             if (!ranks.includes(scoreFixedRank)) {
                 scoreModeStatus.textContent = "這隻角色沒有選擇的階級，請改選其他階級。";
                 return;
             }
-            target = { unitId: scoreFixedUnitId, rank: scoreFixedRank };
+            target = { entityType: scoreFixedEntityType, unitId: scoreFixedUnitId, rank: scoreFixedRank };
         } else {
             target = scoreRandomTarget ?? await (scoreRandomPreparation ?? prepareRandomScoreTarget());
             if (!target) throw new Error("無法準備隨機題目");
@@ -1375,7 +1418,8 @@ async function startScoreRound() {
 
         scoreModeStatus.textContent = "正在讀取正確答案…";
         const template = await ensureScoreTemplateLoaded(target);
-        const unit = unitCatalog[target.unitId] ?? await ensureUnitLoaded(target.unitId);
+        const targetType = targetEntityType(target);
+        const unit = loadedEntity(targetType, target.unitId) ?? await ensureUnitLoaded(target.unitId, targetType);
         const rankParts = availablePartsForRank(unit, target.rank);
         await Promise.all([...new Set(rankParts.map((part) => part.src))].map(ensurePartSourceLoaded));
         const usableTemplate = withoutPlaceholderScoreParts(template, unit, target.rank);
@@ -1388,8 +1432,12 @@ async function startScoreRound() {
         scoreResultPanel.classList.remove("is-summary-pending");
         setScoreRoundCanvasState(true);
         playScoreStartFlash();
-        scoreActiveUnit.value = unitLabel(target.unitId);
+        scoreActiveUnit.value = unitLabel(target.unitId, targetType);
         scoreActiveRank.value = target.rank;
+        const isEnemyTarget = targetType === "enemy";
+        scoreActiveEntityLabel.textContent = entityNoun(targetType);
+        scoreActiveRankLabel.hidden = isEnemyTarget;
+        scoreActiveRank.hidden = isEnemyTarget;
         scoreSetup.hidden = true;
         scoreRunning.hidden = false;
         refreshMobileScoreControls();
@@ -1465,7 +1513,7 @@ async function finishScoreRound(finished = false, { clearCanvas = true } = {}) {
     scoreCancelButton.innerHTML = '<i class="fa-solid fa-xmark" aria-hidden="true"></i><span>取消</span>';
     normalModeTab.disabled = false;
     scoreModeStatus.textContent = scoreQuestionMode === "fixed" && !scoreFixedUnitId
-        ? "選擇一隻角色後即可開始。"
+        ? "選擇一隻" + entityNoun(scoreFixedEntityType) + "後即可開始。"
         : "題目已準備好，可以開始。";
     renderParts();
 }
@@ -2325,7 +2373,8 @@ async function createScoreCompositionPng() {
 
 async function scoreAnswerEntries() {
     if (!scoreRoundTarget || !scoreRoundTemplate) throw new Error("找不到正解資料");
-    const unit = unitCatalog[scoreRoundTarget.unitId] ?? await ensureUnitLoaded(scoreRoundTarget.unitId);
+    const scoreEntityType = targetEntityType(scoreRoundTarget);
+    const unit = loadedEntity(scoreEntityType, scoreRoundTarget.unitId) ?? await ensureUnitLoaded(scoreRoundTarget.unitId, scoreEntityType);
     const assetsByCrop = new Map(availablePartsForRank(unit, scoreRoundTarget.rank)
         .map((part) => [cropIndexFromPartId(part.id), part])
         .filter(([cropIndex]) => cropIndex !== null));
@@ -4003,7 +4052,7 @@ function createPartCard(part) {
 
 async function renderParts() {
     const renderVersion = ++partsRenderVersion;
-    const unit = unitCatalog[unitSelect.value];
+    const unit = loadedEntity(activeEntityType, unitSelect.value);
     if (!unit) {
         showPartsLoading();
         return;
@@ -4030,9 +4079,16 @@ async function renderParts() {
 }
 
 function updateRankOptions() {
-    const unit = unitCatalog[unitSelect.value];
+    const unit = loadedEntity(activeEntityType, unitSelect.value);
     if (!unit) return;
     const forms = new Set(unit.parts.map((part) => part.form));
+    const isEnemy = activeEntityType === "enemy";
+    rankLabel.hidden = isEnemy;
+    rankOptions.hidden = isEnemy;
+    if (isEnemy) {
+        rankSelect.value = "e";
+        return;
+    }
     for (const option of rankSelect.options) option.disabled = !forms.has(option.value);
     if (!forms.has(rankSelect.value)) rankSelect.value = [...forms][0] ?? "f";
     rankButtons.forEach((button) => {
@@ -4045,14 +4101,23 @@ function updateRankOptions() {
 }
 
 function availableRanksForUnit(unit) {
-    const forms = new Set(unit.parts.map((part) => part.form));
-    return [...rankSelect.options]
-        .map((option) => option.value)
-        .filter((form) => forms.has(form));
+    return [...new Set(unit?.parts?.map((part) => part.form) ?? [])];
 }
 
 function updateScoreFixedRankOptions(unit) {
     const forms = new Set(unit?.parts?.map((part) => part.form) ?? []);
+    const isEnemy = forms.has("e");
+    scoreFixedRankLabel.hidden = isEnemy;
+    scoreFixedRanks.hidden = isEnemy;
+    if (isEnemy) {
+        scoreFixedRank = "e";
+        scoreFixedRankButtons.forEach((button) => {
+            button.disabled = true;
+            button.classList.remove("is-selected");
+            button.setAttribute("aria-pressed", "false");
+        });
+        return;
+    }
     for (const button of scoreFixedRankButtons) {
         button.disabled = !forms.has(button.dataset.rank);
     }
@@ -4077,44 +4142,47 @@ function setScoreFixedRankButtonsDisabled(disabled) {
     });
 }
 
-function unitLabel(unitId) {
-    const name = unitIndex[unitId]?.name ?? unitCatalog[unitId]?.name;
+function unitLabel(unitId, entityType = activeEntityType) {
+    const index = entityIndexFor(entityType);
+    const name = index[unitId]?.name ?? loadedEntity(entityType, unitId)?.name;
     return name && name !== unitId ? `${unitId} ${name}` : unitId;
 }
 
-function unitMatchesSearch(unitId, query) {
+function unitMatchesSearch(unitId, query, entityType = activeEntityType) {
     if (!query) return true;
-    const entry = unitIndex[unitId] ?? {};
+    const entry = entityIndexFor(entityType)[unitId] ?? {};
     const searchTerms = [unitId, entry.name, ...(entry.aliases ?? [])];
     return searchTerms.some((term) => String(term ?? "").toLocaleLowerCase().includes(query));
 }
 
-function ensureUnitLoaded(unitId) {
-    if (unitCatalog[unitId]) return Promise.resolve(unitCatalog[unitId]);
-    if (loadingUnits.has(unitId)) return loadingUnits.get(unitId);
+function ensureUnitLoaded(unitId, entityType = activeEntityType) {
+    const key = entityCatalogKey(entityType, unitId);
+    if (unitCatalog[key]) return Promise.resolve(unitCatalog[key]);
+    if (loadingUnits.has(key)) return loadingUnits.get(key);
 
     const request = new Promise((resolve, reject) => {
         const script = document.createElement("script");
         script.async = true;
-        script.src = `assets/units/manifests/${encodeURIComponent(unitId)}.js`;
+        script.src = (entityType === "enemy" ? "assets/enemies/manifests/" : "assets/units/manifests/") + encodeURIComponent(unitId) + ".js";
         script.onload = () => {
-            const unit = globalThis.UNIT_MANIFESTS?.[unitId];
+            const manifestStore = entityType === "enemy" ? globalThis.ENEMY_MANIFESTS : globalThis.UNIT_MANIFESTS;
+            const unit = manifestStore?.[unitId];
             script.remove();
             if (!unit) {
-                reject(new Error(`角色 ${unitId} 的資料格式無效`));
+                reject(new Error(entityNoun(entityType) + " " + unitId + " 的資料格式無效"));
                 return;
             }
-            unitCatalog[unitId] = unit;
+            unitCatalog[key] = unit;
             resolve(unit);
         };
         script.onerror = () => {
             script.remove();
-            reject(new Error(`無法載入角色 ${unitId}`));
+            reject(new Error("無法載入" + entityNoun(entityType) + " " + unitId));
         };
         document.head.append(script);
-    }).finally(() => loadingUnits.delete(unitId));
+    }).finally(() => loadingUnits.delete(key));
 
-    loadingUnits.set(unitId, request);
+    loadingUnits.set(key, request);
     return request;
 }
 
@@ -4130,32 +4198,37 @@ function closeScoreUnitResults() {
 }
 
 async function chooseFixedScoreUnit(unitId) {
-    if (!unitIndex[unitId]) return;
+    const entityType = activeEntityType;
+    if (!entityIndexFor(entityType)[unitId]) return;
     scoreFixedUnitId = unitId;
+    scoreFixedEntityType = entityType;
     scoreUnitSearch.placeholder = "搜尋編號或名稱";
-    scoreUnitSearch.value = unitLabel(unitId);
+    scoreUnitSearch.value = unitLabel(unitId, entityType);
     closeScoreUnitResults();
     setScoreFixedRankButtonsDisabled(true);
-    scoreModeStatus.textContent = "正在讀取可用階級…";
+    scoreModeStatus.textContent = entityType === "enemy" ? "正在讀取敵人資料…" : "正在讀取可用階級…";
     try {
-        const unit = await ensureUnitLoaded(unitId);
-        if (scoreFixedUnitId !== unitId) return;
+        const unit = await ensureUnitLoaded(unitId, entityType);
+        if (scoreFixedUnitId !== unitId || scoreFixedEntityType !== entityType) return;
         updateScoreFixedRankOptions(unit);
-        scoreModeStatus.textContent = "角色已選擇；請確認階級後開始。";
+        scoreModeStatus.textContent = entityType === "enemy" ? "敵人已選擇，可以開始。" : "角色已選擇；請確認階級後開始。";
     } catch (error) {
         console.error(error);
-        if (scoreFixedUnitId !== unitId) return;
+        if (scoreFixedUnitId !== unitId || scoreFixedEntityType !== entityType) return;
         scoreFixedUnitId = "";
-        updateScoreFixedRankOptions(null);
-        scoreModeStatus.textContent = "角色資料載入失敗，請再選一次。";
+        updateScoreFixedRankOptions(entityType === "enemy" ? { parts: [{ form: "e" }] } : null);
+        scoreModeStatus.textContent = entityNoun(entityType) + "資料載入失敗，請再選一次。";
     }
 }
 
 function renderScoreUnitResults() {
     const query = scoreUnitSearch.value.trim().toLocaleLowerCase();
-    const allUnitIds = Object.keys(unitIndex).sort();
+    const entityType = activeEntityType;
+    const index = entityIndexFor(entityType);
+    const noun = entityNoun(entityType);
+    const allUnitIds = Object.keys(index).sort();
     const suggestions = query
-        ? allUnitIds.filter((unitId) => unitMatchesSearch(unitId, query))
+        ? allUnitIds.filter((unitId) => unitMatchesSearch(unitId, query, entityType))
         : allUnitIds;
     const remaining = query ? allUnitIds.filter((unitId) => !suggestions.includes(unitId)) : [];
     scoreUnitResults.replaceChildren();
@@ -4177,7 +4250,7 @@ function renderScoreUnitResults() {
         id.className = "unit-result-id";
         name.className = "unit-result-name";
         id.textContent = unitId;
-        name.textContent = unitIndex[unitId].name ?? "";
+        name.textContent = index[unitId].name ?? "";
         result.append(id, name);
         result.addEventListener("click", () => chooseFixedScoreUnit(unitId));
         scoreUnitResults.append(result);
@@ -4186,12 +4259,12 @@ function renderScoreUnitResults() {
     if (!suggestions.length) {
         const empty = document.createElement("p");
         empty.className = "unit-result-empty";
-        empty.textContent = "找不到相符角色，仍可從完整清單選擇。";
+        empty.textContent = "找不到相符" + noun + "，仍可從完整清單選擇。";
         scoreUnitResults.append(empty);
     }
-    if (query && suggestions.length) addSectionTitle("建議角色");
+    if (query && suggestions.length) addSectionTitle("建議" + noun);
     suggestions.forEach(addResult);
-    if (query) addSectionTitle("全部角色");
+    if (query) addSectionTitle("全部" + noun);
     remaining.forEach(addResult);
     scoreUnitResults.classList.add("is-open");
     scoreUnitSearch.setAttribute("aria-expanded", "true");
@@ -4209,8 +4282,8 @@ function setScoreQuestionMode(mode) {
     closeScoreUnitResults();
     if (isFixed) {
         scoreModeStatus.textContent = scoreFixedUnitId
-            ? "角色已選擇；請確認階級後開始。"
-            : "選擇一隻角色後即可開始。";
+            ? (scoreFixedEntityType === "enemy" ? "敵人已選擇，可以開始。" : "角色已選擇；請確認階級後開始。")
+            : "選擇一隻" + entityNoun() + "後即可開始。";
         return;
     }
 
@@ -4242,18 +4315,19 @@ function updateActiveUnitResult() {
 }
 
 async function chooseUnit(unitId, preferredRank = null) {
-    if (!unitIndex[unitId]) return;
+    const entityType = activeEntityType;
+    if (!entityIndexFor(entityType)[unitId]) return;
     unitSelect.value = unitId;
-    unitSearch.value = unitLabel(unitId);
+    unitSearch.value = unitLabel(unitId, entityType);
     closeUnitResults();
     showPartsLoading();
 
     try {
-        await ensureUnitLoaded(unitId);
+        await ensureUnitLoaded(unitId, entityType);
     } catch (error) {
         console.error(error);
         if (unitSelect.value === unitId) {
-            unitStatus.textContent = "角色部件載入失敗，請再試一次。";
+            unitStatus.textContent = entityNoun(entityType) + "部件載入失敗，請再試一次。";
         }
         return false;
     }
@@ -4269,13 +4343,15 @@ async function chooseUnit(unitId, preferredRank = null) {
 }
 
 async function chooseRandomUnitAndRank() {
-    const unitIds = Object.keys(unitIndex);
+    const entityType = activeEntityType;
+    const unitIds = Object.keys(entityIndexFor(entityType));
     if (!unitIds.length) return;
 
     randomUnitButton.disabled = true;
     try {
         const unitId = unitIds[Math.floor(Math.random() * unitIds.length)];
-        const unit = await ensureUnitLoaded(unitId);
+        const unit = await ensureUnitLoaded(unitId, entityType);
+        if (activeEntityType !== entityType) return;
         const ranks = availableRanksForUnit(unit);
         if (!ranks.length) return;
         const rank = ranks[Math.floor(Math.random() * ranks.length)];
@@ -4287,9 +4363,12 @@ async function chooseRandomUnitAndRank() {
 
 function renderUnitResults() {
     const query = unitSearch.value.trim().toLocaleLowerCase();
-    const allUnitIds = Object.keys(unitIndex).sort();
+    const entityType = activeEntityType;
+    const index = entityIndexFor(entityType);
+    const noun = entityNoun(entityType);
+    const allUnitIds = Object.keys(index).sort();
     const suggestedUnitIds = query
-        ? allUnitIds.filter((unitId) => unitMatchesSearch(unitId, query))
+        ? allUnitIds.filter((unitId) => unitMatchesSearch(unitId, query, entityType))
         : allUnitIds;
     const remainingUnitIds = query
         ? allUnitIds.filter((unitId) => !suggestedUnitIds.includes(unitId))
@@ -4315,7 +4394,7 @@ function renderUnitResults() {
         id.className = "unit-result-id";
         name.className = "unit-result-name";
         id.textContent = unitId;
-        name.textContent = unitIndex[unitId].name ?? "";
+        name.textContent = index[unitId].name ?? "";
         result.append(id, name);
         result.addEventListener("click", () => chooseUnit(unitId));
         unitResults.append(result);
@@ -4324,13 +4403,13 @@ function renderUnitResults() {
     if (!suggestedUnitIds.length) {
         const empty = document.createElement("p");
         empty.className = "unit-result-empty";
-        empty.textContent = "找不到相符角色，仍可從完整清單選擇。";
+        empty.textContent = "找不到相符" + noun + "，仍可從完整清單選擇。";
         unitResults.append(empty);
     }
 
-    if (query && suggestedUnitIds.length) addSectionTitle("建議角色");
+    if (query && suggestedUnitIds.length) addSectionTitle("建議" + noun);
     suggestedUnitIds.forEach(addResult);
-    if (query) addSectionTitle("全部角色");
+    if (query) addSectionTitle("全部" + noun);
     remainingUnitIds.forEach(addResult);
 
     unitResults.classList.add("is-open");
@@ -4338,22 +4417,44 @@ function renderUnitResults() {
 }
 
 function populateUnitSelect() {
-    for (const unitId of Object.keys(unitIndex).sort()) {
+    const entityType = activeEntityType;
+    unitSelect.replaceChildren();
+    for (const unitId of Object.keys(entityIndexFor(entityType)).sort()) {
         const option = document.createElement("option");
         option.value = unitId;
-        option.textContent = unitLabel(unitId);
+        option.textContent = unitLabel(unitId, entityType);
         unitSelect.append(option);
     }
     unitSearch.value = "";
 }
 
-function initializeUnitIndex() {
-    unitIndex = globalThis.UNIT_INDEX ?? {};
-    if (!Object.keys(unitIndex).length || unitSelect.options.length) return;
+function syncEntityTypeControls() {
+    const isEnemy = activeEntityType === "enemy";
+    const noun = entityNoun();
+    entityTypeButtons.forEach((button) => {
+        const isSelected = button.dataset.entityType === activeEntityType;
+        button.classList.toggle("is-selected", isSelected);
+        button.setAttribute("aria-pressed", String(isSelected));
+    });
+    normalEntityLabel.textContent = noun;
+    scoreEntityLabel.textContent = noun;
+    unitResults.setAttribute("aria-label", noun + "搜尋結果");
+    scoreUnitResults.setAttribute("aria-label", "評分模式" + noun + "搜尋結果");
+    randomUnitButton.setAttribute("aria-label", isEnemy ? "隨機敵人" : "隨機角色與階級");
+    rankLabel.hidden = isEnemy;
+    rankOptions.hidden = isEnemy;
+    scoreFixedRankLabel.hidden = isEnemy;
+    scoreFixedRanks.hidden = isEnemy;
+}
+
+function initializeActiveEntityPalette() {
+    const index = entityIndexFor();
+    if (!Object.keys(index).length) return false;
     populateUnitSelect();
+    syncEntityTypeControls();
     const initialUnitId = unitSelect.value;
     showPartsLoading();
-    ensureUnitLoaded(initialUnitId)
+    ensureUnitLoaded(initialUnitId, activeEntityType)
         .then(() => {
             if (unitSelect.value !== initialUnitId) return;
             updateRankOptions();
@@ -4361,8 +4462,44 @@ function initializeUnitIndex() {
         })
         .catch((error) => {
             console.error(error);
-            unitStatus.textContent = "角色部件載入失敗，請重新選擇角色。";
+            unitStatus.textContent = entityNoun() + "部件載入失敗，請重新選擇" + entityNoun() + "。";
         });
+    return true;
+}
+
+function setActiveEntityType(entityType) {
+    if (entityType !== "unit" && entityType !== "enemy") return;
+    if (activeEntityType === entityType) return;
+    const index = entityIndexFor(entityType);
+    if (!Object.keys(index).length) {
+        unitStatus.textContent = entityType === "enemy" ? "敵人資料讀取中，請稍後再試。" : "角色資料讀取中，請稍後再試。";
+        return;
+    }
+    activeEntityType = entityType;
+    scoreFixedUnitId = "";
+    scoreFixedEntityType = entityType;
+    scoreFixedRank = entityRank(entityType);
+    scoreUnitSearch.value = "";
+    scoreUnitSearch.placeholder = "搜尋編號或名稱";
+    updateScoreFixedRankOptions(entityType === "enemy" ? { parts: [{ form: "e" }] } : null);
+    if (scoreQuestionMode === "random") {
+        scoreRandomTarget = null;
+        scoreRandomPreparation = null;
+        setScoreQuestionMode("random");
+    } else {
+        scoreModeStatus.textContent = "選擇一隻" + entityNoun() + "後即可開始。";
+    }
+    initializeActiveEntityPalette();
+}
+
+function initializeUnitIndex() {
+    unitIndex = globalThis.UNIT_INDEX ?? {};
+    if (activeEntityType === "unit" && !unitSelect.options.length) initializeActiveEntityPalette();
+}
+
+function initializeEnemyIndex() {
+    enemyIndex = globalThis.ENEMY_INDEX ?? {};
+    if (activeEntityType === "enemy" && !unitSelect.options.length) initializeActiveEntityPalette();
 }
 
 setTheme(initialTheme);
@@ -4372,6 +4509,8 @@ setEffectsMuted(initialEffectsMuted);
 updateScoreImageActionLabels();
 initializeUnitIndex();
 window.addEventListener("unitindexready", initializeUnitIndex);
+initializeEnemyIndex();
+window.addEventListener("enemyindexready", initializeEnemyIndex);
 resetCanvasView();
 updateUndoButton();
 makeSelectedGroupRotatable();
@@ -4414,6 +4553,9 @@ scoreTimeButtons.forEach((button) => {
 });
 scoreQuestionModeButtons.forEach((button) => {
     button.addEventListener("click", () => setScoreQuestionMode(button.dataset.scoreMode));
+});
+entityTypeButtons.forEach((button) => {
+    button.addEventListener("click", () => setActiveEntityType(button.dataset.entityType));
 });
 scoreFixedRankButtons.forEach((button) => button.addEventListener("click", () => {
     if (button.disabled) return;
@@ -4470,7 +4612,7 @@ scoreUnitSearch.addEventListener("focus", renderScoreUnitResults);
 scoreUnitSearch.addEventListener("input", () => {
     scoreUnitSearch.placeholder = "搜尋編號或名稱";
     scoreFixedUnitId = "";
-    updateScoreFixedRankOptions(null);
+    updateScoreFixedRankOptions(activeEntityType === "enemy" ? { parts: [{ form: "e" }] } : null);
     renderScoreUnitResults();
 });
 scoreUnitSearch.addEventListener("keydown", (event) => {

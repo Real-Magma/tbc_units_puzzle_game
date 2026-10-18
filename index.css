@@ -11,6 +11,8 @@
     --scrollbar-track: #e6e7e9;
     --scrollbar-thumb: #868a90;
     --scrollbar-thumb-hover: #5d6167;
+    /* 名稱清單優先使用專屬字型；少數韓文與罕用漢字才交給各平台的 CJK 字型補字。 */
+    --catalog-font: "GenJyuuGothic", "PingFang TC", "Microsoft JhengHei", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans TC", "Noto Sans KR", "Yu Gothic", sans-serif;
     --sidebar-width: clamp(220px, 19vw, 380px);
     --toolbar-gap: clamp(18px, 2vw, 34px);
     --score-start-flash: 0 0 0;
@@ -19,15 +21,8 @@
 @font-face {
     font-family: "GenJyuuGothic";
     src: url("image/fonts/GENJYUUGOTHIC-BOLD.woff2") format("woff2");
-    font-weight: 700;
-    font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: "GenJyuuGothic";
-    src: url("image/fonts/GENJYUUGOTHIC-BOLD.woff2") format("woff2");
-    font-weight: 900;
+    /* 同一份專屬粗體檔供清單的所有文字權重使用，避免 400 被瀏覽器換成系統字型。 */
+    font-weight: 400 900;
     font-style: normal;
     font-display: swap;
 }
@@ -917,9 +912,8 @@ html[data-theme="dark"] .rounded-box.is-rotating {
     color: #16a34a;
 }
 
-/* 評分作答時收起桌面一般工具，但保留圖層欄供作答調整。 */
-html.is-score-round-active .layer-controls .layer-control-row,
-html.is-score-round-active .trash-zone {
+/* 評分作答時收起桌面一般圖層工具；垃圾桶仍可用於移除作答物件。 */
+html.is-score-round-active .layer-controls .layer-control-row {
     display: none !important;
 }
 
@@ -1343,6 +1337,8 @@ html.is-score-round-active .trash-zone {
 .score-fixed-picker > label,
 .score-fixed-picker > .score-rank-label,
 .unit-panel > .rank-label,
+.unit-panel > .entity-type-label,
+.score-setup-scroll > .entity-type-label,
 .score-active-unit-panel label {
     display: block;
     margin: 0 0 8px;
@@ -1378,8 +1374,23 @@ html.is-score-round-active .trash-zone {
 .rank-label { margin: 0 0 8px; }
 .score-fixed-ranks,
 .rank-options { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 0 0 16px; }
+.rank-label[hidden],
+.rank-options[hidden],
+.score-rank-label[hidden],
+.score-fixed-ranks[hidden],
+.score-active-unit-panel label[hidden],
+.score-active-unit-panel select[hidden] {
+    display: none !important;
+}
+.entity-type-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    margin: 0 0 16px;
+}
 .score-fixed-rank,
-.rank-option {
+.rank-option,
+.entity-type-option {
     min-height: 39px;
     padding: 6px 4px;
     border: 1px solid var(--border);
@@ -1397,11 +1408,29 @@ html.is-score-round-active .trash-zone {
 .score-fixed-rank.is-selected:not(:disabled),
 .rank-option:hover:not(:disabled),
 .rank-option:focus-visible:not(:disabled),
-.rank-option.is-selected:not(:disabled) { background: var(--button-hover-bg); box-shadow: inset 0 -1px var(--text); outline: none; }
+.rank-option.is-selected:not(:disabled),
+.entity-type-option:hover:not(:disabled),
+.entity-type-option:focus-visible:not(:disabled),
+.entity-type-option.is-selected:not(:disabled) { background: var(--button-hover-bg); box-shadow: inset 0 -1px var(--text); outline: none; }
 .score-fixed-rank:active:not(:disabled),
-.rank-option:active:not(:disabled) { box-shadow: none; transform: translateY(2px) scale(0.98); }
+.rank-option:active:not(:disabled),
+.entity-type-option:active:not(:disabled) { box-shadow: none; transform: translateY(2px) scale(0.98); }
 .score-fixed-rank:disabled,
-.rank-option:disabled { cursor: not-allowed; opacity: 0.35; }
+.rank-option:disabled,
+.entity-type-option:disabled { cursor: not-allowed; opacity: 0.35; }
+.entity-type-option {
+    display: grid;
+    place-items: center;
+    min-height: 48px;
+    padding: 4px;
+}
+.entity-type-option img {
+    display: block;
+    width: 34px;
+    height: 34px;
+    object-fit: contain;
+    pointer-events: none;
+}
 .score-mode-status { min-height: 1.2em; margin: 10px 0 0; color: color-mix(in srgb, var(--text) 66%, transparent); font-family: "GenJyuuGothic", sans-serif; font-size: 0.74rem; font-weight: 700; }
 
 .score-start-button {
@@ -1678,7 +1707,7 @@ html.is-score-round-active .trash-zone {
     padding: 8px 10px 6px;
     border-bottom: 1px solid color-mix(in srgb, var(--border) 28%, transparent);
     color: color-mix(in srgb, var(--text) 70%, transparent);
-    font-family: "GenJyuuGothic", sans-serif;
+    font-family: var(--catalog-font);
     font-size: 0.68rem;
     font-weight: 700;
 }
@@ -1693,8 +1722,9 @@ html.is-score-round-active .trash-zone {
     background: transparent;
     color: var(--text);
     cursor: pointer;
-    font-family: "GenJyuuGothic", sans-serif;
+    font-family: var(--catalog-font);
     font-size: 0.78rem;
+    font-weight: 700;
     text-align: left;
 }
 
@@ -1702,7 +1732,7 @@ html.is-score-round-active .trash-zone {
 .unit-result:hover, .unit-result.is-active { background: var(--button-hover-bg); }
 .unit-result-id { flex: 0 0 32px; }
 .unit-result-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.unit-result-empty { padding: 10px; color: color-mix(in srgb, var(--text) 65%, transparent); font-family: "GenJyuuGothic", sans-serif; font-size: 0.78rem; }
+.unit-result-empty { padding: 10px; color: color-mix(in srgb, var(--text) 65%, transparent); font-family: var(--catalog-font); font-size: 0.78rem; font-weight: 700; }
 
 .parts-list {
     display: grid;

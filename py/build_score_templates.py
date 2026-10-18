@@ -237,10 +237,16 @@ def transform(matrix: tuple[float, float, float, float, float, float], x: float,
     return a * x + c * y + tx, b * x + d * y + ty
 
 
-def build_template(unit_id: str, form: str, form_dir: Path) -> dict[str, object]:
-    model, model_info, model_configs = parse_model(form_dir / "mamodel.txt")
-    crops = parse_imgcut(form_dir / "imgcut.txt")
-    idle_path = form_dir / "maanim_idle.txt"
+def build_template_from_paths(
+    unit_id: str,
+    form: str,
+    model_path: Path,
+    imgcut_path: Path,
+    idle_path: Path,
+) -> dict[str, object]:
+    """Build a template from explicitly named BCU files."""
+    model, model_info, model_configs = parse_model(model_path)
+    crops = parse_imgcut(imgcut_path)
     # A small number of special units do not ship an idle animation.  Their
     # mamodel still defines a usable static pose, so use it as the template.
     tracks = parse_animation(idle_path) if idle_path.is_file() else []
@@ -403,6 +409,16 @@ def build_template(unit_id: str, form: str, form_dir: Path) -> dict[str, object]
             "minY": round(min(ys), 5), "maxY": round(max(ys), 5),
         },
     }
+
+
+def build_template(unit_id: str, form: str, form_dir: Path) -> dict[str, object]:
+    return build_template_from_paths(
+        unit_id,
+        form,
+        form_dir / "mamodel.txt",
+        form_dir / "imgcut.txt",
+        form_dir / "maanim_idle.txt",
+    )
 
 
 def main() -> None:

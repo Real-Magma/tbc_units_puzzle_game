@@ -1,0 +1,1 @@
+window.ENEMY_MANIFESTS ??= {};window.ENEMY_MANIFESTS["767"]={"id":"767","name":"敵人 767","folder":"767","parts":[{"id":"e-01","name":"001.png","form":"e","src":"assets/enemy_sprites/767/e.webp","width":227,"height":187,"sprite":{"x":1,"y":1,"width":227,"height":187,"sheetWidth":229,"sheetHeight":189}}]};
