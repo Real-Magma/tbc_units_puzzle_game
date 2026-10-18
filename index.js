@@ -2099,18 +2099,20 @@ function flipPartHorizontally(part) {
     renderLayersPanel();
 }
 
-function flipSelectedParts() {
-    const parts = contextMenuParts();
-    const changes = parts.filter((part) => part?.isConnected && !part.classList.contains("is-layer-locked"))
+function flipSelectedParts(partsToFlip = contextMenuParts()) {
+    const changes = partsToFlip.filter((part) => part?.isConnected && !part.classList.contains("is-layer-locked"))
         .map((part) => ({ image: part, from: positionOf(part) }));
     if (!changes.length) return;
     if (changes.length === 1) {
         const [{ image, from }] = changes;
         setPartFlip(image, from.flipX === "-1" ? "1" : "-1");
     } else {
-        const bounds = changes.map(({ image }) => image.getBoundingClientRect());
-        const left = Math.min(...bounds.map((bound) => clientToWorld(bound.left, bound.top).x));
-        const right = Math.max(...bounds.map((bound) => clientToWorld(bound.right, bound.top).x));
+        // 使用圖層儲存的邏輯座標計算反轉中心。渲染後的 client rect
+        // 會受旋轉與瀏覽器小數像素影響，連續反轉時會累積位移。
+        const bounds = changes.map(({ image }) => selectionBoundsInWorld(image)).filter(Boolean);
+        if (!bounds.length) return;
+        const left = Math.min(...bounds.map((bound) => bound.left));
+        const right = Math.max(...bounds.map((bound) => bound.right));
         const centerX = (left + right) / 2;
         changes.forEach(({ image, from }) => {
             image.style.left = `${2 * centerX - Number.parseFloat(from.left)}px`;
@@ -2118,6 +2120,9 @@ function flipSelectedParts() {
             setPartFlip(image, from.flipX === "-1" ? "1" : "-1");
         });
     }
+    changes.forEach((change) => {
+        change.to = positionOf(change.image);
+    });
     remember({ type: "flip-group", changes });
     updateSelectionFrame();
     renderLayersPanel();
@@ -4847,15 +4852,21 @@ window.addEventListener("keydown", (event) => {
         return;
     }
 
-    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "c" && selectedPart) {
+    if (((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "c" || event.key.toLowerCase() === "c") && selectedPart) {
         event.preventDefault();
         copySelectedParts();
         return;
     }
 
-    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "v" && copiedParts.length) {
+    if (((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "v" || event.key.toLowerCase() === "v") && copiedParts.length) {
         event.preventDefault();
         pasteCopiedParts();
+        return;
+    }
+
+    if (event.key.toLowerCase() === "f" && selectedParts.size) {
+        event.preventDefault();
+        flipSelectedParts([...selectedParts]);
         return;
     }
 

@@ -1876,7 +1876,13 @@ html.is-score-round-active .layer-controls .layer-control-row {
 .social-row > i { width: 18px; font-size: 1.15rem; text-align: center; }
 .social-link { width: fit-content; }
 .audio-credit { margin: 5px 0 0; font-size: 0.7rem; line-height: 1.4; }
-.copyright { display: flex; align-items: center; gap: 7px; margin: 7px 0 0; padding-top: 13px; border-top: 1px solid color-mix(in srgb, var(--border) 35%, transparent); font-size: 0.68rem; line-height: 1.4; }
+.copyright-notice { display: grid; gap: 7px; margin-top: 7px; padding-top: 13px; border-top: 1px solid color-mix(in srgb, var(--border) 35%, transparent); }
+.copyright-line { margin: 0; color: color-mix(in srgb, var(--text) 78%, transparent); font-size: 0.68rem; line-height: 1.48; }
+.copyright-line-owner { display: flex; align-items: flex-start; gap: 7px; color: var(--text); }
+.copyright-line-owner > i { flex: 0 0 auto; margin-top: 0.17em; }
+.copyright-line strong { font-weight: 800; }
+.copyright-english { display: block; margin-top: 1px; color: color-mix(in srgb, var(--text) 63%, transparent); font-family: "Times New Roman", Times, serif; font-size: 0.93em; }
+.copyright-disclaimer { color: color-mix(in srgb, var(--text) 66%, transparent); }
 
 .help-dialog button {
     padding: 8px 14px;
