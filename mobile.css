@@ -1,7 +1,8 @@
 /* Touch layout only. Desktop keeps using index.css without these overrides. */
 .tablet-history-controls { display: none; }
 
-@media (max-width: 700px) and (pointer: coarse) {
+/* 窄螢幕一律使用手機 UI。部分手機 WebView 不會回報 coarse pointer。 */
+@media (max-width: 700px) {
     html,
     body {
         min-width: 0;
@@ -702,7 +703,7 @@
     html.is-apple-tablet .layers-panel .layer-group-header { touch-action: none; }
 }
 
-@media (max-width: 390px) and (pointer: coarse) {
+@media (max-width: 390px) {
     .top-actions .icon-button { width: 31px; }
     #volume-slider { width: 54px; }
     .mobile-action { width: 39px; min-width: 39px; }

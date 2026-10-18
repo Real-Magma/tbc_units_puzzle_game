@@ -2,6 +2,9 @@
     // 平板沿用雙欄畫面，但也需要手機的手指拖曳、雙指縮放與平移邏輯。
     // 工具列是否顯示仍由 CSS 區分：只有窄螢幕手機顯示底部工具列。
     const touchLayout = window.matchMedia("(pointer: coarse)");
+    // 部分手機瀏覽器與開發者工具不會把目前指標回報為 coarse；
+    // 窄螢幕仍應建立手機工具列，否則畫面會完全沒有可用工具。
+    const phoneLayout = window.matchMedia("(max-width: 700px)");
     const isAppleTablet = /iPad/.test(navigator.userAgent)
         || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
     document.documentElement.classList.toggle("is-apple-tablet", isAppleTablet);
@@ -40,7 +43,7 @@
     }
 
     function initializeMobileControls() {
-        if (initialized || (!touchLayout.matches && !isAppleTablet) || !window.tbcPuzzleMobile) return;
+        if (initialized || (!phoneLayout.matches && !touchLayout.matches && !isAppleTablet) || !window.tbcPuzzleMobile) return;
         initialized = true;
 
         const game = document.querySelector("#game");
@@ -50,6 +53,11 @@
         const toolbar = document.createElement("nav");
         toolbar.className = "mobile-toolbar";
         toolbar.setAttribute("aria-label", "手機版工具列");
+        const tabletHistoryControls = document.createElement("nav");
+        tabletHistoryControls.className = "tablet-history-controls";
+        tabletHistoryControls.setAttribute("aria-label", "平板版歷史紀錄工具");
+        // 先放入 DOM；後續任一觸控功能失敗時，CSS 仍可保留工具列位置。
+        game.append(toolbar, tabletHistoryControls);
 
         let multiSelectMode = false;
         let longPress = null;
@@ -90,20 +98,24 @@
 
         const undoAction = makeAction("fa-arrow-rotate-left", "上一步", () => api.undo());
         const redoAction = makeAction("fa-arrow-rotate-right", "下一步", () => api.redo());
-        const tabletHistoryControls = document.createElement("nav");
-        tabletHistoryControls.className = "tablet-history-controls";
-        tabletHistoryControls.setAttribute("aria-label", "平板版歷史紀錄工具");
         const tabletUndoAction = makeAction("fa-arrow-rotate-left", "上一步", () => api.undo());
         const tabletRedoAction = makeAction("fa-arrow-rotate-right", "下一步", () => api.redo());
         tabletHistoryControls.append(tabletUndoAction, tabletRedoAction);
-        const syncHistoryActions = (state = api.historyState()) => {
-            undoAction.disabled = !state.canUndo;
-            redoAction.disabled = !state.canRedo;
-            tabletUndoAction.disabled = !state.canUndo;
-            tabletRedoAction.disabled = !state.canRedo;
+        toolbar.append(drawerButton, undoAction, redoAction, layersButton, multiSelectButton);
+        const syncHistoryActions = (state) => {
+            let nextState = state;
+            if (!nextState) {
+                try {
+                    nextState = api.historyState();
+                } catch {
+                    nextState = { canUndo: false, canRedo: false };
+                }
+            }
+            undoAction.disabled = !nextState.canUndo;
+            redoAction.disabled = !nextState.canRedo;
+            tabletUndoAction.disabled = !nextState.canUndo;
+            tabletRedoAction.disabled = !nextState.canRedo;
         };
-        window.addEventListener("tbcPuzzleHistoryChange", (event) => syncHistoryActions(event.detail));
-        syncHistoryActions();
 
         let trashHold = null;
         let skipTrashClick = false;
@@ -143,6 +155,7 @@
         trashButton.addEventListener("pointerup", stopTrashHold);
         trashButton.addEventListener("pointercancel", stopTrashHold);
         trashButton.addEventListener("lostpointercapture", stopTrashHold);
+        toolbar.append(trashButton);
 
         const moreMenu = document.createElement("div");
         moreMenu.id = "mobile-more-menu";
@@ -188,8 +201,10 @@
         });
         setMoreButtonScoreLock(document.documentElement.classList.contains("is-score-round-active"));
 
-        toolbar.append(drawerButton, undoAction, redoAction, layersButton, multiSelectButton, trashButton, moreMenu, moreButton);
-        game.append(toolbar, tabletHistoryControls);
+        toolbar.append(moreMenu, moreButton);
+        // 先讓使用者看得到整列工具；歷史紀錄更新失敗不應阻斷工具列出現。
+        window.addEventListener("tbcPuzzleHistoryChange", (event) => syncHistoryActions(event.detail));
+        syncHistoryActions();
 
         const touchPair = () => [...touchPoints.values()].slice(0, 2);
         const distanceBetween = ([first, second]) => Math.hypot(first.x - second.x, first.y - second.y);
@@ -363,6 +378,10 @@
         layersPanel.addEventListener("lostpointercapture", clearLayerTouchDrag);
     }
 
+    // 先嘗試建立；若主程式尚未完成，收到就緒事件或頁面完成載入時會再試一次。
     initializeMobileControls();
+    window.addEventListener("tbcPuzzleMobileReady", initializeMobileControls);
+    window.addEventListener("load", initializeMobileControls, { once: true });
     touchLayout.addEventListener("change", initializeMobileControls);
+    phoneLayout.addEventListener("change", initializeMobileControls);
 })();

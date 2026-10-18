@@ -4975,3 +4975,5 @@ window.tbcPuzzleMobile = Object.freeze({
         }), part);
     },
 });
+// mobile.js 可能在不同快取或載入時序下先執行；明確通知它可安全建立工具列。
+window.dispatchEvent(new Event("tbcPuzzleMobileReady"));
