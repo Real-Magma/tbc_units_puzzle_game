@@ -863,13 +863,19 @@ html[data-theme="dark"] .rounded-box.is-rotating {
 }
 
 .project-file-input {
-    position: fixed;
-    top: -100px;
-    left: -100px;
-    width: 1px;
-    height: 1px;
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
     margin: 0;
     opacity: 0;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+.file-import-button > i,
+.file-import-button > .icon-tooltip {
     pointer-events: none;
 }
 
