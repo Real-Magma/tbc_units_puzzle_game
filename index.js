@@ -1436,14 +1436,15 @@ async function finishScoreRound(finished = false, { clearCanvas = true } = {}) {
         scoreRoundStartedAt = 0;
         scoreRunning.hidden = true;
         refreshMobileScoreControls();
-        window.dispatchEvent(new CustomEvent("tbcPuzzleScoreRoundStateChange", {
-            detail: { active: false }
-        }));
+        setScoreRoundInputLocked(false);
         scoreSetup.hidden = true;
         scoreResultPanel.hidden = false;
         scoreResultPanel.classList.add("is-summary-pending");
         normalModeTab.disabled = false;
         showScoreResultOverlay(result);
+        // 結算畫面已取得作答快照，將本局物件轉成一個可操作的群組後恢復一般工具。
+        promoteScoreRoundPartsToNormalGroup();
+        setScoreRoundCanvasState(false);
         return;
     }
     setScoreRoundInputLocked(false);
