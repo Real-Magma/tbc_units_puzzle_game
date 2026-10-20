@@ -473,7 +473,7 @@
     .help-dialog {
         width: min(94vw, 560px);
         max-height: 82dvh;
-        padding: 20px;
+        padding: 10px;
     }
 
     .help-dialog .help-guide { display: none; }
@@ -492,6 +492,14 @@
         height: 42px;
         font-size: 1.15rem;
     }
+
+    .help-card-header { margin-bottom: 12px; }
+    .help-card-header h2 { font-size: 1.65rem; }
+    .help-lead { font-size: 0.82rem; }
+    .help-card-pages, .help-card-page { min-height: 304px; }
+    .help-card-page { padding: 16px; }
+    .help-gif-slot { min-height: 138px; }
+    .news-footer { margin-top: 12px; }
 }
 
 /* 平板保留雙欄工作區，僅放大觸控目標並收斂右側面板。 */

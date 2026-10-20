@@ -1,0 +1,780 @@
+000	Doge
+001	Snache
+002	Those Guys
+003	Hippoe
+004	Pigge
+005	Jackie Peng
+006	Gory
+007	Baa Baa
+008	Sir Seal
+009	Le'boin
+010	Kang Roo
+011	One Horn
+012	Teacher Bear
+013	Croco
+014	B.B.Bunny
+015	Squire Rel
+016	Assassin Bear
+017	Shy Boy
+018	The Face
+019	
+020	
+021	Ms. Sign
+022	Mooth
+023	Dark Emperor Nyandam
+024	Teacher Bun Bun
+025	剣士
+026	ガウガウ
+027	ケリ姫
+028	剣士 (第2形態)
+029	ガウガウ (第2形態)
+030	ケリ姫 (第2形態)
+031	Master A.
+032	R.Ost
+033	Otta-smack-u
+034	Kory
+035	Camelle
+036	Duche
+037	Owlbrow
+038	Bore
+039	THE SLOTH
+040	Rain D.
+041	Dagshund
+042	Celeboodle
+043	H. Nah
+044	Dober P.D
+045	Ururun Wolf
+046	Doge Dark
+047	Metal Hippoe
+048	St. Pigge the 2nd
+049	J.K. Bun Bun
+050	Bun Bun Black
+051	Gory Dark
+052	Shadow Boxer K
+053	Director Kurosawah
+054	Super Metal Hippoe
+055	10式戦車
+056	Metal One Horn
+057	Teacher Cybear
+058	CyberFace
+059	Sir Metal Seal
+060	ユーリンチー
+061	プリンセスカオル
+062	Chief Peng
+063	Dark Emperor Santa
+064	Red Cyclone
+065	Lione Hippoe
+066	Lucky Sloth
+067	Bears Be Bare
+068	猿王
+069	White Cyclone
+070	Dark Cyclone
+071	Metal Cyclone
+072	ニムエ
+073	帰化型ニムエ
+074	SSS猿王
+075	Crazed Cat
+076	Crazed Tank Cat
+077	Crazed Axe Cat
+078	Crazed Gross Cat
+079	Crazed Cow Cat
+080	Crazed Bird Cat
+081	Crazed Fish Cat
+082	Crazed Lizard Cat
+083	Crazed Titan Cat
+084	Teacher A
+085	Samurai Doggy
+086	Mega Cat
+087	Gory Groom
+088	Celesse
+089	Nono
+090	Olga
+091	Norn
+092	Yoichi
+093	Serum
+094	Fuu
+095	Aura
+096	Rei
+097	Wyvern
+098	Healer
+099	Sunny Celeboodle
+100	Bearkini
+101	Lord Enma
+102	Dashing Face
+103	Ghost Doge
+104	Ghost Snache
+105	Ghost Baa Baa
+106	Fireworks Guys (High-Yield)
+107	Fireworks Guys (Low-Yield)
+108	Mighty Gui Zuli
+109	Hermit Peng
+110	Master Da Xun
+111	Pigge Back
+112	Divine Cyclone
+113	Heavenly Hippoe
+114	Gabriel
+115	Angelic Gory
+116	Angel Fanboy
+117	Wall Doge
+118	Ginger Snache
+119	Sunfish Jones
+120	お祝いケーキわんこ
+121	ドラリー魔法使い
+122	ドラリー剣士
+123	Pigeon de Sable
+124	Dark Otter
+125	Angelic Sleipnir
+126	Sunrise Doge
+127	Beefcake Cat
+128	Dancer Cat
+129	Hyper Mr.
+130	Ultimate Bondage Cat
+131	Dark Lazer
+132	Heavy Assault C.A.T.
+133	Lollycat
+134	Unicycle Cat
+135	Flying Ninja Cat
+136	Skelecat
+137	Pastry Cat
+138	Riceball Cat
+139	Gato Amigo
+140	Loincloth Cat
+141	綾小路 翔
+142	早乙女 光
+143	西園寺 瞳
+144	星グランマニエ
+145	白鳥松竹梅
+146	Trolly Blogger
+147	Metal Doge
+148	Li'l Nyandam
+149	Le'noir
+150	Young Man Mola
+151	Mola King
+152	Ayumi Manbosaki
+153	Tasmanian Giant Crab
+154	Sardine
+155	Squid
+156	Marching Kory
+157	ハルドロイド
+158	Takuya
+159	Yuki
+160	Chickful A
+161	極道にゃんこ
+162	ヤクザヴァンパイア
+163	Hearscht
+164	Cornelia
+165	Alois
+166	Healer Cat
+167	Shibalien
+168	Kroxo
+169	Hyppoh
+170	Imperator Sael
+171	Maawth
+172	LeMurr
+173	Helmut Krabbe
+174	I.M. Phace
+175	Ursamajor
+176	Cli-One
+177	Nimoy Bore
+178	Elizabeth the LVIth
+179	Cosmic Cyclone
+180	Galactic Overseer Nyandam
+181	Corrupted Valkyrie
+182	Scissoroo
+183	Cyberhorn
+184	Mistress Celeboodle
+185	Professor A.
+186	111M DL Anniv. Doge Cake
+187	
+188	
+189	MARS PEOPLE
+190	DONALD MORDEN
+191	ALLEN O'NEIL
+192	MARCO
+193	SV-001
+194	HUGE HERMIT
+195	JUPITER KING
+196	HI-DO
+197	Pumpkin Doge
+198	Count Owlbrow
+199	Vlad de Sable
+200	빛의 신도 발키리
+201	신도 브륀힐트
+202	신도 스루즈
+203	풍요의 여신 프레이야
+204	군신 오딘
+205	Capy
+206	Berserkory
+207	Brollow
+208	Calamary
+209	Alpacky
+210	Elder Sloth
+211	Bun Bun Symbiote
+212	Raging Bahamut Cat
+213	Christmas D.
+214	Castle Guard
+215	Castle Horseman
+216	Ashura
+217	Battle Balloon
+218	Dragon Rider
+219	Pretty Cat
+220	Cyclops
+221	Golem
+222	Wise Swordsman
+223	Black Thunder Rider
+224	Kabuki Ashura
+225	Battle UFO
+226	Flame Dragon Rider
+227	Cyber Pretty Cat
+228	4D Cyclops
+229	Volcano Golem
+230	Prisoner Cat
+231	Gentleman Bros.
+232	Cruel Angel Clionel
+233	Nyalladin
+234	Wrestling Cat
+235	Mr. Mole
+236	The Perfect Cyclone
+237	
+238	
+239	
+240	
+241	
+242	Manic Mohawk Cat
+243	Manic Eraser Cat
+244	Manic Dark Cat
+245	Manic Macho Legs
+246	Manic Lion Cat
+247	Manic Flying Cat
+248	Manic Island Cat
+249	Manic King Dragon
+250	Manic Jamiera Cat
+251	Kiss and Koi
+252	Madam the Savannah
+253	Call Center Cat
+254	Mr. Angel
+255	Two Can
+256	Tackey
+257	King Wahwah
+258	Codename "Red Riding"
+259	Takuya & Lovely Yuki
+260	Kite Cat
+261	Boraphim
+262	Ritual Drum Doge
+263	Festive Otter
+264	나메코
+265	Iron Claw X
+266	Henry
+267	Hannya
+268	박스 멍뭉이
+269	
+270	Rampage Cats
+271	Queen B
+272	Li'l Bun Bun
+273	The Rose Garden Witch
+274	Dessert Witch - Obsession
+275	Dessert Witch
+276	Box Witch and Minions
+277	Walpurgisnacht
+278	Kyuubei
+279	Ritual Cat
+280	Razorback
+281	Festival Sign Girl
+282	Vendor El
+283	허수아비
+284	Zoge
+285	Znache
+286	Zomboe
+287	Zigge
+288	Zackie Peng
+289	Zory
+290	Zir Zeal
+291	Zang Roo
+292	Zroco
+293	Lord Gravey
+294	Zyclone
+295	Xmas Pudding Cat
+296	Mega Cat EX
+297	4주년 케이크
+298	
+299	
+300	
+301	
+302	
+303	Miss Haka
+304	Big Sal
+305	피코 타로
+306	Le'mammoth
+307	Ice Doge
+308	Snowball
+309	Coffin Zoge
+310	Zamelle
+311	Killer Cat
+312	
+313	三原慧悟
+314	
+315	멍뭉이 성
+316	Inumusha
+317	Daboo of the Dead
+318	Dolphina
+319	뫼비우스
+320	벨리알
+321	해피100
+322	Li'l Mohawk Cat
+323	Li'l Eraser Cat
+324	Li'l Dark Cat
+325	Li'l Macho Legs Cat
+326	Li'l Lion Cat
+327	Li'l Flying Cat
+328	Li'l Island Cat
+329	Li'l King Dragon Cat
+330	Li'l Jamiera Cat
+331	Easter Duche
+332	Easter B.B.Bunny
+333	
+334	
+335	
+336	Golden Doge
+337	Gold Hippoe
+338	Pure Gold R.Ost
+339	Lost World Yuki
+340	Cala Maria
+341	Red Slug
+342	Black Slug
+343	Angelic Slug
+344	Cat Kart P
+345	Catkwondo SP
+346	Merc & Cat
+347	Titi Cat
+348	Orthos
+349	Michelia
+350	Todomeki
+351	구데타마 플레이트
+352	구데구데 푸딩
+353	니세타마 군단
+354	Hermit Cat
+355	Croakley
+356	Gary Gory
+357	Value Meal Cat
+358	Metal Snache
+359	THE METAL SLOTH
+360	Shibalien Elite
+361	Star Peng
+362	General GreGory
+363	Le'Solar
+364	Project A
+365	Corporal Weyland
+366	Spacefish Jones
+367	The Cat God
+368	세이버
+369	랜서
+370	아처
+371	라이더
+372	길가메쉬
+373	토오사카 린
+374	이리야스필
+375	Youcan
+376	5주년 케이크
+377	Super Cosmic Cyclone
+378	
+379	Winged Pigge
+380	Mystic Mask Yulala
+381	네코즈카 카린
+382	콘노 미사키
+383	니지타니 사이리
+384	카타기리 렌
+385	
+386	괜찮아 박사
+387	Hackey
+388	UltraBaaBaa
+389	Pigge Victorious
+390	Bang-Bang
+391	Mentori
+392	The 4th Angel
+393	The 6th Angel
+394	The 9th Angel
+395	The 10th Angel
+396	Crazed Moneko
+397	Corrupted Moneko
+398	Glowstick Guys
+399	POKOTA
+400	OVIS
+401	COCO
+402	
+403	
+404	
+405	Mecha-Bun
+406	Relic Bun-Bun
+407	Relic Doge
+408	Crazed Yuki
+409	구데 멍뭉 머신
+410	구데베네 냥코
+411	Gorilliam
+412	Sir Rel
+413	Oldhorn
+414	Othom
+415	적극적인 곰
+416	Selena
+417	Kid Tappa
+418	Ribbo
+419	Cat God
+420	Loris
+421	Heavenly Le'saint
+422	The Red Malice
+423	Lowkey
+424	M. Ost
+425	Dead Donny Dash
+426	CTO Seal
+427	Cadaver Bear
+428	Dread Bore
+429	Nutcracker Witch
+430	Satan Claus
+431	Bakoo
+432	
+433	
+434	Sister Lione
+435	6주년 케이크
+436	
+437	Lucky Dags
+438	Primeval Cyclone
+439	Li'l Bore
+440	Bears Be Back
+441	세이버 오르타
+442	Ms. Madonna
+443	Mesocosmocyclone
+444	Gardeneel Bros.
+445	Axoloty
+446	Final Boss Giga-God
+447	Filibuster Obstructa
+448	偶像三原&貓咪
+449	Haterbaa 2.0
+450	Dogumaru
+451	麻吉貓&貓咪旅行團
+452	슈퍼 데빌
+453	사타마리아
+454	원더마리아
+455	마초 네로
+456	헤드 로코코
+457	Gummy Cat
+458	
+459	
+460	
+461	Kano ＆ Souma
+462	
+463	
+464	Unit-13's False Evolution
+465	HAPPI
+466	HAPPI&麻吉貓&貓咪
+467	貓化巧克力
+468	Zuche
+469	The Thrillerz
+470	주걱턱 멍뭉이
+471	주걱턱 고릴라
+472	주걱턱 대갈이군
+473	주걱턱 라이온
+474	주걱턱 호랑이
+475	주걱턱 팬터
+476	
+477	Mr. Puffington
+478	Li'l Cake Doge
+479	Puffsley's Comet
+480	Ryu
+481	Chun-Li
+482	Guile
+483	Zangief
+484	Blanka
+485	Dhalsim
+486	Ken
+487	
+488	Akuma
+489	7주년 케이크
+490	
+491	Masked Okame
+492	Heavenly Herald Papuu
+493	Queen Mother V
+494	
+495	Kappy Jr.
+496	Urs & Fenrir
+497	Croconator
+498	Gobble
+499	Baron Seal
+500	하츠네 미쿠
+501	사쿠라 미쿠
+502	카가미네 린&렌
+503	미쿠 멍뭉이
+504	미쿠 고릴라저씨
+505	미쿠 곰 선생
+506	Everlord Wanwan
+507	Messier
+508	
+509	
+510	Le'Grim
+511	Death Angel Z-Onel
+512	Li'l Zyclone
+513	St. Dober
+514	Doremi
+515	Mega-Mooth
+516	Master Uril
+517	Koronium
+518	전능신 슈퍼 제우스
+519	전정신 샤먼 칸
+520	퍼펙트 헤라클라이스트
+521	Johnnyleon
+522	
+523	
+524	
+525	Super Hyppoh
+526	Idi:Re
+527	Zollow
+528	E. Honda
+529	Balrog
+530	Vega
+531	Sagat
+532	M. Bison
+533	8주년 케이크
+534	
+535	Evil Emperor Cat
+536	메구리네 루카
+537	
+538	Bore Jr.
+539	Chocolate Doge
+540	유키 미쿠
+541	Raynard
+542	사오토메 란마
+543	텐도 아카네
+544	히비키 료가
+545	샴푸
+546	무스
+547	Mr. Mer
+548	Wafer Cat XL
+549	Ragin' Gory
+550	
+551	Elder Flame Doron
+552	Aku Doge
+553	Sinner Snache
+554	Cerberus Kids
+555	Condemned Peng
+556	Aku Gory
+557	Le'Behemoth
+558	Fallen Bear
+559	Wicked Face
+560	Aku Cyclone
+561	Wicked Cat
+562	Wicked Tank Cat
+563	Wicked Axe Cat
+564	
+565	
+566	
+567	
+568	
+569	
+570	Dark Priest Mamon
+571	High Priest Mamon
+572	Lord of Ruin Jagando
+573	Possessed Empress
+574	
+575	
+576	Large White Ball
+577	Large Red Ball
+578	Large Iron Ball
+579	
+580	White Wind
+581	Red Wind
+582	Dark Wind
+583	Medu-san
+584	Miz Devil
+585	Sathankhamun VIII
+586	Midnite D.
+587	Ackey
+588	Deathkory
+589	Masked Grandmaster Cat
+590	
+591	
+592	Red EnerG
+593	Archangel Exiel
+594	Big Peng Z
+595	
+596	
+597	
+598	Firecracker
+599	Ultima Beast Naala
+600	Zapy
+601	
+602	
+603	Wild Doge
+604	Casaurian Ahirujo
+605	Pterowl Hazuku
+606	Crustaceous Scissorex
+607	J.J. Jackrabbit
+608	Li'l Doge
+609	Golem Sunfish
+610	THE FOLIVOREAN
+611	Casaurian Darkjo
+612	Haniwanwan
+613	Angelic Beast Rajakong
+614	Formicidaean Ariant
+615	Great Angel Chibinel
+616	Spiritual Yulala
+617	
+618	
+619	
+620	
+621	
+622	Sakura
+623	Luke
+624	Cumulus Gallus
+625	10th Anniv. Cake Doge
+626	10주년 목각 인형 성
+627	Ancient Magamojoe
+628	Great Ape Luza
+629	Zero Luza
+630	Metafilibuster
+631	
+632	
+633	Killer Tank Cat
+634	Vermilingua Rangmaster
+635	Easter Egg Cat
+636	Devil Wife
+637	Omens
+638	Mini White Cyclone
+639	Infernal Pegasus Deonil
+640	Suidae Piggicus
+641	Elephantidae Papaou
+642	Infernal Tyrant Nyandam
+643	Grand Mage Mimon
+644	
+645	
+646	Redhead Yuki Cat
+647	EVA Unit-13
+648	
+649	Lutrinae Gokurakko
+650	Iguanidae Ibilujon
+651	
+652	Lophiiformes Angaburu
+653	Kappy Kawano
+654	Mega Baa Baa
+655	Crocodylidae Kurocroc
+656	
+657	
+658	Mini Angel Cyclone
+659	Ensanglion the Calamity
+660	Malevolent Mohawk Cat
+661	Malevolent Eraser Cat
+662	Malevolent Dark Cat
+663	Malevolent Macho Leg Cat
+664	Malevolent Lion Cat
+665	Malevolent Flying Cat
+666	Malevolent Island Cat
+667	Malevolent King Dragon Cat
+668	Malevolent Jamiera Cat
+669	Jar Base
+670	King's Mimic
+671	King Doge
+672	11th Anniv. Doge Cake
+673	
+674	Esoteric Uril
+675	SOL DAE ROKKER
+676	Dragon Doge
+677	Sage of Mind Soractes
+678	
+679	Dogenstein
+680	Tarsiriel
+681	
+682	Dark Dober
+683	Gigahaniwan
+684	Mysterious Calamity
+685	Possessed King Doge
+686	Voluptuous Peony - Daji
+687	Madhead
+688	Kenshin Himura
+689	Sanosuke Sagara
+690	Aoshi Shinomori
+691	Hajime Saito
+692	Doctor K.O.
+693	
+694	Techn-Old Hyena
+695	Log
+696	Boulder
+697	Diabrollow
+698	Oldstrich
+699	Sage of Life Dr. Nova
+700	Idi:Ne
+701	Cafeteria Cat
+702	Bannerman Doge
+703	Commander Face
+704	Commander Nyandam
+705	Commander Hannya
+706	Commander Bun Bun
+707	Revolutionary Nobunaga
+708	12周年記念ケーキわんこ
+709	汎用周年木人城
+710	Catclaw Castle
+711	Snache Doge
+712	Mystery Snowmound
+713	Prof. Owlbrowley
+714	Xenobeast Bunaglios
+715	Shachiko
+716	Holy Valkyrie Cat
+717	Awakened Bahamut Cat
+718	Choco Capsule
+719	Killer Gross Cat
+720
+721	Perry Duche
+722	Puffzerker
+723	Commander Ostromeda
+724	Baki Hanma
+725	Retsu Kaioh
+726	Kaoru Hanayama
+727	Katsumi Orochi
+728	Jack Hammer
+729	Sage of Logic Newton
+730	Sonic
+731	Tails
+732	Knuckles
+733	Shadow
+734
+735	Ange Lackey
+736	South Seas Doge
+737	South Seas Otter
+738	Parasol Base
+739	Freeze Dummy
+740	Mass Production EVA
+741	Whiskingmeister
+742	Fireworks Gang
+743	Jumbo Jones
+744	Deathshund
+745	Darkmadillo
+746
+747
+748	Cammy
+749	Juri
+750	Kaijin Doge
+751	Malizabeth
+752	Madam Peng
+753	Baron Face
+754	Archbaron Face
+755	Countess Koryessa
+756	High Countess Koryessa
+757	Emperor Warumongar
+758	Grand Emperor Warumongar
+759	13th Anniv. Doge Cake
+760	Horse Doge
+761	Rui
+762	Enmu
+763	Akaza
+764	Demon Doge
+765	Demon Gory
+766	Demon Teacher Bear
+767	
+768	Le'Prude
+769	Poultrio
+770	Killer Cowbird Cat
+771	The Golden Face
+772	Sage of Selection Darvin
+773
+774
+775
+776
+777
+778
+779

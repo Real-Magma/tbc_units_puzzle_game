@@ -29,202 +29,203 @@
     <script src="https://kit.fontawesome.com/9e790ea2d1.js" crossorigin="anonymous"></script>
 </head>
 <body>
-    <main id="game" aria-label="TBC Units Puzzle Game">
+    <main id="game" aria-label="貓戰拼圖遊戲">
         <section class="app-frame">
-            <button id="news-button" class="github-logo-link" type="button" aria-label="消息">
+            <button id="news-button" class="github-logo-link" type="button" aria-label="News">
                 <img src="image/battle cats puzzle.png" alt="Battle Cats Puzzle">
             </button>
             <header class="top-bar">
-                <h1 class="sr-only">貓戰拼圖遊戲 TBC Units Puzzle Game</h1>
-                <nav class="top-actions" aria-label="工具">
-                    <button id="help-button" class="icon-button" type="button" aria-label="遊戲說明"><i class="fa-solid fa-circle-info" aria-hidden="true"></i><span class="icon-tooltip" aria-hidden="true">說明</span></button>
-                    <button id="theme-button" class="icon-button" type="button" aria-label="切換深色模式"><i class="fa-regular fa-moon" aria-hidden="true"></i><span id="theme-tooltip" class="icon-tooltip" aria-hidden="true">關燈</span></button>
-                    <button id="effects-button" class="icon-button" type="button" aria-label="關閉音效" aria-pressed="false"><i class="fa-solid fa-music" aria-hidden="true"></i><span id="effects-tooltip" class="icon-tooltip" aria-hidden="true">關音效</span></button>
+                <h1 class="sr-only">貓戰拼圖遊戲</h1>
+                <nav class="top-actions" aria-label="Tools">
+                    <button id="help-button" class="icon-button" type="button" aria-label="How to Play"><i class="fa-solid fa-book" aria-hidden="true"></i><span class="icon-tooltip" aria-hidden="true">How to Play</span></button>
+                    <button id="language-button" class="icon-button" type="button" aria-label="切換為英文"><i class="fa-solid fa-earth-americas" aria-hidden="true"></i><span id="language-tooltip" class="icon-tooltip" aria-hidden="true">English</span></button>
+                    <button id="theme-button" class="icon-button" type="button" aria-label="切換深色主題"><i class="fa-regular fa-moon" aria-hidden="true"></i><span id="theme-tooltip" class="icon-tooltip" aria-hidden="true">關燈</span></button>
+                    <button id="effects-button" class="icon-button" type="button" aria-label="Mute sound sfx" aria-pressed="false"><i class="fa-solid fa-music" aria-hidden="true"></i><span id="effects-tooltip" class="icon-tooltip" aria-hidden="true">Mute sfx</span></button>
                     <div class="sound-controls">
-                        <button id="sound-button" class="icon-button" type="button" aria-label="關閉音樂" aria-pressed="false"><i class="fa-solid fa-volume-high" aria-hidden="true"></i><span id="sound-tooltip" class="icon-tooltip" aria-hidden="true">關音樂</span></button>
-                        <input id="volume-slider" type="range" min="0" max="1" step="0.01" value="0.5" aria-label="音樂音量">
+                        <button id="sound-button" class="icon-button" type="button" aria-label="Mute music" aria-pressed="false"><i class="fa-solid fa-volume-high" aria-hidden="true"></i><span id="sound-tooltip" class="icon-tooltip" aria-hidden="true">Mute music</span></button>
+                        <input id="volume-slider" type="range" min="0" max="1" step="0.01" value="0.5" aria-label="Music volume">
                     </div>
                 </nav>
             </header>
-            <nav class="layer-controls" aria-label="主畫面工具">
-                <button id="view-home-button" class="layer-button" type="button" aria-label="回到畫布原點" title="回到原點">
+            <nav class="layer-controls" aria-label="Canvas tools">
+                <button id="view-home-button" class="layer-button" type="button" aria-label="回到原點">
                     <i class="fa-solid fa-house" aria-hidden="true"></i>
-                    <span class="icon-tooltip" aria-hidden="true">回到原點</span>
+                    <span class="icon-tooltip" aria-hidden="true">Reset view</span>
                 </button>
                 <div class="layer-control-row">
-                    <button id="save-project-button" class="layer-button" type="button" aria-label="儲存圖層專案">
+                    <button id="save-project-button" class="layer-button" type="button" aria-label="Save layers">
                         <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
-                        <span class="icon-tooltip" aria-hidden="true">儲存圖層</span>
+                        <span class="icon-tooltip" aria-hidden="true">Save layers</span>
                     </button>
-                    <label id="import-project-button" class="layer-button file-import-button" aria-label="匯入圖層專案">
-                        <input id="import-project-input" class="project-file-input" type="file" aria-label="選擇圖層專案檔案">
+                    <label id="import-project-button" class="layer-button file-import-button" aria-label="Import layers">
+                        <input id="import-project-input" class="project-file-input" type="file" aria-label="Choose a saved layers file">
                         <i class="fa-solid fa-folder-open" aria-hidden="true"></i>
-                        <span class="icon-tooltip" aria-hidden="true">匯入圖層</span>
+                        <span class="icon-tooltip" aria-hidden="true">Import layers</span>
                     </label>
                 </div>
                 <div class="layer-control-row">
-                    <button id="copy-canvas-image-button" class="layer-button" type="button" aria-label="複製目前主畫面圖片">
+                    <button id="copy-canvas-image-button" class="layer-button" type="button" aria-label="Copy current canvas image">
                         <i class="fa-regular fa-copy" aria-hidden="true"></i>
-                        <span class="icon-tooltip" aria-hidden="true">複製主畫面</span>
+                        <span class="icon-tooltip" aria-hidden="true">Copy canvas</span>
                     </button>
-                    <button id="share-canvas-image-button" class="layer-button" type="button" aria-label="分享目前主畫面圖片">
+                    <button id="share-canvas-image-button" class="layer-button" type="button" aria-label="Share current canvas image">
                         <i class="fa-solid fa-share-nodes" aria-hidden="true"></i>
-                        <span class="icon-tooltip" aria-hidden="true">分享主畫面</span>
+                        <span class="icon-tooltip" aria-hidden="true">Share canvas</span>
                     </button>
                 </div>
             </nav>
 
             <div class="workspace">
-                <section class="game-column" aria-label="遊戲主畫面">
+                <section class="game-column" aria-label="Game canvas">
                     <div class="play-area">
-                        <div id="canvas" class="rounded-box" aria-label="拼圖遊戲區">
+                        <div id="canvas" class="rounded-box" aria-label="Puzzle canvas">
                             <div id="canvas-world" class="canvas-world">
                                 <div id="selection-frame" class="selection-frame" aria-hidden="true">
-                                    <button class="selection-corner corner-top-left" type="button" data-corner="top-left" aria-label="縮放選取物件"></button>
-                                    <button class="selection-corner corner-top-right" type="button" data-corner="top-right" aria-label="縮放選取物件"></button>
-                                    <button class="selection-corner corner-bottom-left" type="button" data-corner="bottom-left" aria-label="縮放選取物件"></button>
-                                    <button class="selection-corner corner-bottom-right" type="button" data-corner="bottom-right" aria-label="縮放選取物件"></button>
-                                    <button id="selection-rotate-handle" class="selection-rotate-handle" type="button" aria-label="旋轉選取物件"></button>
+                                    <button class="selection-corner corner-top-left" type="button" data-corner="top-left" aria-label="Scale selected object"></button>
+                                    <button class="selection-corner corner-top-right" type="button" data-corner="top-right" aria-label="Scale selected object"></button>
+                                    <button class="selection-corner corner-bottom-left" type="button" data-corner="bottom-left" aria-label="Scale selected object"></button>
+                                    <button class="selection-corner corner-bottom-right" type="button" data-corner="bottom-right" aria-label="Scale selected object"></button>
+                                    <button id="selection-rotate-handle" class="selection-rotate-handle" type="button" aria-label="Rotate selected object"></button>
                                 </div>
                             </div>
                             <div id="marquee-selection" class="marquee-selection" aria-hidden="true"></div>
-                            <aside id="layers-panel" class="layers-panel" aria-label="圖層面板" hidden></aside>
+                            <aside id="layers-panel" class="layers-panel" aria-label="Layers panel" hidden></aside>
                             <div id="layer-context-menu" class="layer-context-menu" role="menu" hidden>
-                                <button id="merge-layers-button"         type="button" role= "menuitem"><i class="fa-solid fa-object-group"   aria-hidden="true"></i><span>群組</span></button>
-                                <button id="ungroup-layers-button"       type="button" role= "menuitem"><i class="fa-solid fa-object-ungroup" aria-hidden="true"></i><span>解散</span></button>
-                                <button id="flip-horizontal-button"      type="button" role= "menuitem"><i class="fa-solid fa-right-left"     aria-hidden="true"></i><span>左右反轉</span></button>
-                                <button id="show-layers-button"          type="button" role= "menuitem"><i class="fa-solid fa-eye"            aria-hidden="true"></i><span>出現</span></button>
-                                <button id="move-layers-to-front-button" type="button" role= "menuitem"><i class="fa-solid fa-arrow-up"       aria-hidden="true"></i><span>最上層</span></button>
-                                <button id="move-layers-to-back-button"  type="button" role= "menuitem"><i class="fa-solid fa-arrow-down"     aria-hidden="true"></i><span>最下層</span></button>
-                                <button id="lock-layer-button"           type="button" role= "menuitem"><i class="fa-solid fa-lock"           aria-hidden="true"></i><span>鎖定</span></button>
-                                <button id="hide-layers-button"          type="button" role= "menuitem"><i class="fa-solid fa-eye-slash"      aria-hidden="true"></i><span>消失</span></button>
-                                <button id="focus-layer-button"          type="button" role= "menuitem"><i class="fa-solid fa-crosshairs"     aria-hidden="true"></i><span>傳送到它</span></button>
+                                <button id="merge-layers-button"         type="button" role= "menuitem"><i class="fa-solid fa-object-group"   aria-hidden="true"></i><span>Group</span></button>
+                                <button id="ungroup-layers-button"       type="button" role= "menuitem"><i class="fa-solid fa-object-ungroup" aria-hidden="true"></i><span>Ungroup</span></button>
+                                <button id="flip-horizontal-button"      type="button" role= "menuitem"><i class="fa-solid fa-right-left"     aria-hidden="true"></i><span>Flip Horizontally</span></button>
+                                <button id="show-layers-button"          type="button" role= "menuitem"><i class="fa-solid fa-eye"            aria-hidden="true"></i><span>Show</span></button>
+                                <button id="move-layers-to-front-button" type="button" role= "menuitem"><i class="fa-solid fa-arrow-up"       aria-hidden="true"></i><span>Bring to Front</span></button>
+                                <button id="move-layers-to-back-button"  type="button" role= "menuitem"><i class="fa-solid fa-arrow-down"     aria-hidden="true"></i><span>Send to Back</span></button>
+                                <button id="lock-layer-button"           type="button" role= "menuitem"><i class="fa-solid fa-lock"           aria-hidden="true"></i><span>Lock</span></button>
+                                <button id="hide-layers-button"          type="button" role= "menuitem"><i class="fa-solid fa-eye-slash"      aria-hidden="true"></i><span>Hide</span></button>
+                                <button id="focus-layer-button"          type="button" role= "menuitem"><i class="fa-solid fa-crosshairs"     aria-hidden="true"></i><span>Go to It</span></button>
                             </div>
-                            <button id="trash-zone" class="trash-zone" type="button" aria-label="長按三秒清空主畫面">
+                            <button id="trash-zone" class="trash-zone" type="button" aria-label="Hold for three seconds to clear the canvas">
                                 <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
                             </button>
                         </div>
                     </div>
                 </section>
-                <aside class="side-panel" aria-label="單位與物品面板">
+                <aside class="side-panel" aria-label="Units and parts panel">
                     <div id="score-start-flash" class="score-start-flash" aria-hidden="true"></div>
-                    <div class="mode-tabs" role="tablist" aria-label="操作模式">
-                        <button id="normal-mode-tab" class="mode-tab is-active" type="button" role="tab" aria-selected="true" aria-controls="normal-mode-panel">一般模式</button>
-                        <button id="score-mode-tab" class="mode-tab" type="button" role="tab" aria-selected="false" aria-controls="score-mode-panel">評分模式</button>
+                    <div class="mode-tabs" role="tablist" aria-label="Modes">
+                        <button id="normal-mode-tab" class="mode-tab is-active" type="button" role="tab" aria-selected="true" aria-controls="normal-mode-panel">Normal Mode</button>
+                        <button id="score-mode-tab" class="mode-tab" type="button" role="tab" aria-selected="false" aria-controls="score-mode-panel">Score Mode</button>
                     </div>
                     <div id="normal-mode-panel" class="unit-panel" role="tabpanel" aria-labelledby="normal-mode-tab">
-                        <p id="normal-entity-type-label" class="entity-type-label">類別</p>
+                        <p id="normal-entity-type-label" class="entity-type-label">Type</p>
                         <div class="entity-type-options" role="group" aria-labelledby="normal-entity-type-label">
-                            <button class="entity-type-option is-selected" type="button" data-entity-type="unit" aria-pressed="true" aria-label="貓咪" title="貓咪"><img src="image/kitty.png" alt="" aria-hidden="true"></button>
-                            <button class="entity-type-option" type="button" data-entity-type="enemy" aria-pressed="false" aria-label="敵人" title="敵人"><img src="image/puppy.png" alt="" aria-hidden="true"></button>
+                            <button class="entity-type-option is-selected" type="button" data-entity-type="unit" aria-pressed="true" aria-label="Units" title="Units"><img src="image/kitty.png" alt="" aria-hidden="true"></button>
+                            <button class="entity-type-option" type="button" data-entity-type="enemy" aria-pressed="false" aria-label="Enemies" title="Enemies"><img src="image/puppy.png" alt="" aria-hidden="true"></button>
                         </div>
-                        <label id="normal-entity-label" for="unit-search">角色</label>
+                        <label id="normal-entity-label" for="unit-search">Units</label>
                         <div class="unit-search">
                             <div class="unit-search-row">
-                                <input id="unit-search" type="search" autocomplete="off" placeholder="搜尋編號或名稱" aria-describedby="unit-status" aria-controls="unit-results" aria-expanded="false">
-                                <button id="random-unit-button" class="unit-random-button" type="button" aria-label="隨機角色與階級">
+                                <input id="unit-search" type="search" autocomplete="off" placeholder="Search ID or name" aria-describedby="unit-status" aria-controls="unit-results" aria-expanded="false">
+                                <button id="random-unit-button" class="unit-random-button" type="button" aria-label="Random unit and form">
                                     <i class="fa-solid fa-shuffle" aria-hidden="true"></i>
-                                    <span class="icon-tooltip" aria-hidden="true">隨機</span>
+                                    <span class="icon-tooltip" aria-hidden="true">Random</span>
                                 </button>
                             </div>
-                            <div id="unit-results" class="unit-results" role="listbox" aria-label="角色搜尋結果"></div>
+                            <div id="unit-results" class="unit-results" role="listbox" aria-label="Unit search results"></div>
                         </div>
                         <select id="unit-select" hidden></select>
-                        <p id="rank-label" class="rank-label">階級</p>
+                        <p id="rank-label" class="rank-label">Form</p>
                         <div id="rank-options" class="rank-options" role="group" aria-labelledby="rank-label">
-                            <button class="rank-option is-selected" type="button" data-rank="f" aria-pressed="true">1 階</button>
-                            <button class="rank-option" type="button" data-rank="c" aria-pressed="false">2 階</button>
-                            <button class="rank-option" type="button" data-rank="s" aria-pressed="false">3 階</button>
-                            <button class="rank-option" type="button" data-rank="u" aria-pressed="false">4 階</button>
+                            <button class="rank-option is-selected" type="button" data-rank="f" aria-pressed="true">Base</button>
+                            <button class="rank-option" type="button" data-rank="c" aria-pressed="false">Evolved</button>
+                            <button class="rank-option" type="button" data-rank="s" aria-pressed="false">True</button>
+                            <button class="rank-option" type="button" data-rank="u" aria-pressed="false">Ultra</button>
                         </div>
                         <select id="rank-select" hidden aria-describedby="unit-status">
-                            <option value="f">1 階</option>
-                            <option value="c">2 階</option>
-                            <option value="s">3 階</option>
-                            <option value="u">4 階</option>
-                            <option value="e">敵人</option>
+                            <option value="f">Base</option>
+                            <option value="c">Evolved</option>
+                            <option value="s">True</option>
+                            <option value="u">Ultra</option>
+                            <option value="e">Enemy</option>
                         </select>
                         <p id="unit-status" class="sr-only" role="status"></p>
-                        <div id="parts-list" class="parts-list" aria-label="可拖曳部件"></div>
+                        <div id="parts-list" class="parts-list" aria-label="Draggable parts"></div>
                     </div>
                     <section id="score-mode-panel" class="score-mode-panel" role="tabpanel" aria-labelledby="score-mode-tab" hidden>
                         <div id="score-setup" class="score-setup">
                             <div class="score-setup-scroll">
-                                <p id="score-entity-type-label" class="entity-type-label">類別</p>
+                                <p id="score-entity-type-label" class="entity-type-label">Type</p>
                                 <div class="entity-type-options" role="group" aria-labelledby="score-entity-type-label">
-                                    <button class="entity-type-option is-selected" type="button" data-entity-type="unit" aria-pressed="true" aria-label="貓咪" title="貓咪"><img src="image/kitty.png" alt="" aria-hidden="true"></button>
-                                    <button class="entity-type-option" type="button" data-entity-type="enemy" aria-pressed="false" aria-label="敵人" title="敵人"><img src="image/puppy.png" alt="" aria-hidden="true"></button>
+                                    <button class="entity-type-option is-selected" type="button" data-entity-type="unit" aria-pressed="true" aria-label="Units" title="Units"><img src="image/kitty.png" alt="" aria-hidden="true"></button>
+                                    <button class="entity-type-option" type="button" data-entity-type="enemy" aria-pressed="false" aria-label="Enemies" title="Enemies"><img src="image/puppy.png" alt="" aria-hidden="true"></button>
                                 </div>
-                                <p class="score-section-label">時間</p>
-                                <div class="score-time-options" role="group" aria-label="評分時間">
+                                <p class="score-section-label">Time</p>
+                                <div class="score-time-options" role="group" aria-label="Time limit">
                                     <button class="score-time-button is-selected" type="button" data-duration="60" aria-pressed="true">1:00</button>
                                     <button class="score-time-button" type="button" data-duration="180" aria-pressed="false">3:00</button>
                                     <button class="score-time-button" type="button" data-duration="300" aria-pressed="false">5:00</button>
-                                    <button class="score-time-button" type="button" data-duration="0" aria-pressed="false" aria-label="不限時間">∞</button>
+                                    <button class="score-time-button" type="button" data-duration="0" aria-pressed="false" aria-label="No time limit">∞</button>
                                 </div>
-                                <p class="score-section-label score-mode-label">模式</p>
-                                <div class="score-question-modes" role="group" aria-label="題目模式">
-                                    <button class="score-question-mode is-selected" type="button" data-score-mode="fixed" aria-pressed="true"><i class="fa-solid fa-thumbtack" aria-hidden="true"></i>固定</button>
-                                    <button class="score-question-mode" type="button" data-score-mode="random" aria-pressed="false"><i class="fa-solid fa-shuffle" aria-hidden="true"></i>隨機</button>
+                                <p class="score-section-label score-mode-label">Question</p>
+                                <div class="score-question-modes" role="group" aria-label="Question mode">
+                                    <button class="score-question-mode is-selected" type="button" data-score-mode="fixed" aria-pressed="true"><i class="fa-solid fa-thumbtack" aria-hidden="true"></i>Fixed</button>
+                                    <button class="score-question-mode" type="button" data-score-mode="random" aria-pressed="false"><i class="fa-solid fa-shuffle" aria-hidden="true"></i>Random</button>
                                 </div>
                                 <div id="score-fixed-picker" class="score-fixed-picker">
-                                    <label id="score-entity-label" for="score-unit-search">角色</label>
+                                    <label id="score-entity-label" for="score-unit-search">Units</label>
                                     <div class="unit-search score-unit-search">
-                                        <input id="score-unit-search" type="search" autocomplete="off" placeholder="搜尋編號或名稱" aria-controls="score-unit-results" aria-expanded="false">
-                                        <div id="score-unit-results" class="unit-results score-unit-results" role="listbox" aria-label="評分模式角色搜尋結果"></div>
+                                        <input id="score-unit-search" type="search" autocomplete="off" placeholder="Search ID or name" aria-controls="score-unit-results" aria-expanded="false">
+                                        <div id="score-unit-results" class="unit-results score-unit-results" role="listbox" aria-label="Score mode unit search results"></div>
                                     </div>
-                                    <p id="score-fixed-rank-label" class="score-rank-label">階級</p>
+                                    <p id="score-fixed-rank-label" class="score-rank-label">Form</p>
                                     <div id="score-fixed-ranks" class="score-fixed-ranks" role="group" aria-labelledby="score-fixed-rank-label">
-                                        <button class="score-fixed-rank is-selected" type="button" data-rank="f" aria-pressed="true" disabled>1 階</button>
-                                        <button class="score-fixed-rank" type="button" data-rank="c" aria-pressed="false" disabled>2 階</button>
-                                        <button class="score-fixed-rank" type="button" data-rank="s" aria-pressed="false" disabled>3 階</button>
-                                        <button class="score-fixed-rank" type="button" data-rank="u" aria-pressed="false" disabled>4 階</button>
+                                        <button class="score-fixed-rank is-selected" type="button" data-rank="f" aria-pressed="true" disabled>Base</button>
+                                        <button class="score-fixed-rank" type="button" data-rank="c" aria-pressed="false" disabled>Evolved</button>
+                                        <button class="score-fixed-rank" type="button" data-rank="s" aria-pressed="false" disabled>True</button>
+                                        <button class="score-fixed-rank" type="button" data-rank="u" aria-pressed="false" disabled>Ultra</button>
                                     </div>
                                 </div>
-                                <p id="score-mode-status" class="score-mode-status sr-only" aria-live="polite">選擇一隻角色後即可開始。</p>
-                                <button id="score-start-button" class="score-start-button" type="button"><i class="fa-solid fa-play" aria-hidden="true"></i><span>開始</span></button>
+                                <p id="score-mode-status" class="score-mode-status" aria-live="polite"></p>
+                                <button id="score-start-button" class="score-start-button" type="button"><i class="fa-solid fa-play" aria-hidden="true"></i><span>Start</span></button>
                             </div>
                         </div>
                         <div id="score-running" class="score-running" hidden aria-live="polite">
                             <div class="score-running-fixed">
                                 <div class="score-round-actions">
-                                    <button id="score-cancel-button" class="score-cancel-button" type="button"><i class="fa-solid fa-xmark" aria-hidden="true"></i><span>取消</span></button>
-                                    <button id="score-grade-button" class="score-grade-button" type="button"><i class="fa-solid fa-check" aria-hidden="true"></i><span>評分</span></button>
+                                    <button id="score-cancel-button" class="score-cancel-button" type="button"><i class="fa-solid fa-xmark" aria-hidden="true"></i><span>Cancel</span></button>
+                                    <button id="score-grade-button" class="score-grade-button" type="button"><i class="fa-solid fa-check" aria-hidden="true"></i><span>Grade</span></button>
                                 </div>
-                                <div class="score-timer-window" aria-label="倒數時間"><span class="score-timer-caption">TIME</span><strong id="score-countdown" class="score-countdown">1:00</strong></div>
+                                <div class="score-timer-window" aria-label="Countdown"><span class="score-timer-caption">TIME</span><strong id="score-countdown" class="score-countdown">1:00</strong></div>
                             </div>
                             <div class="score-round-scroll">
                                 <div class="score-active-unit-panel">
-                                    <label id="score-active-entity-label" for="score-active-unit">角色</label>
+                                    <label id="score-active-entity-label" for="score-active-unit">Unit</label>
                                     <input id="score-active-unit" type="text" readonly aria-readonly="true">
-                                    <label id="score-active-rank-label" for="score-active-rank">階級</label>
-                                    <select id="score-active-rank" disabled aria-label="本回合階級">
-                                        <option value="f">1 階</option>
-                                        <option value="c">2 階</option>
-                                        <option value="s">3 階</option>
-                                        <option value="u">4 階</option>
-                                        <option value="e">敵人</option>
+                                    <label id="score-active-rank-label" for="score-active-rank">Form</label>
+                                    <select id="score-active-rank" disabled aria-label="This round's form">
+                                        <option value="f">Base</option>
+                                        <option value="c">Evoled</option>
+                                        <option value="s">True</option>
+                                        <option value="u">Ultra</option>
+                                        <option value="e">Enemy</option>
                                     </select>
                                 </div>
-                                <div id="score-parts-list" class="parts-list score-parts-list" aria-label="本回合可拖曳部件"></div>
+                                <div id="score-parts-list" class="parts-list score-parts-list" aria-label="This round's draggable parts"></div>
                             </div>
                         </div>
-                        <section id="score-result-panel" class="score-result-panel" aria-label="評分結果" hidden>
+                        <section id="score-result-panel" class="score-result-panel" aria-label="Score result" hidden>
                             <p class="score-result-kicker">RESULT</p>
-                            <strong id="score-final-score" class="score-final-score">0<span>分</span></strong>
-                            <p id="score-result-message" class="score-result-message">本回合完成</p>
-                            <div id="score-result-breakdown" class="score-result-breakdown" aria-label="評分明細"></div>
-                            <button id="score-result-history-button" class="score-result-history-button" type="button" hidden aria-label="查看本回合結算畫面">
-                                <span class="score-result-history-label">回顧紀錄</span>
+                            <strong id="score-final-score" class="score-final-score">0<span> pts</span></strong>
+                            <p id="score-result-message" class="score-result-message">Round complete</p>
+                            <div id="score-result-breakdown" class="score-result-breakdown" aria-label="Score breakdown"></div>
+                            <button id="score-result-history-button" class="score-result-history-button" type="button" hidden aria-label="View this round's result">
+                                <span class="score-result-history-label">Review</span>
                                 <span id="score-result-history-preview" class="score-result-history-preview" aria-hidden="true"></span>
                             </button>
-                            <button id="score-retry-button" class="score-start-button score-retry-button" type="button"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i><span>再來一局</span></button>
+                            <button id="score-retry-button" class="score-start-button score-retry-button" type="button"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i><span>Play Again</span></button>
                         </section>
                     </section>
                 </aside>
             </div>
         </section>
-        <div id="score-mobile-controls" class="score-mobile-controls" aria-label="評分作答控制" hidden></div>
+        <div id="score-mobile-controls" class="score-mobile-controls" aria-label="Score round controls" hidden></div>
     </main>
     <audio id="background-music" loop preload="metadata">
         <source src="bgm/Battle Cats Lo-fi short.ogg" type="audio/ogg; codecs=opus">
@@ -254,26 +255,26 @@
         <source src="sfx/dojo win.mp3" type="audio/mpeg">
     </audio>
 
-    <div id="score-result-overlay" class="score-result-overlay" role="dialog" aria-modal="true" aria-label="本回合畫面" hidden>
+    <div id="score-result-overlay" class="score-result-overlay" role="dialog" aria-modal="true" aria-label="Round result" hidden>
         <div id="score-result-card" class="score-result-card">
             <div class="score-result-layout">
                 <div class="score-result-scenes">
-                    <section class="score-result-scene" aria-label="你的畫面">
-                        <p class="score-result-scene-label">你</p>
+                    <section class="score-result-scene" aria-label="Your canvas">
+                        <p class="score-result-scene-label">You</p>
                         <div id="score-result-preview" class="score-result-preview" aria-hidden="true"></div>
                     </section>
-                    <section class="score-result-scene" aria-label="正解畫面">
-                        <p class="score-result-scene-label">正解</p>
-                        <div id="score-result-answer" class="score-result-answer" aria-label="正解畫面框架"><span>正解畫面</span></div>
+                    <section class="score-result-scene" aria-label="Answer canvas">
+                        <p class="score-result-scene-label">Answer</p>
+                        <div id="score-result-answer" class="score-result-answer" aria-label="Answer canvas"><span>Answer canvas</span></div>
                     </section>
                 </div>
-                <section id="score-result-overlay-stats" class="score-result-overlay-stats" aria-label="本回合分數">
+                <section id="score-result-overlay-stats" class="score-result-overlay-stats" aria-label="Round score">
                     <div id="score-result-overlay-breakdown" class="score-result-overlay-breakdown"></div>
-                    <strong id="score-result-overlay-score" class="score-result-overlay-score"><span class="score-reveal-value">--</span><span>分</span></strong>
-                    <div class="score-result-actions" aria-label="結算畫面操作">
-                        <button id="score-image-overlap-button" class="score-result-action" type="button" aria-label="影像重疊" title="" aria-pressed="false" hidden><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span class="icon-tooltip" aria-hidden="true">影像</span></button>
-                        <button id="score-copy-composition-button" class="score-result-action" type="button" aria-label="複製你的組合圖片" title=""><i class="fa-regular fa-copy" aria-hidden="true"></i><span class="icon-tooltip" aria-hidden="true">複製你</span></button>
-                        <button id="score-copy-result-button" class="score-result-action" type="button" aria-label="複製整個結算畫面" title=""><i class="fa-regular fa-images" aria-hidden="true"></i><span class="icon-tooltip" aria-hidden="true">複製結算</span></button>
+                    <strong id="score-result-overlay-score" class="score-result-overlay-score"><span class="score-reveal-value">--</span><span> pts</span></strong>
+                    <div class="score-result-actions" aria-label="Result actions">
+                        <button id="score-image-overlap-button" class="score-result-action" type="button" aria-label="Image overlay" title="" aria-pressed="false" hidden><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span class="icon-tooltip" aria-hidden="true">Image</span></button>
+                        <button id="score-copy-composition-button" class="score-result-action" type="button" aria-label="Copy your composition image" title=""><i class="fa-regular fa-copy" aria-hidden="true"></i><span class="icon-tooltip" aria-hidden="true">Copy yours</span></button>
+                        <button id="score-copy-result-button" class="score-result-action" type="button" aria-label="Copy result image" title=""><i class="fa-regular fa-images" aria-hidden="true"></i><span class="icon-tooltip" aria-hidden="true">Copy result</span></button>
                     </div>
                 </section>
             </div>
@@ -281,14 +282,238 @@
     </div>
 
     <dialog id="help-dialog" class="help-dialog" aria-labelledby="help-title">
-        <header class="help-header">
+        <header class="help-card-header">
             <div>
-                <h2 id="help-title">How to Play</h2>
-                <p class="help-lead">利用記憶, 拼出八親不認的貓咪吧！</p>
+            <h2 id="help-title">操作手冊</h2>
+            <p class="help-lead">利用記憶，拼出八親不認的貓咪吧！</p>
             </div>
-            <button id="close-help-button" class="help-close" type="button" aria-label="關閉說明">×</button>
+            <button id="close-help-button" class="help-close" type="button" aria-label="Close help">×</button>
         </header>
 
+        <section class="help-card-pages" aria-label="操作手冊頁面">
+            <article class="help-card-page is-active" data-help-page="1">
+                <div>
+                    <h3>加入角色與敵人</h3>
+                    <figure class="help-gif-slot">
+                        <i class="fa-solid fa-film" aria-hidden="true"></i>
+                        <figcaption>GIF 示範區</figcaption>
+                        <button class="help-page-hitbox help-page-hitbox-previous" type="button" data-help-page-delta="-1" aria-label="上一頁"></button>
+                        <button class="help-page-hitbox help-page-hitbox-next" type="button" data-help-page-delta="1" aria-label="下一頁"></button>
+                    </figure>
+                </div>
+                <p class="help-card-copy">選擇後點一下加入；可搜尋名稱或編號。</p>
+            </article>
+            <article class="help-card-page" data-help-page="2" hidden>
+                <div>
+                    <h3>移動、縮放與旋轉</h3>
+                    <figure class="help-gif-slot">
+                        <i class="fa-solid fa-up-down-left-right" aria-hidden="true"></i>
+                        <figcaption>GIF 示範區</figcaption>
+                        <button class="help-page-hitbox help-page-hitbox-previous" type="button" data-help-page-delta="-1" aria-label="上一頁"></button>
+                        <button class="help-page-hitbox help-page-hitbox-next" type="button" data-help-page-delta="1" aria-label="下一頁"></button>
+                    </figure>
+                </div>
+                <p class="help-card-copy">拖曳移動、拉四角縮放、圓點旋轉。</p>
+            </article>
+            <article class="help-card-page" data-help-page="3" hidden>
+                <div>
+                    <h3>選取、多選與群組</h3>
+                    <figure class="help-gif-slot">
+                        <i class="fa-solid fa-object-group" aria-hidden="true"></i>
+                        <figcaption>GIF 示範區</figcaption>
+                        <button class="help-page-hitbox help-page-hitbox-previous" type="button" data-help-page-delta="-1" aria-label="上一頁"></button>
+                        <button class="help-page-hitbox help-page-hitbox-next" type="button" data-help-page-delta="1" aria-label="下一頁"></button>
+                    </figure>
+                </div>
+                <p class="help-card-copy"><kbd>Ctrl</kbd> 多選；可群組或解除群組。</p>
+            </article>
+            <article class="help-card-page" data-help-page="4" hidden>
+                <div>
+                    <h3>上一步與下一步</h3>
+                    <figure class="help-gif-slot">
+                        <i class="fa-solid fa-arrow-rotate-left" aria-hidden="true"></i>
+                        <figcaption>GIF 示範區</figcaption>
+                        <button class="help-page-hitbox help-page-hitbox-previous" type="button" data-help-page-delta="-1" aria-label="上一頁"></button>
+                        <button class="help-page-hitbox help-page-hitbox-next" type="button" data-help-page-delta="1" aria-label="下一頁"></button>
+                    </figure>
+                </div>
+                <p class="help-card-copy"><kbd>Ctrl</kbd> + <kbd>Z</kbd> 復原，<kbd>Ctrl</kbd> + <kbd>Y</kbd> 重做。</p>
+            </article>
+            <article class="help-card-page" data-help-page="5" hidden>
+                <div>
+                    <h3>圖層順序</h3>
+                    <figure class="help-gif-slot">
+                        <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
+                        <figcaption>GIF 示範區</figcaption>
+                        <button class="help-page-hitbox help-page-hitbox-previous" type="button" data-help-page-delta="-1" aria-label="上一頁"></button>
+                        <button class="help-page-hitbox help-page-hitbox-next" type="button" data-help-page-delta="1" aria-label="下一頁"></button>
+                    </figure>
+                </div>
+                <p class="help-card-copy"><kbd>↑</kbd>／<kbd>↓</kbd> 或 <kbd>W</kbd>／<kbd>S</kbd> 調整前後；<kbd>Shift</kbd> 直達頂／底。</p>
+            </article>
+            <article class="help-card-page" data-help-page="6" hidden>
+                <div>
+                    <h3>複製與貼上</h3>
+                    <figure class="help-gif-slot">
+                        <i class="fa-solid fa-copy" aria-hidden="true"></i>
+                        <figcaption>GIF 示範區</figcaption>
+                        <button class="help-page-hitbox help-page-hitbox-previous" type="button" data-help-page-delta="-1" aria-label="上一頁"></button>
+                        <button class="help-page-hitbox help-page-hitbox-next" type="button" data-help-page-delta="1" aria-label="下一頁"></button>
+                    </figure>
+                </div>
+                <p class="help-card-copy"><kbd>Ctrl</kbd> + <kbd>C</kbd> 複製，<kbd>Ctrl</kbd> + <kbd>V</kbd> 貼上。</p>
+            </article>
+            <article class="help-card-page" data-help-page="7" hidden>
+                <div>
+                    <h3>左右反轉</h3>
+                    <figure class="help-gif-slot">
+                        <i class="fa-solid fa-right-left" aria-hidden="true"></i>
+                        <figcaption>GIF 示範區</figcaption>
+                        <button class="help-page-hitbox help-page-hitbox-previous" type="button" data-help-page-delta="-1" aria-label="上一頁"></button>
+                        <button class="help-page-hitbox help-page-hitbox-next" type="button" data-help-page-delta="1" aria-label="下一頁"></button>
+                    </figure>
+                </div>
+                <p class="help-card-copy">按 <kbd>F</kbd> 或選單可左右反轉。</p>
+            </article>
+            <article class="help-card-page" data-help-page="8" hidden>
+                <div>
+                    <h3>刪除與清空</h3>
+                    <figure class="help-gif-slot">
+                        <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+                        <figcaption>GIF 示範區</figcaption>
+                        <button class="help-page-hitbox help-page-hitbox-previous" type="button" data-help-page-delta="-1" aria-label="上一頁"></button>
+                        <button class="help-page-hitbox help-page-hitbox-next" type="button" data-help-page-delta="1" aria-label="下一頁"></button>
+                    </figure>
+                </div>
+                <p class="help-card-copy"><kbd>Delete</kbd>、<kbd>Backspace</kbd> 或垃圾桶刪除；長按清空。</p>
+            </article>
+            <article class="help-card-page" data-help-page="9" hidden>
+                <div>
+                    <h3>畫布縮放與回原點</h3>
+                    <figure class="help-gif-slot">
+                        <i class="fa-solid fa-expand" aria-hidden="true"></i>
+                        <figcaption>GIF 示範區</figcaption>
+                        <button class="help-page-hitbox help-page-hitbox-previous" type="button" data-help-page-delta="-1" aria-label="上一頁"></button>
+                        <button class="help-page-hitbox help-page-hitbox-next" type="button" data-help-page-delta="1" aria-label="下一頁"></button>
+                    </figure>
+                </div>
+                <p class="help-card-copy">滾輪／雙指縮放；房子回原點。</p>
+            </article>
+            <article class="help-card-page" data-help-page="10" hidden>
+                <div>
+                    <h3>物件功能選單</h3>
+                    <figure class="help-gif-slot">
+                        <i class="fa-solid fa-list" aria-hidden="true"></i>
+                        <figcaption>GIF 示範區</figcaption>
+                        <button class="help-page-hitbox help-page-hitbox-previous" type="button" data-help-page-delta="-1" aria-label="上一頁"></button>
+                        <button class="help-page-hitbox help-page-hitbox-next" type="button" data-help-page-delta="1" aria-label="下一頁"></button>
+                    </figure>
+                </div>
+                <p class="help-card-copy">右鍵或長按物件，開啟進階操作。</p>
+            </article>
+            <article class="help-card-page" data-help-page="11" hidden>
+                <div>
+                    <h3>PS 圖層面板</h3>
+                    <figure class="help-gif-slot">
+                        <i class="fa-solid fa-sliders" aria-hidden="true"></i>
+                        <figcaption>GIF 示範區</figcaption>
+                        <button class="help-page-hitbox help-page-hitbox-previous" type="button" data-help-page-delta="-1" aria-label="上一頁"></button>
+                        <button class="help-page-hitbox help-page-hitbox-next" type="button" data-help-page-delta="1" aria-label="下一頁"></button>
+                    </figure>
+                </div>
+                <p class="help-card-copy">開啟 PS 欄位可選取與排序圖層。</p>
+            </article>
+            <article class="help-card-page" data-help-page="12" hidden>
+                <div>
+                    <h3>儲存圖層</h3>
+                    <figure class="help-gif-slot">
+                        <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+                        <figcaption>GIF 示範區</figcaption>
+                        <button class="help-page-hitbox help-page-hitbox-previous" type="button" data-help-page-delta="-1" aria-label="上一頁"></button>
+                        <button class="help-page-hitbox help-page-hitbox-next" type="button" data-help-page-delta="1" aria-label="下一頁"></button>
+                    </figure>
+                </div>
+                <p class="help-card-copy">更多 → 儲存圖層，下載目前配置。</p>
+            </article>
+            <article class="help-card-page" data-help-page="13" hidden>
+                <div>
+                    <h3>匯入圖層</h3>
+                    <figure class="help-gif-slot">
+                        <i class="fa-solid fa-folder-open" aria-hidden="true"></i>
+                        <figcaption>GIF 示範區</figcaption>
+                        <button class="help-page-hitbox help-page-hitbox-previous" type="button" data-help-page-delta="-1" aria-label="上一頁"></button>
+                        <button class="help-page-hitbox help-page-hitbox-next" type="button" data-help-page-delta="1" aria-label="下一頁"></button>
+                    </figure>
+                </div>
+                <p class="help-card-copy">更多 → 匯入圖層，還原先前配置。</p>
+            </article>
+            <article class="help-card-page" data-help-page="14" hidden>
+                <div>
+                    <h3>複製與分享圖片</h3>
+                    <figure class="help-gif-slot">
+                        <i class="fa-solid fa-share-nodes" aria-hidden="true"></i>
+                        <figcaption>GIF 示範區</figcaption>
+                        <button class="help-page-hitbox help-page-hitbox-previous" type="button" data-help-page-delta="-1" aria-label="上一頁"></button>
+                        <button class="help-page-hitbox help-page-hitbox-next" type="button" data-help-page-delta="1" aria-label="下一頁"></button>
+                    </figure>
+                </div>
+                <p class="help-card-copy">更多 → 複製或分享主畫面圖片。</p>
+            </article>
+            <article class="help-card-page" data-help-page="15" hidden>
+                <div>
+                    <h3>評分模式</h3>
+                    <figure class="help-gif-slot">
+                        <i class="fa-solid fa-stopwatch" aria-hidden="true"></i>
+                        <figcaption>GIF 示範區</figcaption>
+                        <button class="help-page-hitbox help-page-hitbox-previous" type="button" data-help-page-delta="-1" aria-label="上一頁"></button>
+                        <button class="help-page-hitbox help-page-hitbox-next" type="button" data-help-page-delta="1" aria-label="下一頁"></button>
+                    </figure>
+                </div>
+                <p class="help-card-copy">設定條件後開始，完成後按評分。</p>
+            </article>
+            <article class="help-card-page" data-help-page="16" hidden>
+                <div>
+                    <h3>切換明暗主題</h3>
+                    <figure class="help-gif-slot">
+                        <i class="fa-solid fa-moon" aria-hidden="true"></i>
+                        <figcaption>GIF 示範區</figcaption>
+                        <button class="help-page-hitbox help-page-hitbox-previous" type="button" data-help-page-delta="-1" aria-label="上一頁"></button>
+                        <button class="help-page-hitbox help-page-hitbox-next" type="button" data-help-page-delta="1" aria-label="下一頁"></button>
+                    </figure>
+                </div>
+                <p class="help-card-copy">按月亮／太陽切換明暗主題。</p>
+            </article>
+            <article class="help-card-page" data-help-page="17" hidden>
+                <div>
+                    <h3>音效與音量</h3>
+                    <figure class="help-gif-slot">
+                        <i class="fa-solid fa-volume-high" aria-hidden="true"></i>
+                        <figcaption>GIF 示範區</figcaption>
+                        <button class="help-page-hitbox help-page-hitbox-previous" type="button" data-help-page-delta="-1" aria-label="上一頁"></button>
+                        <button class="help-page-hitbox help-page-hitbox-next" type="button" data-help-page-delta="1" aria-label="下一頁"></button>
+                    </figure>
+                </div>
+                <p class="help-card-copy">喇叭開關音效；滑桿調整音量。</p>
+            </article>
+            <article class="help-card-page" data-help-page="18" hidden>
+                <div>
+                    <h3>消息</h3>
+                    <figure class="help-gif-slot">
+                        <i class="fa-solid fa-newspaper" aria-hidden="true"></i>
+                        <figcaption>GIF 示範區</figcaption>
+                        <button class="help-page-hitbox help-page-hitbox-previous" type="button" data-help-page-delta="-1" aria-label="上一頁"></button>
+                        <button class="help-page-hitbox help-page-hitbox-next" type="button" data-help-page-delta="1" aria-label="下一頁"></button>
+                    </figure>
+                </div>
+                <p class="help-card-copy">點左上 Logo 查看消息與網站資訊。</p>
+            </article>
+        </section>
+
+        <nav class="help-card-navigation" aria-label="Help page navigation">
+            <span id="help-page-status" aria-live="polite">Page 1 of 18</span>
+        </nav>
+
+        <div class="help-legacy-content" hidden>
         <section class="help-guide" aria-label="操作說明">
             <div class="help-step">
                 <span class="help-visual"><i class="fa-solid fa-arrow-pointer"></i></span>
@@ -350,29 +575,54 @@
                 <p><strong>更多操作</strong><br>長按物件有選單；手掌按鈕可平移</p>
             </div>
         </section>
+        </div>
 
-        <footer class="help-footer">
-            <div class="social-row"><i class="fa-brands fa-youtube" aria-hidden="true"></i><a class="social-link" href="https://www.youtube.com/@%E9%98%BF%E5%B2%A9Magma" target="_blank" rel="noreferrer">阿岩Magma</a></div>
-            <div class="social-row"><i class="fa-brands fa-instagram" aria-hidden="true"></i><a class="social-link" href="https://www.instagram.com/magma_0716/" target="_blank" rel="noreferrer">阿岩Magma</a></div>
-            <p class="audio-credit">Credit: <a href="https://youtu.be/lIZoygCLOHU?si=cV1AcwTdlWQsxv2i" target="_blank" rel="noreferrer">Battle Cats Lofi BGM</a></p>
-            <section class="copyright-notice" aria-label="版權與非官方聲明">
-                <p class="copyright-line copyright-line-owner"><i class="fa-regular fa-copyright" aria-hidden="true"></i><span><strong>2026 阿岩</strong> - 網站程式與原創內容。<span class="copyright-english">Website code and original content.</span></span></p>
-                <p class="copyright-line">貓咪大戰爭之名稱、角色、圖像及相關素材權利歸 PONOS Corp. 所有。<span class="copyright-english">The Battle Cats name, characters, artwork, and related materials are the property of PONOS Corp.</span></p>
-            </section>
-        </footer>
     </dialog>
 
     <dialog id="news-dialog" class="news-dialog" aria-labelledby="news-title">
         <header class="news-header">
             <h2 id="news-title">消息</h2>
-            <button id="close-news-button" class="news-close" type="button" aria-label="關閉消息">×</button>
+            <button id="close-news-button" class="news-close" type="button" aria-label="Close news">×</button>
         </header>
-        <article class="news-feature">
-            <img src="image/memory-cat-news-cover.png" alt="只憑記憶，能還原貓咪嗎？影片封面">
-            <a href="https://www.youtube.com/watch?v=3_q_h5pzrOA" target="_blank" rel="noopener noreferrer">只憑記憶，能還原貓咪嗎？</a>
-            <time datetime="2026-10-17">2026.10.17</time>
-        </article>
+        <section class="news-marquee" aria-label="Latest news">
+            <div class="news-marquee-track">
+                <div class="news-marquee-set">
+                    <article class="news-feature">
+                        <img src="image/news_memory_cats.webp" alt="Remaking CATS From Memory!! video thumbnail">
+                        <a id="news-memory-title" href="https://www.youtube.com/watch?v=3_q_h5pzrOA" target="_blank" rel="noopener noreferrer">利用記憶，拼出八親不認的貓咪吧！</a>
+                        <time datetime="2026-10-17">2026.10.17</time>
+                    </article>
+                    <article class="news-feature">
+                        <img src="image/news_reaction.webp" alt="Mystery news teaser image">
+                        <p class="news-title">？？？</p>
+                        <time datetime="2026-10-19">2026.10.??</time>
+                    </article>
+                </div>
+                <div class="news-marquee-set" aria-hidden="true">
+                    <article class="news-feature">
+                        <img src="image/news_memory_cats.webp" alt="">
+                        <a class="news-memory-title-copy" href="https://www.youtube.com/watch?v=3_q_h5pzrOA" target="_blank" rel="noopener noreferrer" tabindex="-1">利用記憶，拼出八親不認的貓咪吧！</a>
+                        <time datetime="2026-10-17">2026.10.17</time>
+                    </article>
+                    <article class="news-feature">
+                        <img src="image/news_reaction.webp" alt="">
+                        <p class="news-title">？？？</p>
+                        <time datetime="2026-10-19">2026.10.19</time>
+                    </article>
+                </div>
+            </div>
+        </section>
+        <footer class="news-footer">
+            <div class="social-row"><i class="fa-brands fa-youtube" aria-hidden="true"></i><a class="social-link" href="https://www.youtube.com/@%E9%98%BF%E5%B2%A9Magma" target="_blank" rel="noreferrer">阿岩Magma</a></div>
+            <div class="social-row"><i class="fa-brands fa-instagram" aria-hidden="true"></i><a class="social-link" href="https://www.instagram.com/magma_0716/" target="_blank" rel="noreferrer">阿岩Magma</a></div>
+            <p class="audio-credit"><span id="news-audio-credit-label">音樂來源：</span> <a href="https://youtu.be/lIZoygCLOHU?si=cV1AcwTdlWQsxv2i" target="_blank" rel="noreferrer">Battle Cats Lofi BGM</a></p>
+            <section class="copyright-notice" aria-label="Copyright and unofficial notice">
+                <p class="copyright-line copyright-line-owner"><i class="fa-regular fa-copyright" aria-hidden="true"></i><span id="copyright-owner">2026 阿岩 - 網站程式與原創內容。</span></p>
+                <p id="copyright-ponos" class="copyright-line">貓咪大戰爭之名稱、角色及相關素材權利歸 PONOS Corp. 所有。</p>
+            </section>
+        </footer>
     </dialog>
+    <script src="assets/names_en.js"></script>
     <script async src="assets/units/index.js" onload="window.dispatchEvent(new Event('unitindexready'))"></script>
     <script async src="assets/enemies/index.js" onload="window.dispatchEvent(new Event('enemyindexready'))"></script>
     <script src="index.js"></script>

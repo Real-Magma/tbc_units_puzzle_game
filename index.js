@@ -1,11 +1,13 @@
 const root = document.documentElement;
 const themeButton = document.querySelector("#theme-button");
+const languageButton = document.querySelector("#language-button");
 const soundButton = document.querySelector("#sound-button");
 const effectsButton = document.querySelector("#effects-button");
 const themeIcon = themeButton.querySelector("i");
 const soundIcon = soundButton.querySelector("i");
 const effectsIcon = effectsButton.querySelector("i");
 const themeTooltip = document.querySelector("#theme-tooltip");
+const languageTooltip = document.querySelector("#language-tooltip");
 const soundTooltip = document.querySelector("#sound-tooltip");
 const effectsTooltip = document.querySelector("#effects-tooltip");
 const backgroundMusic = document.querySelector("#background-music");
@@ -21,9 +23,14 @@ const volumeSlider = document.querySelector("#volume-slider");
 const helpButton = document.querySelector("#help-button");
 const helpDialog = document.querySelector("#help-dialog");
 const closeHelpButton = document.querySelector("#close-help-button");
+const helpCardPages = [...document.querySelectorAll(".help-card-page")];
+const helpPageHitboxes = [...document.querySelectorAll(".help-page-hitbox")];
+const helpPageStatus = document.querySelector("#help-page-status");
 const newsButton = document.querySelector("#news-button");
 const newsDialog = document.querySelector("#news-dialog");
 const closeNewsButton = document.querySelector("#close-news-button");
+const newsMarquee = document.querySelector(".news-marquee");
+const newsMarqueeTrack = document.querySelector(".news-marquee-track");
 const undoButton = document.querySelector("#undo-button");
 const layerBackButton = document.querySelector("#layer-back-button");
 const layerFrontButton = document.querySelector("#layer-front-button");
@@ -120,6 +127,9 @@ if (exportPngButton) exportPngButton.hidden = !pngExportEnabled;
 let unitCatalog = {};
 let unitIndex = globalThis.UNIT_INDEX ?? {};
 let enemyIndex = globalThis.ENEMY_INDEX ?? {};
+function englishNameCatalog() {
+    return globalThis.TBC_ENGLISH_NAMES ?? { units: {}, enemies: {} };
+}
 let activeEntityType = "unit";
 const loadingUnits = new Map();
 const loadingPartSources = new Map();
@@ -180,6 +190,8 @@ const initialMuted = localStorage.getItem("muted") === "true";
 const initialEffectsMuted = localStorage.getItem("effects-muted") === "true";
 const savedVolume = Number.parseFloat(localStorage.getItem("music-volume") ?? "0.5");
 const initialVolume = Number.isFinite(savedVolume) ? clamp(savedVolume, 0, 1) : 0.5;
+// 網站預設為繁體中文；地球按鈕只切換目前工作階段。
+let currentLanguage = "zh-Hant";
 const effectsVolume = Object.freeze({
     pop: 0.38,
     bowling: 0.48,
@@ -200,11 +212,185 @@ const SCORE_EFFECT_PART_MARKERS = [
 const SCORE_FINAL_INPUT_LOCK_MS = 1000;
 const SCORE_RESULT_CLOSE_GUARD_MS = 850;
 
+function localized(english, traditionalChinese) {
+    return currentLanguage === "en" ? english : traditionalChinese;
+}
+
+function setLocalizedText(selector, english, traditionalChinese) {
+    document.querySelectorAll(selector).forEach((element) => {
+        const directText = [...element.childNodes].find((node) => node.nodeType === Node.TEXT_NODE);
+        if (directText) directText.nodeValue = localized(english, traditionalChinese);
+        else element.textContent = localized(english, traditionalChinese);
+    });
+}
+
+function setLocalizedAttribute(selector, attribute, english, traditionalChinese) {
+    document.querySelectorAll(selector).forEach((element) => {
+        element.setAttribute(attribute, localized(english, traditionalChinese));
+    });
+}
+
+function scoreEntityNoun(entityType, language) {
+    if (entityType === "enemy") return language === "en" ? "Enemy" : "敵人";
+    return language === "en" ? "Unit" : "角色";
+}
+
+function setScoreModeStatus(english, traditionalChinese) {
+    scoreModeStatus.dataset.messageEnglish = english;
+    scoreModeStatus.dataset.messageTraditionalChinese = traditionalChinese;
+    scoreModeStatus.textContent = localized(english, traditionalChinese);
+}
+
+const helpPageCopy = [
+    ["Add Units and Enemies", "Choose one → click a part.", "加入角色與敵人", "選擇後 → 點部件加入。"],
+    ["Move, Scale and Rotate", "Drag: move · corners: scale · circle: rotate.", "移動、縮放與旋轉", "拖曳移動 · 四角縮放 · 圓點旋轉。"],
+    ["Select, Multi-select and Group", "<kbd>Ctrl</kbd> + click: multi-select · Group / Ungroup.", "選取、多選與群組", "<kbd>Ctrl</kbd> + 點擊：多選 · 群組／解散。"],
+    ["Undo and Redo", "<kbd>Ctrl</kbd> + <kbd>Z</kbd>: undo · <kbd>Ctrl</kbd> + <kbd>Y</kbd>: redo.", "上一步與下一步", "<kbd>Ctrl</kbd> + <kbd>Z</kbd> 復原 · <kbd>Ctrl</kbd> + <kbd>Y</kbd> 重做。"],
+    ["Layer Order", "<kbd>↑</kbd><kbd>↓</kbd> / <kbd>W</kbd><kbd>S</kbd>: order · <kbd>Shift</kbd>: ends.", "圖層順序", "<kbd>↑</kbd><kbd>↓</kbd>／<kbd>W</kbd><kbd>S</kbd> 排序 · <kbd>Shift</kbd> 直達頂／底。"],
+    ["Copy and Paste", "<kbd>Ctrl</kbd> + <kbd>C</kbd>: copy · <kbd>Ctrl</kbd> + <kbd>V</kbd>: paste.", "複製與貼上", "<kbd>Ctrl</kbd> + <kbd>C</kbd> 複製 · <kbd>Ctrl</kbd> + <kbd>V</kbd> 貼上。"],
+    ["Mirror", "<kbd>F</kbd>: flip selected parts.", "左右反轉", "<kbd>F</kbd>：反轉選取物件。"],
+    ["Delete and Clear", "<kbd>Delete</kbd> / <kbd>Backspace</kbd>: delete · hold bin: clear.", "刪除與清空", "<kbd>Delete</kbd>／<kbd>Backspace</kbd> 刪除 · 長按垃圾桶清空。"],
+    ["Zoom and Reset View", "Wheel / pinch: zoom · home: reset.", "畫布縮放與回原點", "滾輪／雙指縮放 · 房子回原點。"],
+    ["Object Menu", "Right-click / long-press an object.", "物件功能選單", "右鍵／長按物件。"],
+    ["PS Layers Panel", "Open PS → select and reorder layers.", "PS 圖層面板", "開啟 PS → 選取與排序圖層。"],
+    ["Save Layers", "More → Save Layers.", "儲存圖層", "更多 → 儲存圖層。"],
+    ["Import Layers", "More → Import Layers.", "匯入圖層", "更多 → 匯入圖層。"],
+    ["Copy and Share Images", "More → Copy / Share.", "複製與分享圖片", "更多 → 複製／分享。"],
+    ["Score Mode", "Set → Start → Grade.", "評分模式", "設條件 → 開始 → 評分。"],
+    ["Light and Dark Themes", "Moon / sun: switch theme.", "切換明暗主題", "月亮／太陽：切換主題。"],
+    ["Sound and Volume", "Speaker: music · slider: volume.", "音效與音量", "喇叭：音樂 · 滑桿：音量。"],
+    ["News", "Top-left logo → news.", "消息", "左上 Logo → 消息。"],
+];
+
+function applyLanguage() {
+    const english = currentLanguage === "en";
+    root.lang = english ? "en" : "zh-Hant";
+    root.dataset.language = currentLanguage;
+    document.title = localized("Battle Cats Puzzle Game", "貓戰拼圖遊戲 TBC Units Puzzle Game");
+    document.querySelector('meta[name="description"]')?.setAttribute("content", localized(
+        "An online Battle Cats puzzle game. Remaking CATS From Your Memory!!",
+        "一個線上貓咪大戰爭拼圖遊戲！用盡你各種創意，去拼出八親不認貓咪吧！",
+    ));
+    document.querySelector('meta[property="og:locale"]')?.setAttribute("content", english ? "en_US" : "zh_TW");
+    document.querySelector('meta[property="og:title"]')?.setAttribute("content", localized("Battle Cats Puzzle Game", "貓戰拼圖遊戲 TBC Units Puzzle Game"));
+    document.querySelector('meta[property="og:description"]')?.setAttribute("content", localized("Remaking CATS From Your Memory!!", "用盡你各種創意，去拼出八親不認貓咪吧！"));
+    languageButton.setAttribute("aria-label", localized("Switch to Chinese-tw", "切換為英文"));
+    languageTooltip.textContent = localized("Chinese-tw", "English");
+
+    [
+        ["#help-button .icon-tooltip", "How to Play", "說明"],
+        ["#random-unit-button .icon-tooltip", "Random", "隨機"],
+        ["#view-home-button .icon-tooltip", "Reset view", "回到原點"],
+        ["#save-project-button .icon-tooltip", "Save layers", "儲存圖層"],
+        ["#import-project-button .icon-tooltip", "Import layers", "匯入圖層"],
+        ["#copy-canvas-image-button .icon-tooltip", "Copy canvas", "複製主畫面"],
+        ["#share-canvas-image-button .icon-tooltip", "Share canvas", "分享主畫面"],
+        ["#normal-mode-tab", "Normal Mode", "一般模式"],
+        ["#score-mode-tab", "Score Mode", "評分模式"],
+        ["#normal-entity-type-label, #score-entity-type-label", "Type", "類別"],
+        ["#rank-label, #score-fixed-rank-label, #score-active-rank-label", "Form", "階級"],
+        [".score-section-label:not(.score-mode-label)", "Time", "時間"],
+        [".score-mode-label", "Question", "模式"],
+        [".score-question-mode[data-score-mode='fixed']", "Fixed", "固定"],
+        [".score-question-mode[data-score-mode='random']", "Random", "隨機"],
+        ["#score-start-button span", "Start", "開始"],
+        ["#score-cancel-button span", "Cancel", "取消"],
+        ["#score-grade-button span", "Grade", "評分"],
+        ["#score-retry-button span", "Play Again", "再來一局"],
+        [".score-result-history-label", "Review", "回顧紀錄"],
+        ["#merge-layers-button span", "Group", "群組"],
+        ["#ungroup-layers-button span", "Ungroup", "解散"],
+        ["#flip-horizontal-button span", "Mirror", "左右反轉"],
+        ["#show-layers-button span", "Show", "出現"],
+        ["#move-layers-to-front-button span", "Bring to Front", "最上層"],
+        ["#move-layers-to-back-button span", "Send to Back", "最下層"],
+        ["#hide-layers-button span", "Hide", "消失"],
+        ["#focus-layer-button span", "Go to It", "傳送到它"],
+        ["#help-title", "How to Play", "操作手冊"],
+        [".help-lead", "Remaking CATS From Your Memory!!", "利用記憶, 拼出八親不認的貓咪吧！"],
+        ["#news-title", "News", "消息"],
+        ["#news-memory-title", "Remaking CATS From Memory!!", "利用記憶，拼出八親不認的貓咪吧！"],
+        [".news-memory-title-copy", "Remaking CATS From Memory!!", "利用記憶，拼出八親不認的貓咪吧！"],
+        ["#news-audio-credit-label", "Credit:", "音樂來源："],
+        ["#copyright-owner", "2026 Magma - Website code and original content.", "2026 阿岩 - 網站程式與原創內容。"],
+        ["#copyright-ponos", "The Battle Cats name, characters, and related materials are the property of PONOS Corp.", "貓咪大戰爭之名稱、角色及相關素材權利歸 PONOS Corp. 所有。"],
+        [".score-result-scene:nth-child(1) .score-result-scene-label", "You", "你"],
+        [".score-result-scene:nth-child(2) .score-result-scene-label", "Answer", "正解"],
+    ].forEach(([selector, en, zh]) => setLocalizedText(selector, en, zh));
+    if (scoreActionConfirmation === "grade") scoreGradeButton.querySelector("span").textContent = "OK";
+
+    const formNames = english ? ["Base", "Evolved", "True", "Ultra"] : ["1 階", "2 階", "3 階", "4 階"];
+    [".rank-option", ".score-fixed-rank"].forEach((selector) => {
+        document.querySelectorAll(selector).forEach((button, index) => { button.textContent = formNames[index]; });
+    });
+    document.querySelectorAll("#rank-select option, #score-active-rank option").forEach((option) => {
+        option.textContent = option.value === "e" ? localized("Enemy", "敵人") : formNames[["f", "c", "s", "u"].indexOf(option.value)];
+    });
+    [unitSearch, scoreUnitSearch].forEach((input) => { input.placeholder = localized("Search ID or name", "搜尋編號或名稱"); });
+    setLocalizedAttribute("#news-button", "aria-label", "News", "消息");
+    setLocalizedAttribute("#close-help-button", "aria-label", "Close help", "關閉說明");
+    setLocalizedAttribute("#close-news-button", "aria-label", "Close news", "關閉消息");
+    setLocalizedAttribute(".help-page-hitbox-previous", "aria-label", "Previous page", "上一頁");
+    setLocalizedAttribute(".help-page-hitbox-next", "aria-label", "Next page", "下一頁");
+    setLocalizedAttribute(".layer-controls", "aria-label", "Canvas tools", "主畫面工具");
+    [
+        ["#view-home-button", "Reset canvas view", "回到原點"],
+        ["#save-project-button", "Save layers", "儲存圖層"],
+        ["#import-project-button", "Import layers", "匯入圖層"],
+        ["#copy-canvas-image-button", "Copy current canvas image", "複製主畫面圖片"],
+        ["#share-canvas-image-button", "Share current canvas image", "分享主畫面圖片"],
+    ].forEach(([selector, englishLabel, traditionalChineseLabel]) => {
+        setLocalizedAttribute(selector, "aria-label", englishLabel, traditionalChineseLabel);
+        document.querySelector(selector)?.removeAttribute("title");
+    });
+    setLocalizedAttribute(".news-marquee", "aria-label", "Latest news", "最新消息");
+    setLocalizedAttribute(".copyright-notice", "aria-label", "Copyright and unofficial notice", "版權與非官方聲明");
+    if (scoreModeStatus.dataset.messageEnglish) {
+        scoreModeStatus.textContent = localized(
+            scoreModeStatus.dataset.messageEnglish,
+            scoreModeStatus.dataset.messageTraditionalChinese,
+        );
+    } else {
+        setScoreModeStatus("", "");
+    }
+    helpPageCopy.forEach(([titleEn, copyEn, titleZh, copyZh], index) => {
+        const page = helpCardPages[index];
+        page?.querySelector("h3") && (page.querySelector("h3").textContent = localized(titleEn, titleZh));
+        page?.querySelector(".help-card-copy") && (page.querySelector(".help-card-copy").innerHTML = localized(copyEn, copyZh));
+    });
+    setTheme(root.dataset.theme ?? initialTheme);
+    setMuted(soundButton.getAttribute("aria-pressed") === "true");
+    setEffectsMuted(effectsButton.getAttribute("aria-pressed") === "true");
+    syncEntityTypeControls();
+    const selectedUnitId = unitSelect.value;
+    if (selectedUnitId) {
+        populateUnitSelect();
+        if (entityIndexFor()[selectedUnitId]) unitSelect.value = selectedUnitId;
+    }
+    if (unitSelect.value) unitSearch.value = unitLabel(unitSelect.value);
+    if (scoreFixedUnitId) scoreUnitSearch.value = unitLabel(scoreFixedUnitId, scoreFixedEntityType);
+    if (unitResults.classList.contains("is-open")) renderUnitResults();
+    if (scoreUnitResults.classList.contains("is-open")) renderScoreUnitResults();
+    setActiveHelpPage(activeHelpPageIndex);
+    updateScoreImageActionLabels();
+    window.dispatchEvent(new CustomEvent("tbcPuzzleLanguageChange", { detail: { language: currentLanguage } }));
+}
+
+function setLanguage(language) {
+    currentLanguage = language === "zh-Hant" ? "zh-Hant" : "en";
+    applyLanguage();
+}
+
+window.tbcPuzzleLanguage = Object.freeze({
+    text: localized,
+    get language() { return currentLanguage; },
+});
+
 function setTheme(theme) {
     const isDark = theme === "dark";
     root.dataset.theme = theme;
     themeIcon.className = isDark ? "fa-regular fa-moon" : "fa-regular fa-sun";
-    const label = isDark ? "開燈" : "關燈";
+    const label = isDark ? localized("Light", "開燈") : localized("Dark", "關燈");
     themeButton.setAttribute("aria-label", label);
     themeTooltip.textContent = label;
 }
@@ -213,7 +399,7 @@ function setMuted(muted) {
     musicTracks.forEach((music) => { music.muted = muted; });
     soundIcon.className = muted ? "fa-solid fa-volume-xmark" : "fa-solid fa-volume-high";
     soundButton.setAttribute("aria-pressed", String(muted));
-    const label = muted ? "開音樂" : "關音樂";
+    const label = muted ? localized("Unmute", "開音樂") : localized("Mute", "關音樂");
     soundButton.setAttribute("aria-label", label);
     soundTooltip.textContent = label;
 }
@@ -222,7 +408,7 @@ function setEffectsMuted(muted) {
     [bowlingSound, popSound, secretAreaSound, buttonSound, scoreRevealSound, scoreFinalSound, scoreDojoWinSound].forEach((sound) => { sound.muted = muted; });
     effectsIcon.className = muted ? "fa-solid fa-music" : "fa-solid fa-music";
     effectsButton.setAttribute("aria-pressed", String(muted));
-    const label = muted ? "開音效" : "關音效";
+    const label = muted ? localized("Unmute sfx", "開音效") : localized("Mute sfx", "關音效");
     effectsButton.setAttribute("aria-label", label);
     effectsTooltip.textContent = label;
 }
@@ -370,6 +556,8 @@ function resetScoreActionConfirmation() {
         button.removeAttribute("aria-pressed");
         button.removeAttribute("aria-label");
     });
+    scoreCancelButton.querySelector("span").textContent = localized("Cancel", "取消");
+    scoreGradeButton.querySelector("span").textContent = localized("Grade", "評分");
 }
 
 function requestScoreActionConfirmation(action) {
@@ -385,7 +573,8 @@ function requestScoreActionConfirmation(action) {
     const button = action === "cancel" ? scoreCancelButton : scoreGradeButton;
     button.classList.add("is-confirming");
     button.setAttribute("aria-pressed", "true");
-    button.setAttribute("aria-label", action === "cancel" ? "確認取消，再按一次" : "確認評分，再按一次");
+    button.setAttribute("aria-label", action === "cancel" ? localized("Confirm cancel: press again", "確認取消，再按一次") : localized("Confirm grade: press again", "確認評分，再按一次"));
+    if (action === "grade") button.querySelector("span").textContent = "OK";
     scoreActionConfirmationTimer = window.setTimeout(resetScoreActionConfirmation, 3000);
 }
 
@@ -440,8 +629,8 @@ function clearScoreImageOverlay() {
     scoreImageOverlayVisible = false;
     scoreImageOverlapButton.hidden = true;
     scoreImageOverlapButton.setAttribute("aria-pressed", "false");
-    scoreImageOverlapButton.setAttribute("aria-label", "影像重疊：關");
-    scoreImageOverlapButton.title = "影像";
+    scoreImageOverlapButton.setAttribute("aria-label", localized("Image overlay: off", "影像重疊：關"));
+    scoreImageOverlapButton.title = localized("Image", "影像");
 }
 
 function renderScoreImageOverlay() {
@@ -463,9 +652,9 @@ function renderScoreImageOverlay() {
     scoreResultPreview.append(overlay);
     scoreImageOverlapButton.hidden = false;
     scoreImageOverlapButton.setAttribute("aria-pressed", String(scoreImageOverlayVisible));
-    const overlapLabel = scoreImageOverlayVisible ? "影像重疊：開" : "影像重疊：關";
+    const overlapLabel = scoreImageOverlayVisible ? localized("Image overlay: on", "影像重疊：開") : localized("Image overlay: off", "影像重疊：關");
     scoreImageOverlapButton.setAttribute("aria-label", overlapLabel);
-    scoreImageOverlapButton.title = "影像";
+    scoreImageOverlapButton.title = localized("Image", "影像");
 }
 
 function openScoreResultOverlay({ result, snapshot, layout, replayScores = false, playIntro = false }) {
@@ -619,11 +808,11 @@ async function revealScoreResult(result) {
     if (!result) return;
     const version = ++scoreResultRevealVersion;
     const metrics = [
-        ["物件", Math.round(result.coverage * 100)],
-        ["位置", Math.round(result.layout * 100)],
-        ["角度", Math.round(result.transform * 100)],
-        ["圖層", Math.round(result.order * 100)],
-        ["影像", Math.round(result.image * 100)],
+        [localized("Parts", "物件"), Math.round(result.coverage * 100)],
+        [localized("Position", "位置"), Math.round(result.layout * 100)],
+        [localized("Angle", "角度"), Math.round(result.transform * 100)],
+        [localized("Layers", "圖層"), Math.round(result.order * 100)],
+        [localized("Image", "影像"), Math.round(result.image * 100)],
     ];
     const values = metrics.map(([label]) => {
         const row = document.createElement("div");
@@ -636,7 +825,7 @@ async function revealScoreResult(result) {
         return { row, value };
     });
     scoreResultOverlayBreakdown.replaceChildren(...values.map(({ row }) => row));
-    scoreResultOverlayScore.innerHTML = '<span class="score-reveal-value">--</span><span>分</span>';
+    scoreResultOverlayScore.innerHTML = `<span class="score-reveal-value">--</span><span>${localized(" pts", "分")}</span>`;
     const finalValue = scoreResultOverlayScore.querySelector(".score-reveal-value");
 
     const stopMetricScrambles = values.map(({ value }) => startScoreScramble(value, "%", version));
@@ -673,7 +862,27 @@ function entityIndexFor(entityType = activeEntityType) {
 }
 
 function entityNoun(entityType = activeEntityType) {
-    return entityType === "enemy" ? "敵人" : "角色";
+    return entityType === "enemy"
+        ? localized("Enemy", "敵人")
+        : localized("Unit", "角色");
+}
+
+function entityDisplayName(unitId, entityType = activeEntityType) {
+    const catalog = englishNameCatalog();
+    const names = entityType === "enemy" ? catalog.enemies?.[unitId] : catalog.units?.[unitId];
+    const entry = entityIndexFor(entityType)[unitId] ?? loadedEntity(entityType, unitId);
+    if (currentLanguage !== "en") return entry?.name;
+    if (names?.[0]) return names[0];
+    const existingName = String(entry?.name ?? "");
+    if (/^[\x00-\x7F]+$/.test(existingName) && /[A-Za-z]/.test(existingName)) return existingName;
+    return `${entityType === "enemy" ? "Enemy" : "Unit"} ${unitId}`;
+}
+
+function entitySearchNames(unitId, entityType = activeEntityType) {
+    const catalog = englishNameCatalog();
+    const names = entityType === "enemy" ? catalog.enemies?.[unitId] : catalog.units?.[unitId];
+    const entry = entityIndexFor(entityType)[unitId] ?? {};
+    return [entry.name, ...(entry.aliases ?? []), ...(names ?? [])];
 }
 
 function entityRank(entityType, rank = "f") {
@@ -719,7 +928,7 @@ function showScorePartsLoading() {
     const loading = document.createElement("p");
     loading.className = "parts-loading";
     loading.setAttribute("role", "status");
-    loading.innerHTML = '<span>載入中</span><span class="parts-loading-dots" aria-hidden="true"></span>';
+    loading.innerHTML = `<span>${localized("Loading", "載入中")}</span><span class="parts-loading-dots" aria-hidden="true"></span>`;
     scorePartsList.append(loading);
 }
 
@@ -737,7 +946,10 @@ async function renderScoreParts(target, template) {
         console.error(error);
         if (renderVersion === partsRenderVersion) {
             scorePartsList.replaceChildren();
-            scoreModeStatus.textContent = entityNoun(entityType) + "圖片載入失敗，請取消後再試一次。";
+            setScoreModeStatus(
+                `${scoreEntityNoun(entityType, "en")} image failed to load. Cancel and try again.`,
+                `${scoreEntityNoun(entityType, "zh-Hant")}圖片載入失敗，請取消後再試一次。`,
+            );
         }
         return false;
     }
@@ -811,7 +1023,7 @@ async function renderScoreAnswer(target, template, layout) {
     scoreResultAnswer.replaceChildren();
     const loading = document.createElement("span");
     loading.className = "score-answer-loading";
-    loading.textContent = "正解載入中…";
+    loading.textContent = localized("Loading answer…", "正解載入中…");
     scoreResultAnswer.append(loading);
     if (!target || !template?.parts?.length) return;
 
@@ -853,7 +1065,7 @@ async function renderScoreAnswer(target, template, layout) {
     } catch (error) {
         console.error(error);
         if (renderVersion !== scoreAnswerRenderVersion) return;
-        loading.textContent = "正解載入失敗";
+        loading.textContent = localized("Answer failed to load", "正解載入失敗");
         scoreResultAnswer.replaceChildren(loading);
         clearScoreImageOverlay();
         if (latestScoreResultView) renderScoreResultHistory(latestScoreResultView.snapshot, layout);
@@ -1350,13 +1562,13 @@ async function gradeScoreRound() {
 
 function renderScoreResult(result) {
     scoreFinalScore.firstChild.nodeValue = `${result.total}`;
-    scoreResultMessage.textContent = result.total == 67 ? "🫲🤪🫱" : result.total >= 90 ? "你是記憶拼圖大師吧！" : result.total >= 70 ? "很強了！" : result.total >= 45 ? "還行啦~" : "你是如何走到這地步的?";
+    scoreResultMessage.textContent = result.total == 67 ? "🫲🤪🫱" : result.total >= 90 ? localized("You are a master!", "你是記憶拼圖大師吧！") : result.total >= 70 ? localized("Amazing!", "很強了！") : result.total >= 45 ? localized("Not bad!", "還行啦~") : localized("How did we get here?", "你是如何走到這地步的?");
     const details = [
-        ["物件", `${result.matched} / ${result.targetCount}`],
-        ["位置", `${Math.round(result.layout * 100)}%`],
-        ["角度", `${Math.round(result.transform * 100)}%`],
-        ["圖層", `${Math.round(result.order * 100)}%`],
-        ["影像", `+${Math.round(result.imageBonus)}分`],
+        [localized("Parts", "物件"), `${result.matched} / ${result.targetCount}`],
+        [localized("Position", "位置"), `${Math.round(result.layout * 100)}%`],
+        [localized("Angle", "角度"), `${Math.round(result.transform * 100)}%`],
+        [localized("Layers", "圖層"), `${Math.round(result.order * 100)}%`],
+        [localized("Image", "影像"), `+${Math.round(result.imageBonus)}${localized(" pts", "分")}`],
     ];
     scoreResultBreakdown.replaceChildren(...details.map(([label, value]) => {
         const row = document.createElement("div");
@@ -1394,20 +1606,20 @@ async function startScoreRound() {
     scoreStartButton.disabled = true;
     resetScoreImageExports();
     setScoreRoundInputLocked(false);
-    scoreModeStatus.textContent = "正在準備題目…";
+    setScoreModeStatus("Preparing question…", "正在準備題目…");
     try {
         if (scoreQuestionMode === "fixed") {
             if (!scoreFixedUnitId) {
                 scoreUnitSearch.value = "";
-                scoreUnitSearch.placeholder = "請先選擇一隻" + entityNoun();
+                scoreUnitSearch.placeholder = localized(`Choose a ${entityNoun().toLowerCase()} first`, "請先選擇一隻" + entityNoun());
                 scoreUnitSearch.focus();
-                scoreModeStatus.textContent = "請先選擇一隻" + entityNoun() + "。";
+                setScoreModeStatus("", "");
                 return;
             }
             const unit = await ensureUnitLoaded(scoreFixedUnitId, scoreFixedEntityType);
             const ranks = availableRanksForUnit(unit);
             if (!ranks.includes(scoreFixedRank)) {
-                scoreModeStatus.textContent = "這隻角色沒有選擇的階級，請改選其他階級。";
+                setScoreModeStatus("This unit does not have the selected form. Choose another form.", "這隻角色沒有選擇的階級，請改選其他階級。");
                 return;
             }
             target = { entityType: scoreFixedEntityType, unitId: scoreFixedUnitId, rank: scoreFixedRank };
@@ -1418,7 +1630,7 @@ async function startScoreRound() {
             scoreRandomPreparation = null;
         }
 
-        scoreModeStatus.textContent = "正在讀取正確答案…";
+        setScoreModeStatus("Loading answer…", "正在讀取正確答案…");
         const template = await ensureScoreTemplateLoaded(target);
         const targetType = targetEntityType(target);
         const unit = loadedEntity(targetType, target.unitId) ?? await ensureUnitLoaded(target.unitId, targetType);
@@ -1462,7 +1674,7 @@ async function startScoreRound() {
         scoreRoundTemplate = null;
         setScoreRoundCanvasState(false);
         tryPlayMusic();
-        scoreModeStatus.textContent = "題目準備失敗，請再試一次。";
+        setScoreModeStatus("Question setup failed. Please try again.", "題目準備失敗，請再試一次。");
         scoreRunning.hidden = true;
         scoreSetup.hidden = false;
         normalModeTab.disabled = false;
@@ -1481,7 +1693,7 @@ async function finishScoreRound(finished = false, { clearCanvas = true } = {}) {
         scoreCancelButton.disabled = true;
         const result = await gradeScoreRound();
         renderScoreResult(result);
-        scoreCountdown.textContent = "完成";
+        scoreCountdown.textContent = localized("Done", "完成");
         scoreGradeButton.disabled = true;
         scoreRoundStartedAt = 0;
         scoreRunning.hidden = true;
@@ -1512,11 +1724,13 @@ async function finishScoreRound(finished = false, { clearCanvas = true } = {}) {
     tryPlayMusic();
     scoreGradeButton.disabled = false;
     scoreCancelButton.disabled = false;
-    scoreCancelButton.innerHTML = '<i class="fa-solid fa-xmark" aria-hidden="true"></i><span>取消</span>';
+    scoreCancelButton.innerHTML = `<i class="fa-solid fa-xmark" aria-hidden="true"></i><span>${localized("Cancel", "取消")}</span>`;
     normalModeTab.disabled = false;
-    scoreModeStatus.textContent = scoreQuestionMode === "fixed" && !scoreFixedUnitId
-        ? "選擇一隻" + entityNoun(scoreFixedEntityType) + "後即可開始。"
-        : "題目已準備好，可以開始。";
+    if (scoreQuestionMode === "fixed" && !scoreFixedUnitId) {
+        setScoreModeStatus("", "");
+    } else {
+        setScoreModeStatus("Question ready. You can start.", "題目已準備好，可以開始。");
+    }
     renderParts();
 }
 
@@ -1640,10 +1854,10 @@ function showPartsLoading() {
     const loading = document.createElement("p");
     loading.className = "parts-loading";
     loading.setAttribute("role", "status");
-    loading.setAttribute("aria-label", "載入中");
-    loading.innerHTML = '<span>載入中</span><span class="parts-loading-dots" aria-hidden="true"></span>';
+    loading.setAttribute("aria-label", localized("Loading", "載入中"));
+    loading.innerHTML = `<span>${localized("Loading", "載入中")}</span><span class="parts-loading-dots" aria-hidden="true"></span>`;
     partsList.append(loading);
-    unitStatus.textContent = "正在載入角色部件…";
+    unitStatus.textContent = localized("Loading unit parts…", "正在載入角色部件…");
 }
 
 function ensurePartSourceLoaded(source) {
@@ -2053,7 +2267,7 @@ function showLayerContextMenu(event, part, { fromLayersPanel = false } = {}) {
     flipHorizontalButton.disabled = contextParts.some((item) => item.classList.contains("is-layer-locked"));
     lockLayerButton.hidden = usesLayersPanelControls || isSingleGroup;
     lockLayerButton.querySelector("i").className = `fa-solid ${hasLockedPart ? "fa-lock-open" : "fa-lock"}`;
-    lockLayerButton.querySelector("span").textContent = hasLockedPart ? "解除鎖定" : "鎖定";
+    lockLayerButton.querySelector("span").textContent = hasLockedPart ? localized("Unlock", "解除鎖定") : localized("Lock", "鎖定");
     const canToggleSelectedVisibility = fromLayersPanel && contextParts.length > 1 && !isSingleGroup;
     hideLayersButton.hidden = usesLayersPanelControls || isSingleGroup;
     showLayersButton.hidden = usesLayersPanelControls || !canToggleSelectedVisibility;
@@ -2614,8 +2828,8 @@ function usesAndroidScoreShare() {
 function updateScoreImageActionLabels() {
     const isAndroidShare = usesAndroidScoreShare();
     const actions = [
-        [scoreCopyCompositionButton, isAndroidShare ? "分享你" : "複製你", isAndroidShare ? "fa-solid fa-share-nodes" : "fa-regular fa-copy"],
-        [scoreCopyResultButton, isAndroidShare ? "分享結算" : "複製結算", isAndroidShare ? "fa-solid fa-share-nodes" : "fa-regular fa-images"],
+        [scoreCopyCompositionButton, isAndroidShare ? localized("Share yours", "分享你") : localized("Copy yours", "複製你"), isAndroidShare ? "fa-solid fa-share-nodes" : "fa-regular fa-copy"],
+        [scoreCopyResultButton, isAndroidShare ? localized("Share result", "分享結算") : localized("Copy result", "複製結算"), isAndroidShare ? "fa-solid fa-share-nodes" : "fa-regular fa-images"],
     ];
     actions.forEach(([button, label, iconClass]) => {
         button.setAttribute("aria-label", label);
@@ -2922,7 +3136,7 @@ async function importLayerProject(event) {
             const top = Number.parseFloat(layer.top);
             const part = addPartToCanvas({
                 src: layer.src,
-                name: layer.name || `圖層 ${index + 1}`,
+                name: layer.name || localized(`Layer ${index + 1}`, `圖層 ${index + 1}`),
                 sprite: normalizeSprite(layer.sprite),
             }, 0, 0, {
                 worldPoint: { x: Number.isFinite(left) ? left : 0, y: Number.isFinite(top) ? top : 0 },
@@ -2981,7 +3195,7 @@ function renderLayersPanel() {
         row.title = part.dataset.name;
         row.tabIndex = 0;
         row.setAttribute("role", "button");
-        row.setAttribute("aria-label", `選取圖層：${part.dataset.name}`);
+        row.setAttribute("aria-label", localized(`Select layer: ${part.dataset.name}`, `選取圖層：${part.dataset.name}`));
         row.classList.toggle("is-selected", selectedParts.has(part));
         row.classList.toggle("is-hidden", part.classList.contains("is-layer-hidden"));
         row.classList.toggle("is-locked", part.classList.contains("is-layer-locked"));
@@ -2989,11 +3203,11 @@ function renderLayersPanel() {
 
         visibility.className = "layer-visibility";
         visibility.type = "button";
-        visibility.setAttribute("aria-label", part.classList.contains("is-layer-hidden") ? `顯示 ${part.dataset.name}` : `隱藏 ${part.dataset.name}`);
+        visibility.setAttribute("aria-label", part.classList.contains("is-layer-hidden") ? localized(`Show ${part.dataset.name}`, `顯示 ${part.dataset.name}`) : localized(`Hide ${part.dataset.name}`, `隱藏 ${part.dataset.name}`));
         visibility.innerHTML = `<i class="fa-solid ${part.classList.contains("is-layer-hidden") ? "fa-eye-slash" : "fa-eye"}" aria-hidden="true"></i>`;
         lock.className = "layer-lock";
         lock.type = "button";
-        lock.setAttribute("aria-label", part.classList.contains("is-layer-locked") ? `解除鎖定 ${part.dataset.name}` : `鎖定 ${part.dataset.name}`);
+        lock.setAttribute("aria-label", part.classList.contains("is-layer-locked") ? localized(`Unlock ${part.dataset.name}`, `解除鎖定 ${part.dataset.name}`) : localized(`Lock ${part.dataset.name}`, `鎖定 ${part.dataset.name}`));
         lock.innerHTML = `<i class="fa-solid ${part.classList.contains("is-layer-locked") ? "fa-lock" : "fa-lock-open"}" aria-hidden="true"></i>`;
 
         row.addEventListener("click", (event) => {
@@ -3097,7 +3311,7 @@ function renderLayersPanel() {
             const label = document.createElement("button");
             label.className = "layer-group-collapse";
             label.type = "button";
-            label.setAttribute("aria-label", collapsedGroupIds.has(part.dataset.groupId) ? "展開群組" : "收合群組");
+            label.setAttribute("aria-label", collapsedGroupIds.has(part.dataset.groupId) ? localized("Expand group", "展開群組") : localized("Collapse group", "收合群組"));
             label.setAttribute("aria-expanded", String(!collapsedGroupIds.has(part.dataset.groupId)));
             label.innerHTML = '<i class="fa-solid fa-object-group" aria-hidden="true"></i>';
             const controls = document.createElement("div");
@@ -3108,11 +3322,11 @@ function renderLayersPanel() {
             const allLocked = groupParts.every((item) => item.classList.contains("is-layer-locked"));
             visibilityToggle.className = "layer-group-control";
             visibilityToggle.type = "button";
-            visibilityToggle.setAttribute("aria-label", allHidden ? "群組目前全部消失，點擊全部出現" : "群組目前全部出現，點擊全部消失");
+            visibilityToggle.setAttribute("aria-label", allHidden ? localized("All group layers are hidden. Click to show all.", "群組目前全部消失，點擊全部出現") : localized("All group layers are shown. Click to hide all.", "群組目前全部出現，點擊全部消失"));
             visibilityToggle.innerHTML = `<i class="fa-solid ${allHidden ? "fa-eye-slash" : "fa-eye"}" aria-hidden="true"></i>`;
             lockToggle.className = "layer-group-control";
             lockToggle.type = "button";
-            lockToggle.setAttribute("aria-label", allLocked ? "群組目前全部鎖定，點擊全部解鎖" : "群組目前全部解鎖，點擊全部鎖定");
+            lockToggle.setAttribute("aria-label", allLocked ? localized("All group layers are locked. Click to unlock all.", "群組目前全部鎖定，點擊全部解鎖") : localized("All group layers are unlocked. Click to lock all.", "群組目前全部解鎖，點擊全部鎖定"));
             lockToggle.innerHTML = `<i class="fa-solid ${allLocked ? "fa-lock" : "fa-lock-open"}" aria-hidden="true"></i>`;
             visibilityToggle.addEventListener("click", (event) => {
                 event.stopPropagation();
@@ -3196,7 +3410,7 @@ function renderLayersPanel() {
     unlockAll.className = "unlock-all-layers";
     unlockAll.type = "button";
     unlockAll.disabled = !parts.some((part) => part.classList.contains("is-layer-locked"));
-    unlockAll.innerHTML = '<i class="fa-solid fa-lock-open" aria-hidden="true"></i><span>全部解鎖</span>';
+    unlockAll.innerHTML = `<i class="fa-solid fa-lock-open" aria-hidden="true"></i><span>${localized("Unlock all", "全部解鎖")}</span>`;
     unlockAll.addEventListener("click", unlockAllLayers);
     layersPanel.append(unlockAll);
 }
@@ -3943,7 +4157,7 @@ function addPartToCanvas(part, clientX, clientY, options = {}) {
     });
     rotateHandle.className = "rotate-handle";
     rotateHandle.type = "button";
-    rotateHandle.setAttribute("aria-label", "拖曳旋轉物件");
+    rotateHandle.setAttribute("aria-label", localized("Drag to rotate object", "拖曳旋轉物件"));
     const highestLayer = Math.max(0, ...orderedParts().map((placedPart) => Number(placedPart.style.zIndex)));
     placedPart.style.zIndex = String(highestLayer + 1);
     placedPart.style.left = `${point.x}px`;
@@ -4035,7 +4249,7 @@ function createPartCard(part) {
     card.className = "part-card";
     card.type = "button";
     card.draggable = true;
-    card.setAttribute("aria-label", `拖曳 ${part.form} 階級部件：${part.name}`);
+    card.setAttribute("aria-label", localized(`Drag ${part.form} form part: ${part.name}`, `拖曳 ${part.form} 階級部件：${part.name}`));
     const image = preview.querySelector?.("img") ?? preview;
     image.loading = "lazy";
     image.decoding = "async";
@@ -4096,7 +4310,7 @@ async function renderParts() {
         console.error(error);
         if (renderVersion === partsRenderVersion) {
             partsList.replaceChildren();
-            unitStatus.textContent = "角色圖片載入失敗，請再試一次。";
+            unitStatus.textContent = localized("Unit image failed to load. Please try again.", "角色圖片載入失敗，請再試一次。");
         }
         return;
     }
@@ -4104,7 +4318,7 @@ async function renderParts() {
     const parts = withoutTransparentParts(candidateParts);
     activeParts = new Map(parts.map((part) => [part.id, part]));
     partsList.replaceChildren();
-    unitStatus.textContent = parts.length ? `${parts.length} 個可拖曳部件` : "此階級沒有可用部件。";
+    unitStatus.textContent = parts.length ? localized(`${parts.length} draggable parts`, `${parts.length} 個可拖曳部件`) : localized("This form has no available parts.", "此階級沒有可用部件。");
 
     partsList.append(...parts.map(createPartCard));
 }
@@ -4174,15 +4388,13 @@ function setScoreFixedRankButtonsDisabled(disabled) {
 }
 
 function unitLabel(unitId, entityType = activeEntityType) {
-    const index = entityIndexFor(entityType);
-    const name = index[unitId]?.name ?? loadedEntity(entityType, unitId)?.name;
+    const name = entityDisplayName(unitId, entityType);
     return name && name !== unitId ? `${unitId} ${name}` : unitId;
 }
 
 function unitMatchesSearch(unitId, query, entityType = activeEntityType) {
     if (!query) return true;
-    const entry = entityIndexFor(entityType)[unitId] ?? {};
-    const searchTerms = [unitId, entry.name, ...(entry.aliases ?? [])];
+    const searchTerms = [unitId, unitLabel(unitId, entityType), ...entitySearchNames(unitId, entityType)];
     return searchTerms.some((term) => String(term ?? "").toLocaleLowerCase().includes(query));
 }
 
@@ -4233,22 +4445,31 @@ async function chooseFixedScoreUnit(unitId) {
     if (!entityIndexFor(entityType)[unitId]) return;
     scoreFixedUnitId = unitId;
     scoreFixedEntityType = entityType;
-    scoreUnitSearch.placeholder = "搜尋編號或名稱";
+    scoreUnitSearch.placeholder = localized("Search ID or name", "搜尋編號或名稱");
     scoreUnitSearch.value = unitLabel(unitId, entityType);
     closeScoreUnitResults();
     setScoreFixedRankButtonsDisabled(true);
-    scoreModeStatus.textContent = entityType === "enemy" ? "正在讀取敵人資料…" : "正在讀取可用階級…";
+    setScoreModeStatus(
+        entityType === "enemy" ? "Loading enemy data…" : "Loading available forms…",
+        entityType === "enemy" ? "正在讀取敵人資料…" : "正在讀取可用階級…",
+    );
     try {
         const unit = await ensureUnitLoaded(unitId, entityType);
         if (scoreFixedUnitId !== unitId || scoreFixedEntityType !== entityType) return;
         updateScoreFixedRankOptions(unit);
-        scoreModeStatus.textContent = entityType === "enemy" ? "敵人已選擇，可以開始。" : "角色已選擇；請確認階級後開始。";
+        setScoreModeStatus(
+            entityType === "enemy" ? "Enemy selected. You can start." : "Unit selected. Confirm a form, then start.",
+            entityType === "enemy" ? "敵人已選擇，可以開始。" : "角色已選擇；請確認階級後開始。",
+        );
     } catch (error) {
         console.error(error);
         if (scoreFixedUnitId !== unitId || scoreFixedEntityType !== entityType) return;
         scoreFixedUnitId = "";
         updateScoreFixedRankOptions(entityType === "enemy" ? { parts: [{ form: "e" }] } : null);
-        scoreModeStatus.textContent = entityNoun(entityType) + "資料載入失敗，請再選一次。";
+        setScoreModeStatus(
+            `${scoreEntityNoun(entityType, "en")} data failed to load. Choose again.`,
+            scoreEntityNoun(entityType, "zh-Hant") + "資料載入失敗，請再選一次。",
+        );
     }
 }
 
@@ -4257,6 +4478,7 @@ function renderScoreUnitResults() {
     const entityType = activeEntityType;
     const index = entityIndexFor(entityType);
     const noun = entityNoun(entityType);
+    const pluralNoun = entityType === "enemy" ? "Enemies" : "Units";
     const allUnitIds = Object.keys(index).sort();
     const suggestions = query
         ? allUnitIds.filter((unitId) => unitMatchesSearch(unitId, query, entityType))
@@ -4281,7 +4503,7 @@ function renderScoreUnitResults() {
         id.className = "unit-result-id";
         name.className = "unit-result-name";
         id.textContent = unitId;
-        name.textContent = index[unitId].name ?? "";
+        name.textContent = entityDisplayName(unitId, entityType) ?? "";
         result.append(id, name);
         result.addEventListener("click", () => chooseFixedScoreUnit(unitId));
         scoreUnitResults.append(result);
@@ -4290,12 +4512,12 @@ function renderScoreUnitResults() {
     if (!suggestions.length) {
         const empty = document.createElement("p");
         empty.className = "unit-result-empty";
-        empty.textContent = "找不到相符" + noun + "，仍可從完整清單選擇。";
+        empty.textContent = localized(`No matching ${noun.toLowerCase()} found.`, "找不到相符的" + noun);
         scoreUnitResults.append(empty);
     }
-    if (query && suggestions.length) addSectionTitle("建議" + noun);
+    if (query && suggestions.length) addSectionTitle(localized(`Suggested ${pluralNoun}`, "建議" + noun));
     suggestions.forEach(addResult);
-    if (query) addSectionTitle("全部" + noun);
+    if (query) addSectionTitle(localized(`All ${pluralNoun}`, "全部" + noun));
     remaining.forEach(addResult);
     scoreUnitResults.classList.add("is-open");
     scoreUnitSearch.setAttribute("aria-expanded", "true");
@@ -4312,26 +4534,34 @@ function setScoreQuestionMode(mode) {
     scoreFixedPicker.hidden = !isFixed;
     closeScoreUnitResults();
     if (isFixed) {
-        scoreModeStatus.textContent = scoreFixedUnitId
-            ? (scoreFixedEntityType === "enemy" ? "敵人已選擇，可以開始。" : "角色已選擇；請確認階級後開始。")
-            : "選擇一隻" + entityNoun() + "後即可開始。";
+        if (scoreFixedUnitId) {
+            setScoreModeStatus(
+                scoreFixedEntityType === "enemy" ? "Enemy selected. You can start." : "Unit selected. Confirm a form, then start.",
+                scoreFixedEntityType === "enemy" ? "敵人已選擇，可以開始。" : "角色已選擇；請確認階級後開始。",
+            );
+        } else {
+            setScoreModeStatus("", "");
+        }
         return;
     }
 
     scoreRandomTarget = null;
-    scoreModeStatus.textContent = "正在準備隨機題目…";
+    setScoreModeStatus("Preparing random question…", "正在準備隨機題目…");
     const preparation = prepareRandomScoreTarget();
     scoreRandomPreparation = preparation;
     preparation
         .then((target) => {
             if (scoreQuestionMode !== "random" || scoreRandomPreparation !== preparation) return;
             scoreRandomTarget = target;
-            scoreModeStatus.textContent = target ? "隨機題目已準備完成。" : "隨機題目準備失敗，請再試一次。";
+            setScoreModeStatus(
+                target ? "Random question is ready." : "Random question setup failed. Please try again.",
+                target ? "隨機題目已準備完成。" : "隨機題目準備失敗，請再試一次。",
+            );
         })
         .catch((error) => {
             console.error(error);
             if (scoreQuestionMode === "random" && scoreRandomPreparation === preparation) {
-                scoreModeStatus.textContent = "隨機題目準備失敗，請再試一次。";
+                setScoreModeStatus("Random question setup failed. Please try again.", "隨機題目準備失敗，請再試一次。");
             }
         });
 }
@@ -4397,6 +4627,7 @@ function renderUnitResults() {
     const entityType = activeEntityType;
     const index = entityIndexFor(entityType);
     const noun = entityNoun(entityType);
+    const pluralNoun = entityType === "enemy" ? "Enemies" : "Units";
     const allUnitIds = Object.keys(index).sort();
     const suggestedUnitIds = query
         ? allUnitIds.filter((unitId) => unitMatchesSearch(unitId, query, entityType))
@@ -4425,7 +4656,7 @@ function renderUnitResults() {
         id.className = "unit-result-id";
         name.className = "unit-result-name";
         id.textContent = unitId;
-        name.textContent = index[unitId].name ?? "";
+        name.textContent = entityDisplayName(unitId, entityType) ?? "";
         result.append(id, name);
         result.addEventListener("click", () => chooseUnit(unitId));
         unitResults.append(result);
@@ -4434,13 +4665,13 @@ function renderUnitResults() {
     if (!suggestedUnitIds.length) {
         const empty = document.createElement("p");
         empty.className = "unit-result-empty";
-        empty.textContent = "找不到相符" + noun + "，仍可從完整清單選擇。";
+        empty.textContent = localized(`No matching ${noun.toLowerCase()} found.`, "找不到相符的" + noun);
         unitResults.append(empty);
     }
 
-    if (query && suggestedUnitIds.length) addSectionTitle("建議" + noun);
+    if (query && suggestedUnitIds.length) addSectionTitle(localized(`Suggested ${pluralNoun}`, "建議" + noun));
     suggestedUnitIds.forEach(addResult);
-    if (query) addSectionTitle("全部" + noun);
+    if (query) addSectionTitle(localized(`All ${pluralNoun}`, "全部" + noun));
     remainingUnitIds.forEach(addResult);
 
     unitResults.classList.add("is-open");
@@ -4466,12 +4697,15 @@ function syncEntityTypeControls() {
         const isSelected = button.dataset.entityType === activeEntityType;
         button.classList.toggle("is-selected", isSelected);
         button.setAttribute("aria-pressed", String(isSelected));
+        const isEnemyButton = button.dataset.entityType === "enemy";
+        button.setAttribute("aria-label", localized(isEnemyButton ? "Enemies" : "Units", isEnemyButton ? "敵人" : "角色"));
+        button.setAttribute("title", localized(isEnemyButton ? "Enemies" : "Units", isEnemyButton ? "敵人" : "角色"));
     });
     normalEntityLabel.textContent = noun;
     scoreEntityLabel.textContent = noun;
-    unitResults.setAttribute("aria-label", noun + "搜尋結果");
-    scoreUnitResults.setAttribute("aria-label", "評分模式" + noun + "搜尋結果");
-    randomUnitButton.setAttribute("aria-label", isEnemy ? "隨機敵人" : "隨機角色與階級");
+    unitResults.setAttribute("aria-label", localized(`${noun} search results`, noun + "搜尋結果"));
+    scoreUnitResults.setAttribute("aria-label", localized(`Score mode ${noun} search results`, "評分模式" + noun + "搜尋結果"));
+    randomUnitButton.setAttribute("aria-label", isEnemy ? localized("Random enemy", "隨機敵人") : localized("Random unit and form", "隨機角色與階級"));
     rankLabel.hidden = isEnemy;
     rankOptions.hidden = isEnemy;
     scoreFixedRankLabel.hidden = isEnemy;
@@ -4511,14 +4745,14 @@ function setActiveEntityType(entityType) {
     scoreFixedEntityType = entityType;
     scoreFixedRank = entityRank(entityType);
     scoreUnitSearch.value = "";
-    scoreUnitSearch.placeholder = "搜尋編號或名稱";
+    scoreUnitSearch.placeholder = localized("Search ID or name", "搜尋編號或名稱");
     updateScoreFixedRankOptions(entityType === "enemy" ? { parts: [{ form: "e" }] } : null);
     if (scoreQuestionMode === "random") {
         scoreRandomTarget = null;
         scoreRandomPreparation = null;
         setScoreQuestionMode("random");
     } else {
-        scoreModeStatus.textContent = "選擇一隻" + entityNoun() + "後即可開始。";
+        setScoreModeStatus("", "");
     }
     initializeActiveEntityPalette();
 }
@@ -4533,6 +4767,15 @@ function initializeEnemyIndex() {
     if (activeEntityType === "enemy" && !unitSelect.options.length) initializeActiveEntityPalette();
 }
 
+function refreshEnglishEntityNames() {
+    if (currentLanguage !== "en" || !Object.keys(entityIndexFor()).length) return;
+    if (unitSelect.options.length) populateUnitSelect();
+    if (unitResults.classList.contains("is-open")) renderUnitResults();
+    if (scoreUnitResults.classList.contains("is-open")) renderScoreUnitResults();
+    if (unitSelect.value) unitSearch.value = unitLabel(unitSelect.value);
+    if (scoreFixedUnitId) scoreUnitSearch.value = unitLabel(scoreFixedUnitId, scoreFixedEntityType);
+}
+
 setTheme(initialTheme);
 setVolume(initialVolume);
 setMuted(initialMuted);
@@ -4542,6 +4785,8 @@ initializeUnitIndex();
 window.addEventListener("unitindexready", initializeUnitIndex);
 initializeEnemyIndex();
 window.addEventListener("enemyindexready", initializeEnemyIndex);
+window.addEventListener("englishnamesready", refreshEnglishEntityNames);
+refreshEnglishEntityNames();
 resetCanvasView();
 updateUndoButton();
 makeSelectedGroupRotatable();
@@ -4596,7 +4841,9 @@ scoreFixedRankButtons.forEach((button) => button.addEventListener("click", () =>
         item.classList.toggle("is-selected", isSelected);
         item.setAttribute("aria-pressed", String(isSelected));
     });
-    if (scoreFixedUnitId) scoreModeStatus.textContent = "角色與階級已選擇，可以開始。";
+    if (scoreFixedUnitId) {
+        setScoreModeStatus("Unit and form selected. You can start.", "角色與階級已選擇，可以開始。");
+    }
 }));
 rankButtons.forEach((button) => button.addEventListener("click", () => {
     if (button.disabled || button.dataset.rank === rankSelect.value) return;
@@ -4630,7 +4877,7 @@ scoreCopyResultButton.addEventListener("click", () => {
     }
     copyScoreImageWithFeedback(copyScoreResultImage, scoreCopyResultButton, "battle-cats-puzzle-result.png");
 });
-scoreResultPreview.title = "右鍵複製你的組合圖片";
+    scoreResultPreview.title = localized("Right-click to copy your composition image", "右鍵複製你的組合圖片");
 scoreResultPreview.addEventListener("contextmenu", (event) => {
     event.preventDefault();
     copyScoreImageWithFeedback(copyScoreCompositionImage, null, "battle-cats-your-composition.png");
@@ -4641,7 +4888,7 @@ scoreResultOverlay.addEventListener("pointerdown", (event) => {
 });
 scoreUnitSearch.addEventListener("focus", renderScoreUnitResults);
 scoreUnitSearch.addEventListener("input", () => {
-    scoreUnitSearch.placeholder = "搜尋編號或名稱";
+    scoreUnitSearch.placeholder = localized("Search ID or name", "搜尋編號或名稱");
     scoreFixedUnitId = "";
     updateScoreFixedRankOptions(activeEntityType === "enemy" ? { parts: [{ form: "e" }] } : null);
     renderScoreUnitResults();
@@ -4657,6 +4904,9 @@ themeButton.addEventListener("click", () => {
     const nextTheme = root.dataset.theme === "dark" ? "light" : "dark";
     localStorage.setItem("theme", nextTheme);
     setTheme(nextTheme);
+});
+languageButton.addEventListener("click", () => {
+    setLanguage(currentLanguage === "en" ? "zh-Hant" : "en");
 });
 soundButton.addEventListener("click", () => {
     const nextMuted = soundButton.getAttribute("aria-pressed") !== "true";
@@ -4684,8 +4934,38 @@ document.addEventListener("click", (event) => {
     const isExcluded = event.target.closest("#trash-zone, #help-button, #random-unit-button, .part-card, .unit-result");
     if (button && !button.disabled && !isExcluded) playButtonSound();
 });
+let activeHelpPageIndex = 0;
+function setActiveHelpPage(index) {
+    if (!helpCardPages.length) return;
+    activeHelpPageIndex = clamp(index, 0, helpCardPages.length - 1);
+    helpCardPages.forEach((page, pageIndex) => {
+        const isActive = pageIndex === activeHelpPageIndex;
+        page.hidden = !isActive;
+        page.classList.toggle("is-active", isActive);
+    });
+    helpPageHitboxes.forEach((hitbox) => {
+        const delta = Number(hitbox.dataset.helpPageDelta);
+        hitbox.disabled = delta < 0
+            ? activeHelpPageIndex === 0
+            : activeHelpPageIndex === helpCardPages.length - 1;
+    });
+    helpPageStatus.textContent = localized(
+        `Page ${activeHelpPageIndex + 1} of ${helpCardPages.length}`,
+        `第 ${activeHelpPageIndex + 1} 頁／共 ${helpCardPages.length} 頁`,
+    );
+}
+
+helpPageHitboxes.forEach((hitbox) => {
+    hitbox.addEventListener("click", () => {
+        setActiveHelpPage(activeHelpPageIndex + Number(hitbox.dataset.helpPageDelta));
+    });
+});
+setActiveHelpPage(0);
+setLanguage(currentLanguage);
+
 helpButton.addEventListener("click", () => {
     playSecretAreaSound();
+    setActiveHelpPage(0);
     helpDialog.showModal();
 });
 newsButton.addEventListener("click", () => newsDialog.showModal());
@@ -4693,6 +4973,113 @@ closeNewsButton.addEventListener("click", () => newsDialog.close());
 newsDialog.addEventListener("click", (event) => {
     if (event.target === newsDialog) newsDialog.close();
 });
+
+function enableNewsMarqueeDrag() {
+    if (!newsMarquee || !newsMarqueeTrack) return;
+
+    const autoSpeed = 36;
+    let loopWidth = 0;
+    let offset = 0;
+    let velocity = autoSpeed;
+    let isDragging = false;
+    let pointerId = null;
+    let lastPointerX = 0;
+    let lastPointerTime = 0;
+    let dragDistance = 0;
+    let suppressClick = false;
+    let lastFrameTime = performance.now();
+
+    const updateLoopWidth = () => {
+        const sets = newsMarqueeTrack.querySelectorAll(".news-marquee-set");
+        const firstSet = sets[0];
+        const duplicateSet = sets[1];
+        if (!firstSet || !duplicateSet) {
+            loopWidth = 0;
+            return;
+        }
+        loopWidth = duplicateSet.getBoundingClientRect().left - firstSet.getBoundingClientRect().left;
+    };
+    const normalizeOffset = () => {
+        if (!loopWidth) return;
+        offset = ((offset % loopWidth) + loopWidth) % loopWidth;
+    };
+    const draw = () => {
+        normalizeOffset();
+        newsMarqueeTrack.style.transform = `translate3d(${-offset}px, 0, 0)`;
+    };
+    const animate = (time) => {
+        const elapsedSeconds = Math.min((time - lastFrameTime) / 1000, 0.05);
+        lastFrameTime = time;
+        if (!isDragging && loopWidth) {
+            velocity += (autoSpeed - velocity) * Math.min(1, elapsedSeconds * 3.2);
+            offset += velocity * elapsedSeconds;
+            draw();
+        }
+        requestAnimationFrame(animate);
+    };
+
+    updateLoopWidth();
+    window.addEventListener("resize", () => {
+        updateLoopWidth();
+        draw();
+    });
+    if ("ResizeObserver" in window) {
+        new ResizeObserver(() => {
+            updateLoopWidth();
+            draw();
+        }).observe(newsMarquee);
+    }
+
+    newsMarqueeTrack.addEventListener("pointerdown", (event) => {
+        if (event.pointerType === "mouse" && event.button !== 0) return;
+        isDragging = true;
+        pointerId = event.pointerId;
+        lastPointerX = event.clientX;
+        lastPointerTime = performance.now();
+        dragDistance = 0;
+        newsMarqueeTrack.classList.add("is-dragging");
+        newsMarqueeTrack.setPointerCapture(pointerId);
+        event.preventDefault();
+    });
+
+    newsMarqueeTrack.addEventListener("pointermove", (event) => {
+        if (!isDragging || event.pointerId !== pointerId) return;
+        const now = performance.now();
+        const distance = event.clientX - lastPointerX;
+        const elapsedSeconds = Math.max((now - lastPointerTime) / 1000, 0.001);
+        offset -= distance;
+        velocity = -distance / elapsedSeconds;
+        dragDistance += Math.abs(distance);
+        lastPointerX = event.clientX;
+        lastPointerTime = now;
+        draw();
+        event.preventDefault();
+    });
+
+    const stopDragging = (event) => {
+        if (!isDragging || event.pointerId !== pointerId) return;
+        if (newsMarqueeTrack.hasPointerCapture(pointerId)) newsMarqueeTrack.releasePointerCapture(pointerId);
+        isDragging = false;
+        pointerId = null;
+        newsMarqueeTrack.classList.remove("is-dragging");
+        if (dragDistance > 5) {
+            suppressClick = true;
+            window.setTimeout(() => { suppressClick = false; }, 0);
+        }
+    };
+    newsMarqueeTrack.addEventListener("pointerup", stopDragging);
+    newsMarqueeTrack.addEventListener("pointercancel", stopDragging);
+    newsMarqueeTrack.addEventListener("click", (event) => {
+        if (!suppressClick) return;
+        event.preventDefault();
+        event.stopPropagation();
+    }, true);
+
+    draw();
+    requestAnimationFrame(animate);
+}
+
+enableNewsMarqueeDrag();
 closeHelpButton.addEventListener("click", () => helpDialog.close());
 helpDialog.addEventListener("click", (event) => {
     if (event.target === helpDialog) helpDialog.close();

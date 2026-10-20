@@ -20,24 +20,36 @@
         if (touchLayout.matches || isAppleTablet) event.preventDefault();
     }, { passive: false });
 
-    function makeAction(icon, label, action, { persistentLabel = false } = {}) {
+    function currentMobileLanguage() {
+        return window.tbcPuzzleLanguage?.language ?? document.documentElement.lang;
+    }
+
+    function setMobileLabel(control, english, traditionalChinese = english) {
+        const label = currentMobileLanguage() === "zh-Hant" ? traditionalChinese : english;
+        control.dataset.labelEnglish = english;
+        control.dataset.labelTraditionalChinese = traditionalChinese;
+        control.setAttribute("aria-label", label);
+        control.title = label;
+        const tooltip = control.querySelector(".mobile-more-tooltip");
+        if (tooltip) tooltip.textContent = label;
+    }
+
+    function makeAction(icon, label, action, { persistentLabel = false, zhLabel = label } = {}) {
         const button = document.createElement("button");
         button.className = "mobile-action";
         button.type = "button";
-        button.setAttribute("aria-label", label);
-        button.title = label;
-        button.innerHTML = `<i class="fa-solid ${icon}" aria-hidden="true"></i>${persistentLabel ? `<span class="icon-tooltip mobile-more-tooltip" aria-hidden="true">${label}</span>` : ""}`;
+        button.innerHTML = `<i class="fa-solid ${icon}" aria-hidden="true"></i>${persistentLabel ? '<span class="icon-tooltip mobile-more-tooltip" aria-hidden="true"></span>' : ""}`;
+        setMobileLabel(button, label, zhLabel);
         button.addEventListener("click", action);
         return button;
     }
 
-    function makeImportAction(label, action, { persistentLabel = false } = {}) {
+    function makeImportAction(label, action, { persistentLabel = false, zhLabel = label } = {}) {
         const control = document.createElement("label");
         control.className = "mobile-action file-import-action";
         control.htmlFor = "import-project-input";
-        control.setAttribute("aria-label", label);
-        control.title = label;
-        control.innerHTML = `<i class="fa-solid fa-folder-open" aria-hidden="true"></i>${persistentLabel ? `<span class="icon-tooltip mobile-more-tooltip" aria-hidden="true">${label}</span>` : ""}`;
+        control.innerHTML = `<i class="fa-solid fa-folder-open" aria-hidden="true"></i>${persistentLabel ? '<span class="icon-tooltip mobile-more-tooltip" aria-hidden="true"></span>' : ""}`;
+        setMobileLabel(control, label, zhLabel);
         control.addEventListener("click", action);
         return control;
     }
@@ -52,10 +64,10 @@
         const api = window.tbcPuzzleMobile;
         const toolbar = document.createElement("nav");
         toolbar.className = "mobile-toolbar";
-        toolbar.setAttribute("aria-label", "手機版工具列");
+        toolbar.setAttribute("aria-label", currentMobileLanguage() === "zh-Hant" ? "手機版工具列" : "Mobile toolbar");
         const tabletHistoryControls = document.createElement("nav");
         tabletHistoryControls.className = "tablet-history-controls";
-        tabletHistoryControls.setAttribute("aria-label", "平板版歷史紀錄工具");
+        tabletHistoryControls.setAttribute("aria-label", currentMobileLanguage() === "zh-Hant" ? "平板版歷史紀錄工具" : "Tablet history controls");
         // 先放入 DOM；後續任一觸控功能失敗時，CSS 仍可保留工具列位置。
         game.append(toolbar, tabletHistoryControls);
 
@@ -74,32 +86,32 @@
         const closeDrawer = () => {
             game.classList.remove("is-mobile-panel-open");
             drawerButton?.classList.remove("is-active");
-            drawerButton?.setAttribute("aria-label", "開啟角色與部件");
+            if (drawerButton) setMobileLabel(drawerButton, "Open units and parts", "開啟角色與部件");
         };
-        drawerButton = makeAction("fa-cat", "開啟角色與部件", () => {
+        drawerButton = makeAction("fa-cat", "Open units and parts", () => {
             const willOpen = !game.classList.contains("is-mobile-panel-open");
             game.classList.toggle("is-mobile-panel-open", willOpen);
             drawerButton.classList.toggle("is-active", willOpen);
-            drawerButton.setAttribute("aria-label", willOpen ? "關閉角色與部件" : "開啟角色與部件");
-        });
+            setMobileLabel(drawerButton, willOpen ? "Close units and parts" : "Open units and parts", willOpen ? "關閉角色與部件" : "開啟角色與部件");
+        }, { zhLabel: "開啟角色與部件" });
 
-        const layersButton = makeAction("fa-layer-group", "開啟圖層面板", () => {
+        const layersButton = makeAction("fa-layer-group", "Open layers panel", () => {
             const willOpen = !canvas.classList.contains("is-mobile-layers-open");
             canvas.classList.toggle("is-mobile-layers-open", willOpen);
             layersButton.classList.toggle("is-active", willOpen);
-            layersButton.setAttribute("aria-label", willOpen ? "關閉圖層面板" : "開啟圖層面板");
-        });
+            setMobileLabel(layersButton, willOpen ? "Close layers panel" : "Open layers panel", willOpen ? "關閉圖層面板" : "開啟圖層面板");
+        }, { zhLabel: "開啟圖層面板" });
 
-        const multiSelectButton = makeAction("fa-object-group", "開啟多選物件", () => {
+        const multiSelectButton = makeAction("fa-object-group", "Enable multi-select", () => {
             multiSelectMode = !multiSelectMode;
             multiSelectButton.classList.toggle("is-active", multiSelectMode);
-            multiSelectButton.setAttribute("aria-label", multiSelectMode ? "結束多選物件" : "開啟多選物件");
-        });
+            setMobileLabel(multiSelectButton, multiSelectMode ? "Disable multi-select" : "Enable multi-select", multiSelectMode ? "結束多選物件" : "開啟多選物件");
+        }, { zhLabel: "開啟多選物件" });
 
-        const undoAction = makeAction("fa-arrow-rotate-left", "上一步", () => api.undo());
-        const redoAction = makeAction("fa-arrow-rotate-right", "下一步", () => api.redo());
-        const tabletUndoAction = makeAction("fa-arrow-rotate-left", "上一步", () => api.undo());
-        const tabletRedoAction = makeAction("fa-arrow-rotate-right", "下一步", () => api.redo());
+        const undoAction = makeAction("fa-arrow-rotate-left", "Undo", () => api.undo(), { zhLabel: "上一步" });
+        const redoAction = makeAction("fa-arrow-rotate-right", "Redo", () => api.redo(), { zhLabel: "下一步" });
+        const tabletUndoAction = makeAction("fa-arrow-rotate-left", "Undo", () => api.undo(), { zhLabel: "上一步" });
+        const tabletRedoAction = makeAction("fa-arrow-rotate-right", "Redo", () => api.redo(), { zhLabel: "下一步" });
         tabletHistoryControls.append(tabletUndoAction, tabletRedoAction);
         toolbar.append(drawerButton, undoAction, redoAction, layersButton, multiSelectButton);
         const syncHistoryActions = (state) => {
@@ -119,13 +131,13 @@
 
         let trashHold = null;
         let skipTrashClick = false;
-        const trashButton = makeAction("fa-trash-can", "刪除選取物件；長按清空全部", () => {
+        const trashButton = makeAction("fa-trash-can", "Delete selected; hold to clear all", () => {
             if (skipTrashClick) {
                 skipTrashClick = false;
                 return;
             }
             api.deleteSelected();
-        });
+        }, { zhLabel: "刪除選取物件；長按清空全部" });
         const stopTrashHold = (event) => {
             if (!trashHold || event.pointerId !== trashHold.pointerId) return;
             window.clearTimeout(trashHold.timer);
@@ -160,13 +172,13 @@
         const moreMenu = document.createElement("div");
         moreMenu.id = "mobile-more-menu";
         moreMenu.className = "mobile-more-menu";
-        moreMenu.setAttribute("aria-label", "更多主畫面工具");
+        moreMenu.setAttribute("aria-label", currentMobileLanguage() === "zh-Hant" ? "更多主畫面工具" : "More canvas tools");
         const desktopTools = [
-            ["#view-home-button", "fa-house", "回到原點"],
-            ["#save-project-button", "fa-floppy-disk", "儲存圖層"],
-            ["#import-project-button", "fa-folder-open", "匯入圖層"],
-            ["#copy-canvas-image-button", "fa-copy", "複製主畫面"],
-            ["#share-canvas-image-button", "fa-share-nodes", "分享主畫面"],
+            ["#view-home-button", "fa-house", "Reset view", "回到原點"],
+            ["#save-project-button", "fa-floppy-disk", "Save layers", "儲存圖層"],
+            ["#import-project-button", "fa-folder-open", "Import layers", "匯入圖層"],
+            ["#copy-canvas-image-button", "fa-copy", "Copy canvas", "複製主畫面"],
+            ["#share-canvas-image-button", "fa-share-nodes", "Share canvas", "分享主畫面"],
         ];
         let moreButton;
         const closeMoreMenu = () => {
@@ -174,21 +186,21 @@
             moreButton?.classList.remove("is-active");
             moreButton?.setAttribute("aria-expanded", "false");
         };
-        desktopTools.forEach(([selector, icon, label]) => {
+        desktopTools.forEach(([selector, icon, label, zhLabel]) => {
             const action = selector === "#import-project-button"
-                ? makeImportAction(label, closeMoreMenu, { persistentLabel: true })
+                ? makeImportAction(label, closeMoreMenu, { persistentLabel: true, zhLabel })
                 : makeAction(icon, label, () => {
                 closeMoreMenu();
                 document.querySelector(selector)?.click();
-            }, { persistentLabel: true });
+            }, { persistentLabel: true, zhLabel });
             moreMenu.append(action);
         });
-        moreButton = makeAction("fa-ellipsis", "更多工具", () => {
+        moreButton = makeAction("fa-ellipsis", "More tools", () => {
             const willOpen = !moreMenu.classList.contains("is-open");
             moreMenu.classList.toggle("is-open", willOpen);
             moreButton.classList.toggle("is-active", willOpen);
             moreButton.setAttribute("aria-expanded", String(willOpen));
-        });
+        }, { zhLabel: "更多工具" });
         moreButton.setAttribute("aria-controls", "mobile-more-menu");
         moreButton.setAttribute("aria-expanded", "false");
         const setMoreButtonScoreLock = (isLocked) => {
@@ -202,6 +214,14 @@
         setMoreButtonScoreLock(document.documentElement.classList.contains("is-score-round-active"));
 
         toolbar.append(moreMenu, moreButton);
+        window.addEventListener("tbcPuzzleLanguageChange", () => {
+            toolbar.setAttribute("aria-label", currentMobileLanguage() === "zh-Hant" ? "手機版工具列" : "Mobile toolbar");
+            tabletHistoryControls.setAttribute("aria-label", currentMobileLanguage() === "zh-Hant" ? "平板版歷史紀錄工具" : "Tablet history controls");
+            moreMenu.setAttribute("aria-label", currentMobileLanguage() === "zh-Hant" ? "更多主畫面工具" : "More canvas tools");
+            [...toolbar.querySelectorAll("[data-label-english]"), ...tabletHistoryControls.querySelectorAll("[data-label-english]")].forEach((control) => {
+                setMobileLabel(control, control.dataset.labelEnglish, control.dataset.labelTraditionalChinese);
+            });
+        });
         // 先讓使用者看得到整列工具；歷史紀錄更新失敗不應阻斷工具列出現。
         window.addEventListener("tbcPuzzleHistoryChange", (event) => syncHistoryActions(event.detail));
         syncHistoryActions();
