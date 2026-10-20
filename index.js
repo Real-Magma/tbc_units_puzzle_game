@@ -256,7 +256,7 @@ const helpPageCopy = [
     ["Add Units and Enemies", "Choose one → click a part.", "加入角色與敵人", "選擇後 → 點部件加入。"],
     ["Move, Scale and Rotate", "Drag: move · corners: scale · circle: rotate.", "移動、縮放與旋轉", "拖曳移動 · 四角縮放 · 圓點旋轉。"],
     ["Select, Multi-select and Group", "<kbd>Ctrl</kbd> + click: multi-select · Group / Ungroup.", "選取、多選與群組", "<kbd>Ctrl</kbd> + 點擊：多選 · 群組／解散。"],
-    ["Undo and Redo", "<kbd>Ctrl</kbd> + <kbd>Z</kbd>: undo · <kbd>Ctrl</kbd> + <kbd>Y</kbd>: redo.", "上一步與下一步", "<kbd>Ctrl</kbd> + <kbd>Z</kbd> 復原 · <kbd>Ctrl</kbd> + <kbd>Y</kbd> 重做。"],
+    ["Undo and Redo", "<kbd>Ctrl</kbd> + <kbd>Z</kbd>: undo · <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd>: redo.", "上一步與下一步", "<kbd>Ctrl</kbd> + <kbd>Z</kbd> 復原 · <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd> 重做。"],
     ["Layer Order", "<kbd>↑</kbd><kbd>↓</kbd> / <kbd>W</kbd><kbd>S</kbd>: order · <kbd>Shift</kbd>: ends.", "圖層順序", "<kbd>↑</kbd><kbd>↓</kbd>／<kbd>W</kbd><kbd>S</kbd> 排序 · <kbd>Shift</kbd> 直達頂／底。"],
     ["Copy and Paste", "<kbd>Ctrl</kbd> + <kbd>C</kbd>: copy · <kbd>Ctrl</kbd> + <kbd>V</kbd>: paste.", "複製與貼上", "<kbd>Ctrl</kbd> + <kbd>C</kbd> 複製 · <kbd>Ctrl</kbd> + <kbd>V</kbd> 貼上。"],
     ["Mirror", "<kbd>F</kbd>: flip selected parts.", "左右反轉", "<kbd>F</kbd>：反轉選取物件。"],
@@ -5058,10 +5058,25 @@ document.addEventListener("click", (event) => {
     const isExcluded = event.target.closest("#trash-zone, #help-button, #random-unit-button, .part-card, .unit-result");
     if (button && !button.disabled && !isExcluded) playButtonSound();
 });
-let activeHelpPageIndex = 0;
+const HELP_PAGE_STORAGE_KEY = "tbc-help-page-index";
+function storedHelpPageIndex() {
+    try {
+        const saved = Number.parseInt(localStorage.getItem(HELP_PAGE_STORAGE_KEY) ?? "", 10);
+        return Number.isInteger(saved) ? saved : 0;
+    } catch {
+        return 0;
+    }
+}
+
+let activeHelpPageIndex = storedHelpPageIndex();
 function setActiveHelpPage(index) {
     if (!helpCardPages.length) return;
     activeHelpPageIndex = clamp(index, 0, helpCardPages.length - 1);
+    try {
+        localStorage.setItem(HELP_PAGE_STORAGE_KEY, String(activeHelpPageIndex));
+    } catch {
+        // The help guide still works when browser storage is unavailable.
+    }
     helpCardPages.forEach((page, pageIndex) => {
         const isActive = pageIndex === activeHelpPageIndex;
         page.hidden = !isActive;
@@ -5084,12 +5099,11 @@ helpPageHitboxes.forEach((hitbox) => {
         setActiveHelpPage(activeHelpPageIndex + Number(hitbox.dataset.helpPageDelta));
     });
 });
-setActiveHelpPage(0);
+setActiveHelpPage(activeHelpPageIndex);
 setLanguage(currentLanguage);
 
 helpButton.addEventListener("click", () => {
     playSecretAreaSound();
-    setActiveHelpPage(0);
     helpDialog.showModal();
 });
 newsButton.addEventListener("click", () => newsDialog.showModal());
@@ -5356,7 +5370,8 @@ document.addEventListener("keydown", (event) => {
 window.addEventListener("keydown", (event) => {
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
         event.preventDefault();
-        undo();
+        if (event.shiftKey) redo();
+        else undo();
         return;
     }
 
