@@ -58,6 +58,81 @@ html, body {
 
 button { font: inherit; }
 
+/* Local Font Awesome replacements: SVG masks keep every existing fa-* class usable offline. */
+.fa-solid, .fa-regular, .fa-brands {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    flex: 0 0 auto;
+    font-style: normal;
+    line-height: 1;
+    vertical-align: -0.125em;
+}
+
+.fa-solid::before, .fa-regular::before, .fa-brands::before {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: currentColor;
+    content: "";
+    -webkit-mask: var(--local-fa-icon) center / contain no-repeat;
+    mask: var(--local-fa-icon) center / contain no-repeat;
+}
+
+.fa-brands.fa-instagram { --local-fa-icon: url("image/fa/brands-instagram.svg"); }
+.fa-brands.fa-youtube { --local-fa-icon: url("image/fa/brands-youtube.svg"); }
+.fa-regular.fa-copy { --local-fa-icon: url("image/fa/regular-copy.svg"); }
+.fa-regular.fa-copyright { --local-fa-icon: url("image/fa/regular-copyright.svg"); }
+.fa-regular.fa-images { --local-fa-icon: url("image/fa/regular-images.svg"); }
+.fa-regular.fa-moon { --local-fa-icon: url("image/fa/regular-moon.svg"); }
+.fa-regular.fa-sun { --local-fa-icon: url("image/fa/regular-sun.svg"); }
+.fa-solid.fa-arrow-down { --local-fa-icon: url("image/fa/solid-arrow-down.svg"); }
+.fa-solid.fa-arrow-pointer { --local-fa-icon: url("image/fa/solid-arrow-pointer.svg"); }
+.fa-solid.fa-arrow-rotate-left { --local-fa-icon: url("image/fa/solid-arrow-rotate-left.svg"); }
+.fa-solid.fa-arrow-rotate-right { --local-fa-icon: url("image/fa/solid-arrow-rotate-right.svg"); }
+.fa-solid.fa-arrow-up { --local-fa-icon: url("image/fa/solid-arrow-up.svg"); }
+.fa-solid.fa-book { --local-fa-icon: url("image/fa/solid-book.svg"); }
+.fa-solid.fa-cat { --local-fa-icon: url("image/fa/solid-cat.svg"); }
+.fa-solid.fa-check { --local-fa-icon: url("image/fa/solid-check.svg"); }
+.fa-solid.fa-copy { --local-fa-icon: url("image/fa/solid-copy.svg"); }
+.fa-solid.fa-crosshairs { --local-fa-icon: url("image/fa/solid-crosshairs.svg"); }
+.fa-solid.fa-earth-americas { --local-fa-icon: url("image/fa/solid-earth-americas.svg"); }
+.fa-solid.fa-ellipsis { --local-fa-icon: url("image/fa/solid-ellipsis.svg"); }
+.fa-solid.fa-expand { --local-fa-icon: url("image/fa/solid-expand.svg"); }
+.fa-solid.fa-eye { --local-fa-icon: url("image/fa/solid-eye.svg"); }
+.fa-solid.fa-eye-slash { --local-fa-icon: url("image/fa/solid-eye-slash.svg"); }
+.fa-solid.fa-film { --local-fa-icon: url("image/fa/solid-film.svg"); }
+.fa-solid.fa-floppy-disk { --local-fa-icon: url("image/fa/solid-floppy-disk.svg"); }
+.fa-solid.fa-folder-open { --local-fa-icon: url("image/fa/solid-folder-open.svg"); }
+.fa-solid.fa-hand-pointer { --local-fa-icon: url("image/fa/solid-hand-pointer.svg"); }
+.fa-solid.fa-house { --local-fa-icon: url("image/fa/solid-house.svg"); }
+.fa-solid.fa-layer-group { --local-fa-icon: url("image/fa/solid-layer-group.svg"); }
+.fa-solid.fa-list { --local-fa-icon: url("image/fa/solid-list.svg"); }
+.fa-solid.fa-lock { --local-fa-icon: url("image/fa/solid-lock.svg"); }
+.fa-solid.fa-lock-open { --local-fa-icon: url("image/fa/solid-lock-open.svg"); }
+.fa-solid.fa-moon { --local-fa-icon: url("image/fa/solid-moon.svg"); }
+.fa-solid.fa-music { --local-fa-icon: url("image/fa/solid-music.svg"); }
+.fa-solid.fa-newspaper { --local-fa-icon: url("image/fa/solid-newspaper.svg"); }
+.fa-solid.fa-object-group { --local-fa-icon: url("image/fa/solid-object-group.svg"); }
+.fa-solid.fa-object-ungroup { --local-fa-icon: url("image/fa/solid-object-ungroup.svg"); }
+.fa-solid.fa-paw { --local-fa-icon: url("image/fa/solid-paw.svg"); }
+.fa-solid.fa-play { --local-fa-icon: url("image/fa/solid-play.svg"); }
+.fa-solid.fa-right-left { --local-fa-icon: url("image/fa/solid-right-left.svg"); }
+.fa-solid.fa-rotate-right { --local-fa-icon: url("image/fa/solid-rotate-right.svg"); }
+.fa-solid.fa-share-nodes { --local-fa-icon: url("image/fa/solid-share-nodes.svg"); }
+.fa-solid.fa-shuffle { --local-fa-icon: url("image/fa/solid-shuffle.svg"); }
+.fa-solid.fa-sliders { --local-fa-icon: url("image/fa/solid-sliders.svg"); }
+.fa-solid.fa-stopwatch { --local-fa-icon: url("image/fa/solid-stopwatch.svg"); }
+.fa-solid.fa-sun { --local-fa-icon: url("image/fa/solid-sun.svg"); }
+.fa-solid.fa-thumbtack { --local-fa-icon: url("image/fa/solid-thumbtack.svg"); }
+.fa-solid.fa-trash-can { --local-fa-icon: url("image/fa/solid-trash-can.svg"); }
+.fa-solid.fa-up-down-left-right { --local-fa-icon: url("image/fa/solid-up-down-left-right.svg"); }
+.fa-solid.fa-vector-square { --local-fa-icon: url("image/fa/solid-vector-square.svg"); }
+.fa-solid.fa-volume-high { --local-fa-icon: url("image/fa/solid-volume-high.svg"); }
+.fa-solid.fa-volume-xmark { --local-fa-icon: url("image/fa/solid-volume-xmark.svg"); }
+.fa-solid.fa-wrench { --local-fa-icon: url("image/fa/solid-wrench.svg"); }
+.fa-solid.fa-xmark { --local-fa-icon: url("image/fa/solid-xmark.svg"); }
+
 html, body, .app-frame, .rounded-box, .side-panel, .help-dialog, .news-dialog, .icon-button, .help-dialog button, .news-dialog button {
     transition: background-color 280ms ease, color 280ms ease, border-color 280ms ease, box-shadow 280ms ease;
 }
@@ -593,15 +668,13 @@ html.is-score-result-open .score-result-overlay {
     gap: clamp(1px, min(3cqw, 1cqh), 4px);
     color: color-mix(in srgb, var(--text) 68%, transparent);
     font-family: "GenJyuuGothic", sans-serif;
-    font-size: clamp(0.72rem, 1.35vw, 0.9rem);
-    font-size: clamp(0.58rem, min(9cqw, 4cqh), 0.9rem);
+    font-size: clamp(0.68rem, min(10.5cqw, 4.8cqh), 1.05rem);
     font-weight: 700;
     text-align: center;
 }
 .score-result-overlay-breakdown strong {
     color: var(--text);
-    font-size: clamp(1rem, 1.85vw, 1.22rem);
-    font-size: clamp(0.7rem, min(13cqw, 5.5cqh), 1.22rem);
+    font-size: clamp(0.9rem, min(16cqw, 6.2cqh), 1.45rem);
 }
 .score-result-overlay-score {
     grid-row: 1;
@@ -613,8 +686,7 @@ html.is-score-result-open .score-result-overlay {
     text-align: center;
     color: var(--text);
     font-family: "GenJyuuGothic", sans-serif;
-    font-size: clamp(2.1rem, 5vw, 3.5rem);
-    font-size: clamp(1.15rem, min(25cqw, 12cqh), 3.5rem);
+    font-size: clamp(1.8rem, min(34cqw, 14cqh), 4.4rem);
     font-weight: 900;
     line-height: 1;
 }
@@ -630,17 +702,20 @@ html.is-score-result-open .score-result-overlay {
     .score-result-scene-label { position: static; margin: 0; justify-self: center; transform: none; }
     .score-result-overlay-stats {
         display: grid;
-        grid-template-columns: repeat(5, max-content);
-        grid-template-rows: none;
+        /* `size` containment collapses an auto-height mobile stats card. */
+        container-type: inline-size;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-rows: auto auto auto;
         justify-content: center;
-        column-gap: clamp(8px, 2.4vw, 14px);
+        column-gap: clamp(4px, 1.6vw, 10px);
         margin-top: 0;
-        padding: 18px 16px 20px;
+        padding: 12px 12px 14px;
     }
     .score-result-overlay-breakdown { position: static; display: contents; }
-    .score-result-overlay-breakdown div { display: grid; width: auto; justify-content: initial; justify-items: center; gap: 3px; }
-    .score-result-overlay-score { grid-row: auto; grid-column: 1 / -1; margin: 20px 0 22px; }
-    .score-result-actions { position: static; grid-column: 1 / -1; margin: 0 auto; transform: none; }
+    .score-result-overlay-breakdown div { display: grid; grid-row: 2; width: auto; justify-content: initial; justify-items: center; gap: 3px; font-size: clamp(0.5rem, 2.3vw, 0.78rem); }
+    .score-result-overlay-breakdown strong { font-size: clamp(0.68rem, 3.3vw, 1rem); }
+    .score-result-overlay-score { grid-row: 1; grid-column: 1 / -1; margin: 0 0 8px; font-size: clamp(1.55rem, 8.5vw, 2.7rem); }
+    .score-result-actions { position: static; grid-row: 3; grid-column: 1 / -1; margin: 10px auto 0; transform: none; }
 }
 
 @keyframes score-scramble-shake {
