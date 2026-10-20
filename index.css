@@ -141,7 +141,7 @@ html.is-score-result-open .score-result-overlay {
 
 .top-actions { display: flex; align-items: center; gap: 12px; }
 
-#effects-button[aria-pressed="true"] { opacity: 0.42; }
+#effects-button[aria-pressed="true"] > i { opacity: 0.42; }
 
 .sound-controls {
     display: flex;
@@ -182,7 +182,7 @@ html.is-score-result-open .score-result-overlay {
     appearance: none;
     border: 2px solid var(--text);
     border-radius: 50%;
-    background: var(--panel-bg);
+    background: var(--text);
 }
 
 #volume-slider::-moz-range-track {
@@ -557,7 +557,10 @@ html.is-score-result-open .score-result-overlay {
     position: relative;
     display: grid;
     box-sizing: border-box;
-    grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr);
+    container-type: size;
+    /* Reserve distinct score, breakdown and action areas.  The old auto
+       middle row could consume the score area's height on short displays. */
+    grid-template-rows: minmax(2.5rem, 0.8fr) minmax(0, 3fr) minmax(3.4rem, 1fr);
     margin-top: 0;
     padding: 0 16px;
     border: 3px solid color-mix(in srgb, var(--text) 35%, transparent);
@@ -570,9 +573,12 @@ html.is-score-result-open .score-result-overlay {
     position: static;
     display: grid;
     grid-row: 2;
-    align-content: start;
+    min-height: 0;
+    height: 100%;
+    grid-template-rows: repeat(5, minmax(0, 1fr));
+    align-content: stretch;
     justify-items: center;
-    gap: 14px;
+    gap: 0;
     padding-bottom: 0;
     text-align: center;
 }
@@ -580,17 +586,22 @@ html.is-score-result-open .score-result-overlay {
     display: grid;
     min-width: 0;
     width: 100%;
+    min-height: 0;
+    align-content: center;
     justify-items: center;
     gap: 6px;
+    gap: clamp(1px, min(3cqw, 1cqh), 4px);
     color: color-mix(in srgb, var(--text) 68%, transparent);
     font-family: "GenJyuuGothic", sans-serif;
     font-size: clamp(0.72rem, 1.35vw, 0.9rem);
+    font-size: clamp(0.58rem, min(9cqw, 4cqh), 0.9rem);
     font-weight: 700;
     text-align: center;
 }
 .score-result-overlay-breakdown strong {
     color: var(--text);
     font-size: clamp(1rem, 1.85vw, 1.22rem);
+    font-size: clamp(0.7rem, min(13cqw, 5.5cqh), 1.22rem);
 }
 .score-result-overlay-score {
     grid-row: 1;
@@ -603,10 +614,11 @@ html.is-score-result-open .score-result-overlay {
     color: var(--text);
     font-family: "GenJyuuGothic", sans-serif;
     font-size: clamp(2.1rem, 5vw, 3.5rem);
+    font-size: clamp(1.15rem, min(25cqw, 12cqh), 3.5rem);
     font-weight: 900;
     line-height: 1;
 }
-.score-result-overlay-score > span:last-child { margin-left: 4px; font-size: 0.82rem; }
+.score-result-overlay-score > span:last-child { margin-left: 4px; margin-left: 0.14em; font-size: 0.82rem; font-size: 0.36em; }
 .score-reveal-value { display: inline-block; }
 .score-reveal-value.is-scrambling { animation: score-scramble-shake 70ms steps(2, end) infinite; }
 .score-reveal-value.is-revealed { animation: score-reveal-flash 260ms ease-out both; }
@@ -1797,6 +1809,27 @@ html[data-language="en"] .score-grade-button.is-confirming::after {
 .part-card:active { cursor: grabbing; }
 .part-card:hover { outline: 1px solid var(--border); border-radius: 6px; }
 
+.correct-answer-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 7px;
+    background: rgba(118, 245, 79, 0.3);
+    cursor: pointer;
+}
+
+.correct-answer-card:hover { outline: 0; border-color: var(--text); }
+
+.correct-answer-preview {
+    position: relative;
+    display: block;
+    width: 76px;
+    height: 76px;
+    max-width: 100%;
+    max-height: 100%;
+    overflow: hidden;
+    pointer-events: none;
+}
+
 .part-card > img {
     max-width: 100%;
     max-height: 100%;
@@ -1915,6 +1948,12 @@ html[data-language="en"] .score-grade-button.is-confirming::after {
 }
 
 .help-dialog .help-close { padding: 0; }
+.help-close:hover,
+.help-close:focus-visible,
+.news-close:hover,
+.news-close:focus-visible { background: var(--button-hover-bg); }
+.help-close:active,
+.news-close:active { transform: translateY(2px) scale(0.97); }
 
 /* 說明改為與其他面板一致的單頁卡片，GIF 與文字會在後續填入。 */
 .help-dialog { width: min(560px, calc(100% - 32px)); max-height: min(720px, calc(100% - 32px)); padding: 22px 24px 20px; border: 2px solid var(--border); border-radius: 16px; background: var(--panel-bg); color: var(--text); box-shadow: var(--shadow); }
@@ -1923,7 +1962,8 @@ html[data-language="en"] .score-grade-button.is-confirming::after {
 .help-card-pages { min-height: 318px; }
 .help-card-page { display: grid; min-height: 318px; grid-template-rows: 1fr auto; gap: 13px; padding: 0; border: 0; background: transparent; animation: help-card-page-enter 100ms ease-out; }
 .help-card-page[hidden] { display: none; }
-.help-card-page h3 { margin: 0 0 11px; font-size: 1.25rem; }
+.help-card-page h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 11px; font-size: 1.25rem; }
+.help-card-page h3 > i { font-size: 0.86em; }
 .help-gif-slot { position: relative; display: grid; min-height: 150px; aspect-ratio: 16 / 9; margin: 0; place-items: center; border: 0; border-radius: 9px; background: color-mix(in srgb, var(--button-hover-bg) 48%, var(--panel-bg)); color: color-mix(in srgb, var(--text) 62%, transparent); text-align: center; overflow: hidden; }
 .help-gif-slot i { display: none; }
 .help-gif-slot figcaption { font-size: 0; font-weight: 800; }
@@ -1968,6 +2008,7 @@ html[data-theme="dark"] .help-dialog .help-page-hitbox-next { cursor: url("data:
     font-size: 1.5rem;
     line-height: 1;
 }
+
 .news-marquee { --news-card-width: min(480px, calc(100vw - 72px)); overflow: hidden; }
 .news-marquee-track { display: flex; width: max-content; cursor: grab; touch-action: pan-y; user-select: none; will-change: transform; }
 .news-marquee-track.is-dragging { cursor: grabbing; }
@@ -1977,6 +2018,34 @@ html[data-theme="dark"] .help-dialog .help-page-hitbox-next { cursor: url("data:
 .news-feature a, .news-title { margin: 0; color: #3976c3; font-size: clamp(1.3rem, 4vw, 1.8rem); font-weight: 800; line-height: 1.3; }
 .news-feature a:hover, .news-feature a:focus-visible { text-decoration-thickness: 2px; }
 .news-feature time { color: color-mix(in srgb, var(--text) 62%, transparent); font-size: 0.78rem; }
+
+.news-cheat-button {
+    position: relative;
+    display: grid;
+    width: 24px;
+    height: 24px;
+    margin: 10px 0 0 auto;
+    padding: 0;
+    place-items: center;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    color: color-mix(in srgb, var(--text) 35%, transparent);
+    cursor: pointer;
+    font-size: 0.7rem;
+    opacity: 0.34;
+    transition: opacity 160ms ease, background-color 160ms ease, color 160ms ease;
+}
+
+.news-cheat-button:hover,
+.news-cheat-button:focus-visible { background: var(--button-hover-bg); color: var(--text); opacity: 0.9; }
+.news-cheat-button .icon-tooltip { top: 50%; right: calc(100% + 7px); left: auto; transform: translate(4px, -50%); }
+.news-cheat-button:hover .icon-tooltip,
+.news-cheat-button:focus-visible .icon-tooltip { opacity: 1; transform: translate(0, -50%); }
+.news-cheat-button[aria-pressed="true"] {
+    color: #d4901c;
+    opacity: 0.75;
+}
 
 .sr-only {
     position: absolute;

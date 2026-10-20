@@ -29,6 +29,7 @@ const helpPageStatus = document.querySelector("#help-page-status");
 const newsButton = document.querySelector("#news-button");
 const newsDialog = document.querySelector("#news-dialog");
 const closeNewsButton = document.querySelector("#close-news-button");
+const correctAnswerCheatButton = document.querySelector("#correct-answer-cheat-button");
 const newsMarquee = document.querySelector(".news-marquee");
 const newsMarqueeTrack = document.querySelector(".news-marquee-track");
 const undoButton = document.querySelector("#undo-button");
@@ -143,6 +144,7 @@ let selectedPart = null;
 const selectedParts = new Set();
 const collapsedGroupIds = new Set();
 let copiedParts = [];
+let correctAnswerCheatEnabled = false;
 let contextLayerPart = null;
 let matchingUnitIds = [];
 let activeUnitResultIndex = -1;
@@ -216,6 +218,15 @@ function localized(english, traditionalChinese) {
     return currentLanguage === "en" ? english : traditionalChinese;
 }
 
+function updateCorrectAnswerCheatButton() {
+    const enabled = correctAnswerCheatEnabled;
+    const label = localized(enabled ? "Hide answer" : "Reveal answer", enabled ? "隱藏正解" : "顯示正解");
+    correctAnswerCheatButton.setAttribute("aria-pressed", String(enabled));
+    correctAnswerCheatButton.setAttribute("aria-label", label);
+    correctAnswerCheatButton.querySelector(".icon-tooltip").textContent = "你是怎麼看到的???";
+    correctAnswerCheatButton.querySelector("i").className = enabled ? "fa-solid fa-eye" : "fa-solid fa-eye-slash";
+}
+
 function setLocalizedText(selector, english, traditionalChinese) {
     document.querySelectorAll(selector).forEach((element) => {
         const directText = [...element.childNodes].find((node) => node.nodeType === Node.TEXT_NODE);
@@ -262,6 +273,33 @@ const helpPageCopy = [
     ["News", "Top-left logo → news.", "消息", "左上 Logo → 消息。"],
 ];
 
+// Match each help topic to the icon used by its corresponding in-game tool.
+const helpPageTitleIcons = [
+    "fa-paw", "fa-up-down-left-right", "fa-object-group", "fa-arrow-rotate-left",
+    "fa-arrow-up", "fa-copy", "fa-right-left", "fa-trash-can", "fa-house",
+    "fa-list", "fa-layer-group", "fa-floppy-disk", "fa-folder-open", "fa-share-nodes",
+    "fa-stopwatch", "fa-moon", "fa-volume-high", "fa-newspaper",
+];
+
+function setHelpPageTitle(page, index, title) {
+    const heading = page?.querySelector("h3");
+    if (!heading) return;
+
+    let titleText = heading.querySelector(".help-page-title");
+    if (!titleText) {
+        titleText = document.createElement("span");
+        titleText.className = "help-page-title";
+        heading.replaceChildren(titleText);
+    }
+    heading.querySelectorAll(":scope > i").forEach((icon) => icon.remove());
+
+    const icon = document.createElement("i");
+    icon.className = `fa-solid ${helpPageTitleIcons[index]}`;
+    icon.setAttribute("aria-hidden", "true");
+    heading.prepend(icon);
+    titleText.textContent = title;
+}
+
 function applyLanguage() {
     const english = currentLanguage === "en";
     root.lang = english ? "en" : "zh-Hant";
@@ -275,7 +313,7 @@ function applyLanguage() {
     document.querySelector('meta[property="og:title"]')?.setAttribute("content", localized("Battle Cats Puzzle Game", "貓戰拼圖遊戲 TBC Units Puzzle Game"));
     document.querySelector('meta[property="og:description"]')?.setAttribute("content", localized("Remaking CATS From Your Memory!!", "用盡你各種創意，去拼出八親不認貓咪吧！"));
     languageButton.setAttribute("aria-label", localized("Switch to Chinese-tw", "切換為英文"));
-    languageTooltip.textContent = localized("Chinese-tw", "English");
+    languageTooltip.textContent = localized("English", "Chinese-tw");
 
     [
         ["#help-button .icon-tooltip", "How to Play", "說明"],
@@ -309,8 +347,8 @@ function applyLanguage() {
         ["#help-title", "How to Play", "操作手冊"],
         [".help-lead", "Remaking CATS From Your Memory!!", "利用記憶, 拼出八親不認的貓咪吧！"],
         ["#news-title", "News", "消息"],
-        ["#news-memory-title", "Remaking CATS From Memory!!", "利用記憶，拼出八親不認的貓咪吧！"],
-        [".news-memory-title-copy", "Remaking CATS From Memory!!", "利用記憶，拼出八親不認的貓咪吧！"],
+        ["#news-memory-title", "Remaking CATS From Memory!!", "只憑記憶，能還原貓咪嗎？"],
+        [".news-memory-title-copy", "Remaking CATS From Memory!!", "只憑記憶，能還原貓咪嗎？"],
         ["#news-audio-credit-label", "Credit:", "音樂來源："],
         ["#copyright-owner", "2026 Magma - Website code and original content.", "2026 阿岩 - 網站程式與原創內容。"],
         ["#copyright-ponos", "The Battle Cats name, characters, and related materials are the property of PONOS Corp.", "貓咪大戰爭之名稱、角色及相關素材權利歸 PONOS Corp. 所有。"],
@@ -319,13 +357,14 @@ function applyLanguage() {
     ].forEach(([selector, en, zh]) => setLocalizedText(selector, en, zh));
     if (scoreActionConfirmation === "grade") scoreGradeButton.querySelector("span").textContent = "OK";
 
-    const formNames = english ? ["Base", "Evolved", "True", "Ultra"] : ["1 階", "2 階", "3 階", "4 階"];
+    const formNames = english ? ["Normal", "Evolved", "True", "Ultra"] : ["1 階", "2 階", "3 階", "4 階"];
     [".rank-option", ".score-fixed-rank"].forEach((selector) => {
         document.querySelectorAll(selector).forEach((button, index) => { button.textContent = formNames[index]; });
     });
     document.querySelectorAll("#rank-select option, #score-active-rank option").forEach((option) => {
         option.textContent = option.value === "e" ? localized("Enemy", "敵人") : formNames[["f", "c", "s", "u"].indexOf(option.value)];
     });
+    updateCorrectAnswerCheatButton();
     [unitSearch, scoreUnitSearch].forEach((input) => { input.placeholder = localized("Search ID or name", "搜尋編號或名稱"); });
     setLocalizedAttribute("#news-button", "aria-label", "News", "消息");
     setLocalizedAttribute("#close-help-button", "aria-label", "Close help", "關閉說明");
@@ -355,7 +394,7 @@ function applyLanguage() {
     }
     helpPageCopy.forEach(([titleEn, copyEn, titleZh, copyZh], index) => {
         const page = helpCardPages[index];
-        page?.querySelector("h3") && (page.querySelector("h3").textContent = localized(titleEn, titleZh));
+        setHelpPageTitle(page, index, localized(titleEn, titleZh));
         page?.querySelector(".help-card-copy") && (page.querySelector(".help-card-copy").innerHTML = localized(copyEn, copyZh));
     });
     setTheme(root.dataset.theme ?? initialTheme);
@@ -390,7 +429,7 @@ function setTheme(theme) {
     const isDark = theme === "dark";
     root.dataset.theme = theme;
     themeIcon.className = isDark ? "fa-regular fa-moon" : "fa-regular fa-sun";
-    const label = isDark ? localized("Light", "開燈") : localized("Dark", "關燈");
+    const label = isDark ? localized("Dark", "黑夜") : localized("Light", "白天");
     themeButton.setAttribute("aria-label", label);
     themeTooltip.textContent = label;
 }
@@ -399,7 +438,7 @@ function setMuted(muted) {
     musicTracks.forEach((music) => { music.muted = muted; });
     soundIcon.className = muted ? "fa-solid fa-volume-xmark" : "fa-solid fa-volume-high";
     soundButton.setAttribute("aria-pressed", String(muted));
-    const label = muted ? localized("Unmute", "開音樂") : localized("Mute", "關音樂");
+    const label = localized("Music", "音樂");
     soundButton.setAttribute("aria-label", label);
     soundTooltip.textContent = label;
 }
@@ -408,7 +447,7 @@ function setEffectsMuted(muted) {
     [bowlingSound, popSound, secretAreaSound, buttonSound, scoreRevealSound, scoreFinalSound, scoreDojoWinSound].forEach((sound) => { sound.muted = muted; });
     effectsIcon.className = muted ? "fa-solid fa-music" : "fa-solid fa-music";
     effectsButton.setAttribute("aria-pressed", String(muted));
-    const label = muted ? localized("Unmute sfx", "開音效") : localized("Mute sfx", "關音效");
+    const label = localized("SFX", "音效");
     effectsButton.setAttribute("aria-label", label);
     effectsTooltip.textContent = label;
 }
@@ -959,6 +998,73 @@ async function renderScoreParts(target, template) {
     activeParts = new Map(scoreParts.map((part) => [part.id, part]));
     scorePartsList.replaceChildren(...scoreParts.map(createPartCard));
     return true;
+}
+
+function answerAssetsFromTemplate(unit, target, template) {
+    const assetsByCrop = new Map(availablePartsForRank(unit, target.rank)
+        .map((part) => [cropIndexFromPartId(part.id), part])
+        .filter(([cropIndex]) => cropIndex !== null));
+    return withoutPlaceholderScoreParts(template, unit, target.rank).parts
+        .map((targetPart) => ({ targetPart, asset: assetsByCrop.get(targetPart.cropIndex) }))
+        .filter(({ asset }) => asset && normalizeSprite(asset.sprite));
+}
+
+function createCorrectAnswerPreview(answerParts) {
+    const bounds = scoreAnswerBounds(answerParts);
+    if (!Number.isFinite(bounds.left)) return null;
+
+    const contentWidth = Math.max(1, bounds.right - bounds.left);
+    const contentHeight = Math.max(1, bounds.bottom - bounds.top);
+    // Keep the assembled answer at the same preview scale as a normal part card.
+    const previewSize = 76;
+    const fitScale = Math.min((previewSize * 0.82) / contentWidth, (previewSize * 0.82) / contentHeight);
+    const preview = document.createElement("span");
+    const world = document.createElement("span");
+    preview.className = "correct-answer-preview";
+    world.className = "score-answer-world";
+    world.style.left = `${previewSize / 2 - ((bounds.left + bounds.right) / 2) * fitScale}px`;
+    world.style.top = `${previewSize / 2 - ((bounds.top + bounds.bottom) / 2) * fitScale}px`;
+    world.style.transform = `scale(${fitScale})`;
+    answerParts.forEach(({ asset, targetPart }) => {
+        const answerPart = createScoreAnswerPart(asset, targetPart);
+        if (answerPart) world.append(answerPart);
+    });
+    preview.append(world);
+    return preview;
+}
+
+function addCorrectAnswerToCanvas(answerParts) {
+    if (!answerParts.length) return;
+    const groupId = createGroupId();
+    const groupColor = createGroupColor();
+    const placedParts = [...answerParts]
+        .sort((left, right) => (Number(left.targetPart.z) || 0) - (Number(right.targetPart.z) || 0))
+        .map(({ asset, targetPart }) => {
+            const placedPart = addPartToCanvas(asset, 0, 0, {
+                worldPoint: { x: Number(targetPart.x) || 0, y: Number(targetPart.y) || 0 },
+                rotation: `${Number(targetPart.angle) || 0}deg`,
+                scale: String(Math.sqrt(Math.abs(Number(targetPart.scaleX) || 1) * Math.abs(Number(targetPart.scaleY) || 1))),
+                flipX: Number(targetPart.flipX) === -1 ? "-1" : "1",
+                remember: false,
+            });
+            placedPart.dataset.groupId = groupId;
+            placedPart.dataset.groupColor = groupColor;
+            return placedPart;
+        });
+    setSelectedParts(placedParts, placedParts.at(-1));
+    remember({ type: "add-answer-group", parts: placedParts });
+    playPopSound();
+}
+
+function createCorrectAnswerCard(answerParts) {
+    const card = document.createElement("button");
+    const preview = createCorrectAnswerPreview(answerParts);
+    card.className = "part-card correct-answer-card";
+    card.type = "button";
+    card.setAttribute("aria-label", localized("Add correct answer", "加入正解"));
+    card.addEventListener("click", () => addCorrectAnswerToCanvas(answerParts));
+    if (preview) card.append(preview);
+    return card;
 }
 
 function createScoreAnswerPart(asset, targetPart) {
@@ -1594,6 +1700,12 @@ function clearScoreRoundParts() {
     updateSelectionFrame();
 }
 
+function clearCopiedPartsForScoreRound() {
+    // Keep the normal-mode canvas intact, but do not let a pre-round copy be
+    // pasted into a scoring puzzle.
+    copiedParts = [];
+}
+
 function resetScorePanelScrollPositions() {
     sidePanel.scrollTop = 0;
     scoreSetupScroll.scrollTop = 0;
@@ -1638,6 +1750,7 @@ async function startScoreRound() {
         await Promise.all([...new Set(rankParts.map((part) => part.src))].map(ensurePartSourceLoaded));
         const usableTemplate = withoutPlaceholderScoreParts(template, unit, target.rank);
         if (!usableTemplate.parts.length) throw new Error("此題沒有可用的角色部件");
+        clearCopiedPartsForScoreRound();
         clearScoreRoundParts();
         scoreHistoryStart = history.length;
         scoreRoundTarget = target;
@@ -3475,7 +3588,7 @@ function undo() {
     redoHistory.push(action);
 
     if (action.type === "add") action.image.remove();
-    if (action.type === "paste-group") action.parts.forEach((image) => image.remove());
+    if (action.type === "paste-group" || action.type === "add-answer-group") action.parts.forEach((image) => image.remove());
     if (action.type === "move") restoreImage(action.image, action.from);
     if (action.type === "move-group") action.changes.forEach(({ image, from }) => restoreImage(image, from));
     if (action.type === "rotate") restoreImage(action.image, action.from);
@@ -3515,7 +3628,7 @@ function redo() {
     if (!action) return;
 
     if (action.type === "add") canvasWorld.append(action.image);
-    if (action.type === "paste-group") action.parts.forEach((image) => canvasWorld.append(image));
+    if (action.type === "paste-group" || action.type === "add-answer-group") action.parts.forEach((image) => canvasWorld.append(image));
     if (action.type === "move" || action.type === "rotate" || action.type === "scale" || action.type === "flip") restoreImage(action.image, action.to);
     if (action.type === "move-group" || action.type === "rotate-group" || action.type === "scale-group" || action.type === "flip-group") {
         action.changes.forEach(({ image, to }) => restoreImage(image, to));
@@ -4303,9 +4416,14 @@ async function renderParts() {
         return;
     }
     const candidateParts = availablePartsForRank(unit, rankSelect.value);
+    const target = { entityType: activeEntityType, unitId: unitSelect.value, rank: rankSelect.value };
+    const templatePromise = ensureScoreTemplateLoaded(target).catch(() => null);
     showPartsLoading();
     try {
-        await Promise.all([...new Set(candidateParts.map((part) => part.src))].map(ensurePartSourceLoaded));
+        await Promise.all([
+            ...[...new Set(candidateParts.map((part) => part.src))].map(ensurePartSourceLoaded),
+            templatePromise,
+        ]);
     } catch (error) {
         console.error(error);
         if (renderVersion === partsRenderVersion) {
@@ -4316,10 +4434,13 @@ async function renderParts() {
     }
     if (renderVersion !== partsRenderVersion) return;
     const parts = withoutTransparentParts(candidateParts);
+    const template = await templatePromise;
+    const answerParts = template ? answerAssetsFromTemplate(unit, target, template) : [];
     activeParts = new Map(parts.map((part) => [part.id, part]));
     partsList.replaceChildren();
     unitStatus.textContent = parts.length ? localized(`${parts.length} draggable parts`, `${parts.length} 個可拖曳部件`) : localized("This form has no available parts.", "此階級沒有可用部件。");
 
+    if (correctAnswerCheatEnabled && answerParts.length) partsList.append(createCorrectAnswerCard(answerParts));
     partsList.append(...parts.map(createPartCard));
 }
 
@@ -4970,6 +5091,11 @@ helpButton.addEventListener("click", () => {
 });
 newsButton.addEventListener("click", () => newsDialog.showModal());
 closeNewsButton.addEventListener("click", () => newsDialog.close());
+correctAnswerCheatButton.addEventListener("click", () => {
+    correctAnswerCheatEnabled = !correctAnswerCheatEnabled;
+    updateCorrectAnswerCheatButton();
+    void renderParts();
+});
 newsDialog.addEventListener("click", (event) => {
     if (event.target === newsDialog) newsDialog.close();
 });
@@ -5232,6 +5358,11 @@ window.addEventListener("keydown", (event) => {
     const target = event.target;
     const isTyping = target instanceof HTMLInputElement || target instanceof HTMLSelectElement || target instanceof HTMLTextAreaElement || target?.isContentEditable;
     if (isTyping || helpDialog.open) return;
+
+    if (isScoreRoundCanvasActive && ["c", "v"].includes(event.key.toLowerCase())) {
+        event.preventDefault();
+        return;
+    }
 
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "a") {
         event.preventDefault();
