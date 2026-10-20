@@ -313,7 +313,7 @@ function applyLanguage() {
     document.querySelector('meta[property="og:title"]')?.setAttribute("content", localized("Battle Cats Puzzle Game", "貓戰拼圖遊戲 TBC Units Puzzle Game"));
     document.querySelector('meta[property="og:description"]')?.setAttribute("content", localized("Remaking CATS From Your Memory!!", "用盡你各種創意，去拼出八親不認貓咪吧！"));
     languageButton.setAttribute("aria-label", localized("Switch to Chinese-tw", "切換為英文"));
-    languageTooltip.textContent = localized("English", "Chinese-tw");
+    languageTooltip.textContent = localized("English", "Chinese");
 
     [
         ["#help-button .icon-tooltip", "How to Play", "說明"],
@@ -5158,6 +5158,8 @@ function enableNewsMarqueeDrag() {
 
     newsMarqueeTrack.addEventListener("pointerdown", (event) => {
         if (event.pointerType === "mouse" && event.button !== 0) return;
+        // Keep news links as ordinary links; only the card background and images begin a drag.
+        if (event.target.closest("a")) return;
         isDragging = true;
         pointerId = event.pointerId;
         lastPointerX = event.clientX;

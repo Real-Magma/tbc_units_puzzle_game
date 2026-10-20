@@ -2016,6 +2016,7 @@ html[data-theme="dark"] .help-dialog .help-page-hitbox-next { cursor: url("data:
 .news-feature { display: grid; flex: 0 0 var(--news-card-width); width: var(--news-card-width); gap: 10px; }
 .news-feature img { display: block; width: 100%; border-radius: 12px; box-shadow: 0 8px 20px color-mix(in srgb, #000 22%, transparent); }
 .news-feature a, .news-title { margin: 0; color: #3976c3; font-size: clamp(1.3rem, 4vw, 1.8rem); font-weight: 800; line-height: 1.3; }
+.news-feature a { cursor: pointer; }
 .news-feature a:hover, .news-feature a:focus-visible { text-decoration-thickness: 2px; }
 .news-feature time { color: color-mix(in srgb, var(--text) 62%, transparent); font-size: 0.78rem; }
 
