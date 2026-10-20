@@ -2031,7 +2031,7 @@ html[data-language="en"] .score-grade-button.is-confirming::after {
 .news-close:active { transform: translateY(2px) scale(0.97); }
 
 /* 說明改為與其他面板一致的單頁卡片，GIF 與文字會在後續填入。 */
-.help-dialog { width: min(560px, calc(100% - 32px)); max-height: min(720px, calc(100% - 32px)); padding: 22px 24px 20px; border: 2px solid var(--border); border-radius: 16px; background: var(--panel-bg); color: var(--text); box-shadow: var(--shadow); }
+.help-dialog { width: min(560px, calc(100% - 32px)); max-height: min(720px, calc(100% - 32px)); padding: 22px 24px 20px; border: 0px solid var(--border); border-radius: 16px; background: var(--panel-bg); color: var(--text); box-shadow: var(--shadow); }
 .help-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 16px; color: var(--text); text-shadow: none; }
 .help-card-header .help-close { border-color: var(--border); background: transparent; color: var(--text); box-shadow: none; }
 .help-card-pages { min-height: 318px; }
@@ -2041,13 +2041,13 @@ html[data-language="en"] .score-grade-button.is-confirming::after {
 .help-card-page h3 > i { font-size: 0.86em; }
 .help-gif-slot { position: relative; display: grid; min-height: 150px; aspect-ratio: 16 / 9; margin: 0; place-items: center; border: 0; border-radius: 9px; background: color-mix(in srgb, var(--button-hover-bg) 48%, var(--panel-bg)); color: color-mix(in srgb, var(--text) 62%, transparent); text-align: center; overflow: hidden; }
 .help-gif-slot i { display: none; }
-.help-gif-slot > img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.help-gif-slot > img { position: relative; z-index: 1; display: block; width: 100%; height: 100%; object-fit: contain; }
 .help-gif-slot figcaption { font-size: 0; font-weight: 800; }
 .help-gif-slot figcaption::after { content: "Work in progress..."; font-size: 0.82rem; }
 .help-gif-slot.has-demo figcaption::after { display: none; }
 .help-dialog .help-page-hitbox { position: absolute; top: 0; bottom: 0; width: 50%; min-height: 0; box-sizing: border-box; margin: 0; padding: 0; border: 0 !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important; opacity: 0; z-index: 1; }
-.help-dialog .help-page-hitbox-previous { left: 0; right: auto; cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M15 4 7 12l8 8' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") 12 12, w-resize; }
-.help-dialog .help-page-hitbox-next { right: 0; left: auto; cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M9 4l8 8-8 8' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") 12 12, e-resize; }
+.help-dialog .help-page-hitbox-previous { left: 0; right: auto; cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M15 4 7 12l8 8' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") 12 12, w-resize; }
+.help-dialog .help-page-hitbox-next { right: 0; left: auto; cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M9 4l8 8-8 8' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") 12 12, e-resize; }
 .help-dialog .help-page-hitbox:disabled { cursor: default; }
 .help-card-copy { margin: 0; color: color-mix(in srgb, var(--text) 75%, transparent); font-size: 0.82rem; line-height: 1.55; }
 .help-card-navigation { display: block; padding: 14px 4px 1px; color: color-mix(in srgb, var(--text) 72%, transparent); font-size: 0.76rem; font-weight: 800; text-align: center; }
@@ -2055,6 +2055,7 @@ html[data-language="en"] .score-grade-button.is-confirming::after {
 .news-footer a { color: #3976c3; font-weight: 700; }
 html[data-theme="dark"] .help-dialog .help-page-hitbox-previous { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M15 4 7 12l8 8' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") 12 12, w-resize; }
 html[data-theme="dark"] .help-dialog .help-page-hitbox-next { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M9 4l8 8-8 8' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") 12 12, e-resize; }
+html[data-theme="dark"] .help-gif-slot.has-demo { border: 1px solid rgb(255 255 255 / 0.94); background: #080808; box-shadow: 0 0 5px rgb(255 255 255 / 0.78), 0 0 18px rgb(255 255 255 / 0.42), 0 0 36px rgb(255 255 255 / 0.16); }
 @keyframes help-card-page-enter { from { opacity: 0.92; } to { opacity: 1; } }
 
 .news-dialog {

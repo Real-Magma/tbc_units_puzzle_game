@@ -1,197 +1,197 @@
-const root = document.documentElement;
-const themeButton = document.querySelector("#theme-button");
-const languageButton = document.querySelector("#language-button");
-const soundButton = document.querySelector("#sound-button");
-const effectsButton = document.querySelector("#effects-button");
-const themeIcon = themeButton.querySelector("i");
-const soundIcon = soundButton.querySelector("i");
-const effectsIcon = effectsButton.querySelector("i");
-const themeTooltip = document.querySelector("#theme-tooltip");
-const languageTooltip = document.querySelector("#language-tooltip");
-const soundTooltip = document.querySelector("#sound-tooltip");
-const effectsTooltip = document.querySelector("#effects-tooltip");
-const backgroundMusic = document.querySelector("#background-music");
-const scoreMusic = document.querySelector("#score-music");
-const bowlingSound = document.querySelector("#bowling-sound");
-const popSound = document.querySelector("#pop-sound");
-const secretAreaSound = document.querySelector("#secret-area-sound");
-const buttonSound = document.querySelector("#button-sound");
-const scoreRevealSound = document.querySelector("#score-reveal-sound");
-const scoreFinalSound = document.querySelector("#score-final-sound");
-const scoreDojoWinSound = document.querySelector("#score-dojo-win-sound");
-const volumeSlider = document.querySelector("#volume-slider");
-const helpButton = document.querySelector("#help-button");
-const helpDialog = document.querySelector("#help-dialog");
-const closeHelpButton = document.querySelector("#close-help-button");
-const helpCardPages = [...document.querySelectorAll(".help-card-page")];
-const helpPageHitboxes = [...document.querySelectorAll(".help-page-hitbox")];
-const helpPageStatus = document.querySelector("#help-page-status");
-const newsButton = document.querySelector("#news-button");
-const newsDialog = document.querySelector("#news-dialog");
-const closeNewsButton = document.querySelector("#close-news-button");
-const correctAnswerCheatButton = document.querySelector("#correct-answer-cheat-button");
-const newsMarquee = document.querySelector(".news-marquee");
-const newsMarqueeTrack = document.querySelector(".news-marquee-track");
-const undoButton = document.querySelector("#undo-button");
-const layerBackButton = document.querySelector("#layer-back-button");
-const layerFrontButton = document.querySelector("#layer-front-button");
-const viewHomeButton = document.querySelector("#view-home-button");
-const canvas = document.querySelector("#canvas");
-const canvasWorld = document.querySelector("#canvas-world");
-const scoreStartFlash = document.querySelector("#score-start-flash");
-const selectionFrame = document.querySelector("#selection-frame");
-const selectionRotateHandle = document.querySelector("#selection-rotate-handle");
-const marqueeSelection = document.querySelector("#marquee-selection");
-const layersPanel = document.querySelector("#layers-panel");
-const layerContextMenu = document.querySelector("#layer-context-menu");
-const mergeLayersButton = document.querySelector("#merge-layers-button");
-const ungroupLayersButton = document.querySelector("#ungroup-layers-button");
-const flipHorizontalButton = document.querySelector("#flip-horizontal-button");
-const lockLayerButton = document.querySelector("#lock-layer-button");
-const hideLayersButton = document.querySelector("#hide-layers-button");
-const showLayersButton = document.querySelector("#show-layers-button");
-const moveLayersToBackButton = document.querySelector("#move-layers-to-back-button");
-const moveLayersToFrontButton = document.querySelector("#move-layers-to-front-button");
-const focusLayerButton = document.querySelector("#focus-layer-button");
-const importProjectButton = document.querySelector("#import-project-button");
-const importProjectInput = document.querySelector("#import-project-input");
-const saveProjectButton = document.querySelector("#save-project-button");
-const exportPngButton = document.querySelector("#export-png-button");
-const copyCanvasImageButton = document.querySelector("#copy-canvas-image-button");
-const shareCanvasImageButton = document.querySelector("#share-canvas-image-button");
-const pngExportEnabled = window.TBC_PUZZLE_CONFIG?.showPngExport === true;
-const PART_DRAG_TYPE = "application/x-tbc-part";
-const trashZone = document.querySelector("#trash-zone");
-const unitSelect = document.querySelector("#unit-select");
-const unitSearch = document.querySelector("#unit-search");
-const unitResults = document.querySelector("#unit-results");
-const randomUnitButton = document.querySelector("#random-unit-button");
-const rankSelect = document.querySelector("#rank-select");
-const rankLabel = document.querySelector("#rank-label");
-const rankOptions = document.querySelector("#rank-options");
-const normalEntityLabel = document.querySelector("#normal-entity-label");
-const unitStatus = document.querySelector("#unit-status");
-const partsList = document.querySelector("#parts-list");
-const normalModeTab = document.querySelector("#normal-mode-tab");
-const scoreModeTab = document.querySelector("#score-mode-tab");
-const normalModePanel = document.querySelector("#normal-mode-panel");
-const scoreModePanel = document.querySelector("#score-mode-panel");
-const scoreSetup = document.querySelector("#score-setup");
-const sidePanel = document.querySelector(".side-panel");
-const scoreSetupScroll = document.querySelector(".score-setup-scroll");
-const scoreRunning = document.querySelector("#score-running");
-const scoreRunningFixed = document.querySelector(".score-running-fixed");
-const scoreMobileControls = document.querySelector("#score-mobile-controls");
-const scoreRoundScroll = document.querySelector(".score-round-scroll");
-const scoreResultPanel = document.querySelector("#score-result-panel");
-const scoreTimeButtons = [...document.querySelectorAll(".score-time-button")];
-const scoreQuestionModeButtons = [...document.querySelectorAll(".score-question-mode")];
-const scoreFixedPicker = document.querySelector("#score-fixed-picker");
-const scoreFixedRankButtons = [...document.querySelectorAll(".score-fixed-rank")];
-const rankButtons = [...document.querySelectorAll(".rank-option")];
-const entityTypeButtons = [...document.querySelectorAll(".entity-type-option")];
-const scoreFixedRankLabel = document.querySelector("#score-fixed-rank-label");
-const scoreFixedRanks = document.querySelector("#score-fixed-ranks");
-const scoreEntityLabel = document.querySelector("#score-entity-label");
-const scoreUnitSearch = document.querySelector("#score-unit-search");
-const scoreUnitResults = document.querySelector("#score-unit-results");
-const scoreModeStatus = document.querySelector("#score-mode-status");
-const scoreStartButton = document.querySelector("#score-start-button");
-const scoreCancelButton = document.querySelector("#score-cancel-button");
-const scoreGradeButton = document.querySelector("#score-grade-button");
-const scoreCountdown = document.querySelector("#score-countdown");
-const scoreActiveUnit = document.querySelector("#score-active-unit");
-const scoreActiveRank = document.querySelector("#score-active-rank");
-const scoreActiveEntityLabel = document.querySelector("#score-active-entity-label");
-const scoreActiveRankLabel = document.querySelector("#score-active-rank-label");
-const scorePartsList = document.querySelector("#score-parts-list");
-const scoreResultOverlay = document.querySelector("#score-result-overlay");
-const scoreResultCard = document.querySelector("#score-result-card");
-const scoreResultPreview = document.querySelector("#score-result-preview");
-const scoreResultAnswer = document.querySelector("#score-result-answer");
-const scoreResultOverlayStats = document.querySelector("#score-result-overlay-stats");
+const root                        = document.documentElement;
+const themeButton                 = document.querySelector("#theme-button");
+const languageButton              = document.querySelector("#language-button");
+const soundButton                 = document.querySelector("#sound-button");
+const effectsButton               = document.querySelector("#effects-button");
+const themeIcon                   = themeButton.querySelector("i");
+const soundIcon                   = soundButton.querySelector("i");
+const effectsIcon                 = effectsButton.querySelector("i");
+const themeTooltip                = document.querySelector("#theme-tooltip");
+const languageTooltip             = document.querySelector("#language-tooltip");
+const soundTooltip                = document.querySelector("#sound-tooltip");
+const effectsTooltip              = document.querySelector("#effects-tooltip");
+const backgroundMusic             = document.querySelector("#background-music");
+const scoreMusic                  = document.querySelector("#score-music");
+const bowlingSound                = document.querySelector("#bowling-sound");
+const popSound                    = document.querySelector("#pop-sound");
+const secretAreaSound             = document.querySelector("#secret-area-sound");
+const buttonSound                 = document.querySelector("#button-sound");
+const scoreRevealSound            = document.querySelector("#score-reveal-sound");
+const scoreFinalSound             = document.querySelector("#score-final-sound");
+const scoreDojoWinSound           = document.querySelector("#score-dojo-win-sound");
+const volumeSlider                = document.querySelector("#volume-slider");
+const helpButton                  = document.querySelector("#help-button");
+const helpDialog                  = document.querySelector("#help-dialog");
+const closeHelpButton             = document.querySelector("#close-help-button");
+const helpCardPages               = [...document.querySelectorAll(".help-card-page")];
+const helpPageHitboxes            = [...document.querySelectorAll(".help-page-hitbox")];
+const helpPageStatus              = document.querySelector("#help-page-status");
+const newsButton                  = document.querySelector("#news-button");
+const newsDialog                  = document.querySelector("#news-dialog");
+const closeNewsButton             = document.querySelector("#close-news-button");
+const correctAnswerCheatButton    = document.querySelector("#correct-answer-cheat-button");
+const newsMarquee                 = document.querySelector(".news-marquee");
+const newsMarqueeTrack            = document.querySelector(".news-marquee-track");
+const undoButton                  = document.querySelector("#undo-button");
+const layerBackButton             = document.querySelector("#layer-back-button");
+const layerFrontButton            = document.querySelector("#layer-front-button");
+const viewHomeButton              = document.querySelector("#view-home-button");
+const canvas                      = document.querySelector("#canvas");
+const canvasWorld                 = document.querySelector("#canvas-world");
+const scoreStartFlash             = document.querySelector("#score-start-flash");
+const selectionFrame              = document.querySelector("#selection-frame");
+const selectionRotateHandle       = document.querySelector("#selection-rotate-handle");
+const marqueeSelection            = document.querySelector("#marquee-selection");
+const layersPanel                 = document.querySelector("#layers-panel");
+const layerContextMenu            = document.querySelector("#layer-context-menu");
+const mergeLayersButton           = document.querySelector("#merge-layers-button");
+const ungroupLayersButton         = document.querySelector("#ungroup-layers-button");
+const flipHorizontalButton        = document.querySelector("#flip-horizontal-button");
+const lockLayerButton             = document.querySelector("#lock-layer-button");
+const hideLayersButton            = document.querySelector("#hide-layers-button");
+const showLayersButton            = document.querySelector("#show-layers-button");
+const moveLayersToBackButton      = document.querySelector("#move-layers-to-back-button");
+const moveLayersToFrontButton     = document.querySelector("#move-layers-to-front-button");
+const focusLayerButton            = document.querySelector("#focus-layer-button");
+const importProjectButton         = document.querySelector("#import-project-button");
+const importProjectInput          = document.querySelector("#import-project-input");
+const saveProjectButton           = document.querySelector("#save-project-button");
+const exportPngButton             = document.querySelector("#export-png-button");
+const copyCanvasImageButton       = document.querySelector("#copy-canvas-image-button");
+const shareCanvasImageButton      = document.querySelector("#share-canvas-image-button");
+const pngExportEnabled            = window.TBC_PUZZLE_CONFIG?.showPngExport === true;
+const PART_DRAG_TYPE              = "application/x-tbc-part";
+const trashZone                   = document.querySelector("#trash-zone");
+const unitSelect                  = document.querySelector("#unit-select");
+const unitSearch                  = document.querySelector("#unit-search");
+const unitResults                 = document.querySelector("#unit-results");
+const randomUnitButton            = document.querySelector("#random-unit-button");
+const rankSelect                  = document.querySelector("#rank-select");
+const rankLabel                   = document.querySelector("#rank-label");
+const rankOptions                 = document.querySelector("#rank-options");
+const normalEntityLabel           = document.querySelector("#normal-entity-label");
+const unitStatus                  = document.querySelector("#unit-status");
+const partsList                   = document.querySelector("#parts-list");
+const normalModeTab               = document.querySelector("#normal-mode-tab");
+const scoreModeTab                = document.querySelector("#score-mode-tab");
+const normalModePanel             = document.querySelector("#normal-mode-panel");
+const scoreModePanel              = document.querySelector("#score-mode-panel");
+const scoreSetup                  = document.querySelector("#score-setup");
+const sidePanel                   = document.querySelector(".side-panel");
+const scoreSetupScroll            = document.querySelector(".score-setup-scroll");
+const scoreRunning                = document.querySelector("#score-running");
+const scoreRunningFixed           = document.querySelector(".score-running-fixed");
+const scoreMobileControls         = document.querySelector("#score-mobile-controls");
+const scoreRoundScroll            = document.querySelector(".score-round-scroll");
+const scoreResultPanel            = document.querySelector("#score-result-panel");
+const scoreTimeButtons            = [...document.querySelectorAll(".score-time-button")];
+const scoreQuestionModeButtons    = [...document.querySelectorAll(".score-question-mode")];
+const scoreFixedPicker            = document.querySelector("#score-fixed-picker");
+const scoreFixedRankButtons       = [...document.querySelectorAll(".score-fixed-rank")];
+const rankButtons                 = [...document.querySelectorAll(".rank-option")];
+const entityTypeButtons           = [...document.querySelectorAll(".entity-type-option")];
+const scoreFixedRankLabel         = document.querySelector("#score-fixed-rank-label");
+const scoreFixedRanks             = document.querySelector("#score-fixed-ranks");
+const scoreEntityLabel            = document.querySelector("#score-entity-label");
+const scoreUnitSearch             = document.querySelector("#score-unit-search");
+const scoreUnitResults            = document.querySelector("#score-unit-results");
+const scoreModeStatus             = document.querySelector("#score-mode-status");
+const scoreStartButton            = document.querySelector("#score-start-button");
+const scoreCancelButton           = document.querySelector("#score-cancel-button");
+const scoreGradeButton            = document.querySelector("#score-grade-button");
+const scoreCountdown              = document.querySelector("#score-countdown");
+const scoreActiveUnit             = document.querySelector("#score-active-unit");
+const scoreActiveRank             = document.querySelector("#score-active-rank");
+const scoreActiveEntityLabel      = document.querySelector("#score-active-entity-label");
+const scoreActiveRankLabel        = document.querySelector("#score-active-rank-label");
+const scorePartsList              = document.querySelector("#score-parts-list");
+const scoreResultOverlay          = document.querySelector("#score-result-overlay");
+const scoreResultCard             = document.querySelector("#score-result-card");
+const scoreResultPreview          = document.querySelector("#score-result-preview");
+const scoreResultAnswer           = document.querySelector("#score-result-answer");
+const scoreResultOverlayStats     = document.querySelector("#score-result-overlay-stats");
 const scoreResultOverlayBreakdown = document.querySelector("#score-result-overlay-breakdown");
-const scoreResultOverlayScore = document.querySelector("#score-result-overlay-score");
-const scoreImageOverlapButton = document.querySelector("#score-image-overlap-button");
-const scoreCopyCompositionButton = document.querySelector("#score-copy-composition-button");
-const scoreCopyResultButton = document.querySelector("#score-copy-result-button");
-const scoreFinalScore = document.querySelector("#score-final-score");
-const scoreResultMessage = document.querySelector("#score-result-message");
-const scoreResultBreakdown = document.querySelector("#score-result-breakdown");
-const scoreResultHistoryButton = document.querySelector("#score-result-history-button");
-const scoreResultHistoryPreview = document.querySelector("#score-result-history-preview");
-const scoreRetryButton = document.querySelector("#score-retry-button");
-const mobileScoreControlsMedia = window.matchMedia("(max-width: 700px) and (pointer: coarse)");
+const scoreResultOverlayScore     = document.querySelector("#score-result-overlay-score");
+const scoreImageOverlapButton     = document.querySelector("#score-image-overlap-button");
+const scoreCopyCompositionButton  = document.querySelector("#score-copy-composition-button");
+const scoreCopyResultButton       = document.querySelector("#score-copy-result-button");
+const scoreFinalScore             = document.querySelector("#score-final-score");
+const scoreResultMessage          = document.querySelector("#score-result-message");
+const scoreResultBreakdown        = document.querySelector("#score-result-breakdown");
+const scoreResultHistoryButton    = document.querySelector("#score-result-history-button");
+const scoreResultHistoryPreview   = document.querySelector("#score-result-history-preview");
+const scoreRetryButton            = document.querySelector("#score-retry-button");
+const mobileScoreControlsMedia    = window.matchMedia("(max-width: 700px) and (pointer: coarse)");
 
 if (exportPngButton) exportPngButton.hidden = !pngExportEnabled;
 
 let unitCatalog = {};
-let unitIndex = globalThis.UNIT_INDEX ?? {};
-let enemyIndex = globalThis.ENEMY_INDEX ?? {};
+let unitIndex   = globalThis.UNIT_INDEX ?? {};
+let enemyIndex  = globalThis.ENEMY_INDEX ?? {};
 function englishNameCatalog() {
     return globalThis.TBC_ENGLISH_NAMES ?? { units: {}, enemies: {} };
 }
-let activeEntityType = "unit";
-const loadingUnits = new Map();
-const loadingPartSources = new Map();
-const loadedPartImages = new Map();
-const opaqueHitMasks = new Map();
-const spriteVisibilityCache = new Map();
-const history = [];
-const redoHistory = [];
-let activeParts = new Map();
-let selectedPart = null;
-const selectedParts = new Set();
-const collapsedGroupIds = new Set();
-let copiedParts = [];
-let correctAnswerCheatEnabled = false;
-let contextLayerPart = null;
-let matchingUnitIds = [];
-let activeUnitResultIndex = -1;
-let viewScale = 1;
-let viewX = 0;
-let viewY = 0;
-let partsRenderVersion = 0;
-let palettePartDrag = null;
-let palettePointerGrab = null;
-let layerGroupPointerGrab = null;
-let selectedScoreDuration = 60;
-let scoreRoundStartedAt = 0;
-let scoreTimerId = null;
-let scoreRoundFinished = false;
-let scoreQuestionMode = "fixed";
-let scoreFixedUnitId = "";
-let scoreFixedEntityType = "unit";
-let scoreFixedRank = "f";
-let scoreRandomTarget = null;
-let scoreRandomPreparation = null;
-let scoreRoundTarget = null;
-let scoreRoundTemplate = null;
-let isScoreRoundCanvasActive = false;
-let scoreRoundInputLocked = false;
-let scoreResultCloseTimer = null;
-let scoreResultOpenedAt = 0;
-let scoreResultRevealVersion = 0;
-let scoreActionConfirmation = null;
+let activeEntityType             = "unit";
+const loadingUnits               = new Map();
+const loadingPartSources         = new Map();
+const loadedPartImages           = new Map();
+const opaqueHitMasks             = new Map();
+const spriteVisibilityCache      = new Map();
+const history                    = [];
+const redoHistory                = [];
+let activeParts                  = new Map();
+let selectedPart                 = null;
+const selectedParts              = new Set();
+const collapsedGroupIds          = new Set();
+let copiedParts                  = [];
+let correctAnswerCheatEnabled    = false;
+let contextLayerPart             = null;
+let matchingUnitIds              = [];
+let activeUnitResultIndex        = -1;
+let viewScale                    = 1;
+let viewX                        = 0;
+let viewY                        = 0;
+let partsRenderVersion           = 0;
+let palettePartDrag              = null;
+let palettePointerGrab           = null;
+let layerGroupPointerGrab        = null;
+let selectedScoreDuration        = 60;
+let scoreRoundStartedAt          = 0;
+let scoreTimerId                 = null;
+let scoreRoundFinished           = false;
+let scoreQuestionMode            = "fixed";
+let scoreFixedUnitId             = "";
+let scoreFixedEntityType         = "unit";
+let scoreFixedRank               = "f";
+let scoreRandomTarget            = null;
+let scoreRandomPreparation       = null;
+let scoreRoundTarget             = null;
+let scoreRoundTemplate           = null;
+let isScoreRoundCanvasActive     = false;
+let scoreRoundInputLocked        = false;
+let scoreResultCloseTimer        = null;
+let scoreResultOpenedAt          = 0;
+let scoreResultRevealVersion     = 0;
+let scoreActionConfirmation      = null;
 let scoreActionConfirmationTimer = null;
-let scoreAnswerRenderVersion = 0;
-let scoreHistoryStart = null;
-let latestScoreResultView = null;
-let scoreImageOverlayVisible = false;
-let scoreImageExportVersion = 0;
-let scoreCompositionPngBlob = null;
-let scoreResultPngBlob = null;
-let scoreCompositionPngPromise = null;
-let scoreResultPngPromise = null;
-const scoreTemplateCache = new Map();
+let scoreAnswerRenderVersion     = 0;
+let scoreHistoryStart            = null;
+let latestScoreResultView        = null;
+let scoreImageOverlayVisible     = false;
+let scoreImageExportVersion      = 0;
+let scoreCompositionPngBlob      = null;
+let scoreResultPngBlob           = null;
+let scoreCompositionPngPromise   = null;
+let scoreResultPngPromise        = null;
+const scoreTemplateCache         = new Map();
 
-const savedTheme = localStorage.getItem("theme");
-const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-const initialTheme = savedTheme ?? (systemPrefersDark ? "dark" : "light");
-const initialMuted = localStorage.getItem("muted") === "true";
+const savedTheme          = localStorage.getItem("theme");
+const systemPrefersDark   = window.matchMedia("(prefers-color-scheme: dark)").matches;
+const initialTheme        = savedTheme ?? (systemPrefersDark ? "dark" : "light");
+const initialMuted        = localStorage.getItem("muted") === "true";
 const initialEffectsMuted = localStorage.getItem("effects-muted") === "true";
-const savedVolume = Number.parseFloat(localStorage.getItem("music-volume") ?? "0.5");
-const initialVolume = Number.isFinite(savedVolume) ? clamp(savedVolume, 0, 1) : 0.5;
+const savedVolume         = Number.parseFloat(localStorage.getItem("music-volume") ?? "0.5");
+const initialVolume       = Number.isFinite(savedVolume) ? clamp(savedVolume, 0, 1) : 0.5;
 // 網站預設為繁體中文；地球按鈕只切換目前工作階段。
 let currentLanguage = "zh-Hant";
 const effectsVolume = Object.freeze({
@@ -211,7 +211,7 @@ const SCORE_EFFECT_PART_MARKERS = [
     "エフェクト", "effect", "攻撃", "attack", "煙", "smoke", "flash", "spark",
     "beam", "laser", "bullet", "shot", "explosion", "爆発", "fire", "flame",
 ];
-const SCORE_FINAL_INPUT_LOCK_MS = 1000;
+const SCORE_FINAL_INPUT_LOCK_MS   = 1000;
 const SCORE_RESULT_CLOSE_GUARD_MS = 850;
 
 function localized(english, traditionalChinese) {
@@ -220,18 +220,18 @@ function localized(english, traditionalChinese) {
 
 function updateCorrectAnswerCheatButton() {
     const enabled = correctAnswerCheatEnabled;
-    const label = localized(enabled ? "Hide answer" : "Reveal answer", enabled ? "隱藏正解" : "顯示正解");
+    const label   = localized(enabled ? "Hide answer" : "Reveal answer", enabled ? "隱藏正解" : "顯示正解");
     correctAnswerCheatButton.setAttribute("aria-pressed", String(enabled));
     correctAnswerCheatButton.setAttribute("aria-label", label);
     correctAnswerCheatButton.querySelector(".icon-tooltip").textContent = localized("How did you find this???", "你是怎麼看到的???");
-    correctAnswerCheatButton.querySelector("i").className = enabled ? "fa-solid fa-eye" : "fa-solid fa-eye-slash";
+    correctAnswerCheatButton.querySelector("i").className               = enabled ? "fa-solid fa-eye" : "fa-solid fa-eye-slash";
 }
 
 function setLocalizedText(selector, english, traditionalChinese) {
     document.querySelectorAll(selector).forEach((element) => {
-        const directText = [...element.childNodes].find((node) => node.nodeType === Node.TEXT_NODE);
+        const directText                     = [...element.childNodes].find((node) => node.nodeType === Node.TEXT_NODE);
         if (directText) directText.nodeValue = localized(english, traditionalChinese);
-        else element.textContent = localized(english, traditionalChinese);
+        else element.textContent             = localized(english, traditionalChinese);
     });
 }
 
@@ -247,30 +247,30 @@ function scoreEntityNoun(entityType, language) {
 }
 
 function setScoreModeStatus(english, traditionalChinese) {
-    scoreModeStatus.dataset.messageEnglish = english;
+    scoreModeStatus.dataset.messageEnglish            = english;
     scoreModeStatus.dataset.messageTraditionalChinese = traditionalChinese;
-    scoreModeStatus.textContent = localized(english, traditionalChinese);
+    scoreModeStatus.textContent                       = localized(english, traditionalChinese);
 }
 
 const helpPageCopy = [
-    ["Add Units and Enemies", "Choose one → click a part.", "加入角色與敵人", "選擇後 → 點部件加入。"],
-    ["Move, Scale and Rotate", "Drag: move · corners: scale · circle: rotate.", "移動、縮放與旋轉", "拖曳移動 · 四角縮放 · 圓點旋轉。"],
-    ["Select, Multi-select and Group", "<kbd>Ctrl</kbd> + click: multi-select · Group / Ungroup.", "選取、多選與群組", "<kbd>Ctrl</kbd> + 點擊：多選 · 群組／解散。"],
-    ["Undo and Redo", "<kbd>Ctrl</kbd> + <kbd>Z</kbd>: undo · <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd>: redo.", "上一步與下一步", "<kbd>Ctrl</kbd> + <kbd>Z</kbd> 復原 · <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd> 重做。"],
-    ["Layer Order", "<kbd>↑</kbd><kbd>↓</kbd> / <kbd>W</kbd><kbd>S</kbd>: order · <kbd>Shift</kbd>: ends.", "圖層順序", "<kbd>↑</kbd><kbd>↓</kbd>／<kbd>W</kbd><kbd>S</kbd> 排序 · <kbd>Shift</kbd> 直達頂／底。"],
-    ["Copy and Paste", "<kbd>Ctrl</kbd> + <kbd>C</kbd>: copy · <kbd>Ctrl</kbd> + <kbd>V</kbd>: paste.", "複製與貼上", "<kbd>Ctrl</kbd> + <kbd>C</kbd> 複製 · <kbd>Ctrl</kbd> + <kbd>V</kbd> 貼上。"],
-    ["Mirror", "<kbd>F</kbd>: flip selected parts.", "左右反轉", "<kbd>F</kbd>：反轉選取物件。"],
-    ["Delete and Clear", "<kbd>Delete</kbd> / <kbd>Backspace</kbd>: delete · hold bin: clear.", "刪除與清空", "<kbd>Delete</kbd>／<kbd>Backspace</kbd> 刪除 · 長按垃圾桶清空。"],
-    ["Zoom and Reset View", "Wheel / pinch: zoom · home: reset.", "畫布縮放與回原點", "滾輪／雙指縮放 · 房子回原點。"],
-    ["Object Menu", "Right-click / long-press an object.", "物件功能選單", "右鍵／長按物件。"],
-    ["PS Layers Panel", "Open PS → select and reorder layers.", "PS 圖層面板", "開啟 PS → 選取與排序圖層。"],
-    ["Save Layers", "More → Save Layers.", "儲存圖層", "更多 → 儲存圖層。"],
-    ["Import Layers", "More → Import Layers.", "匯入圖層", "更多 → 匯入圖層。"],
-    ["Copy and Share Images", "More → Copy / Share.", "複製與分享圖片", "更多 → 複製／分享。"],
-    ["Score Mode", "Set → Start → Grade.", "評分模式", "設條件 → 開始 → 評分。"],
-    ["Light and Dark Themes", "Moon / sun: switch theme.", "切換明暗主題", "月亮／太陽：切換主題。"],
-    ["Sound and Volume", "Speaker: music · slider: volume.", "音效與音量", "喇叭：音樂 · 滑桿：音量。"],
-    ["News", "Top-left logo → news.", "消息", "左上 Logo → 消息。"],
+    ["Add Units and Enemies"          , "Choose one → click a part."                                                                      , "加入物件"   , ""],
+    ["Move, Scale and Rotate"         , "Drag: move · corners: scale · circle: rotate."                                                   , "移動 縮放 旋轉" , ""],
+    ["Select, Multi-select and Group" , "<kbd>Ctrl</kbd> + click: multi-select · Group / Ungroup."                                        , "選取 群組" , "多選：<kbd>Ctrl</kbd> + 點擊"],
+    ["Undo and Redo"                  , "<kbd>Ctrl</kbd> + <kbd>Z</kbd>: undo · <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd>: redo." , "上一步 下一步"   , "<kbd>Ctrl</kbd> + <kbd>Z</kbd>／<kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd>"],
+    ["Layer Order"                    , "<kbd>↑</kbd><kbd>↓</kbd> / <kbd>W</kbd><kbd>S</kbd>: order · <kbd>Shift</kbd>: ends."            , "圖層順序"         , "<kbd>↑</kbd><kbd>↓</kbd>／<kbd>W</kbd><kbd>S</kbd>。 + <kbd>Shift</kbd> 到最上下層"],
+    ["Copy and Paste"                 , "<kbd>Ctrl</kbd> + <kbd>C</kbd>: copy · <kbd>Ctrl</kbd> + <kbd>V</kbd>: paste."                   , "複製 貼上"       , "<kbd>C</kbd>複製。<kbd>V</kbd>貼上"],
+    ["Mirror"                         , "<kbd>F</kbd>: flip selected parts."                                                              , "鏡像"          , "<kbd>F</kbd>鏡像"],
+    ["Delete and Clear"               , "<kbd>Delete</kbd> / <kbd>Backspace</kbd>: delete · hold bin: clear."                             , "刪除 清空"       , "刪除：<kbd>Delete</kbd>／<kbd>Backspace</kbd>。長按清空"],
+    ["Zoom and Reset View"            , "Wheel / pinch: zoom · home: reset."                                                              , "縮放 回原點"   ,  "滾輪縮放。房子回原點"],
+    ["Object Menu"                    , "Right-click / long-press an object."                                                             , "功能選單"      , "右鍵"],
+    ["Layers Panel"                   , "Open → select and reorder layers."                                                               , "圖層面板"      , ""],
+    ["Save Layers"                    , "More → Save Layers."                                                                             , "儲存圖層"         , ""],
+    ["Import Layers"                  , "More → Import Layers."                                                                           , "匯入圖層"         , ""],
+    ["Copy and Share Images"          , "More → Copy / Share."                                                                            , "複製 分享圖片"   ,  ""],
+    ["Score Mode"                     , "Set → Start → Grade."                                                                            , "評分模式"         , ""],
+    ["Light and Dark Themes"          , "Moon / sun: switch theme."                                                                       , "白 夜"         , ""],
+    ["Sound and Volume"               , "Speaker: music · slider: volume."                                                                , "音效 音量"       , ""],
+    ["News"                           , "Top-left logo → news."                                                                           , "消息"             , ""],
 ];
 
 // Match each help topic to the icon used by its corresponding in-game tool.
@@ -287,13 +287,13 @@ function setHelpPageTitle(page, index, title) {
 
     let titleText = heading.querySelector(".help-page-title");
     if (!titleText) {
-        titleText = document.createElement("span");
+        titleText           = document.createElement("span");
         titleText.className = "help-page-title";
         heading.replaceChildren(titleText);
     }
     heading.querySelectorAll(":scope > i").forEach((icon) => icon.remove());
 
-    const icon = document.createElement("i");
+    const icon     = document.createElement("i");
     icon.className = `fa-solid ${helpPageTitleIcons[index]}`;
     icon.setAttribute("aria-hidden", "true");
     heading.prepend(icon);
@@ -301,10 +301,10 @@ function setHelpPageTitle(page, index, title) {
 }
 
 function applyLanguage() {
-    const english = currentLanguage === "en";
-    root.lang = english ? "en" : "zh-Hant";
+    const english         = currentLanguage === "en";
+    root.lang             = english ? "en" : "zh-Hant";
     root.dataset.language = currentLanguage;
-    document.title = localized("Battle Cats Puzzle Game", "貓戰拼圖遊戲 TBC Units Puzzle Game");
+    document.title        = localized("Battle Cats Puzzle Game", "貓戰拼圖遊戲 TBC Units Puzzle Game");
     document.querySelector('meta[name="description"]')?.setAttribute("content", localized(
         "An online Battle Cats puzzle game. Remaking CATS From Your Memory!!",
         "一個線上貓咪大戰爭拼圖遊戲！用盡你各種創意，去拼出八親不認貓咪吧！",
@@ -406,7 +406,7 @@ function applyLanguage() {
         populateUnitSelect();
         if (entityIndexFor()[selectedUnitId]) unitSelect.value = selectedUnitId;
     }
-    if (unitSelect.value) unitSearch.value = unitLabel(unitSelect.value);
+    if (unitSelect.value) unitSearch.value      = unitLabel(unitSelect.value);
     if (scoreFixedUnitId) scoreUnitSearch.value = unitLabel(scoreFixedUnitId, scoreFixedEntityType);
     if (unitResults.classList.contains("is-open")) renderUnitResults();
     if (scoreUnitResults.classList.contains("is-open")) renderScoreUnitResults();
@@ -429,10 +429,10 @@ window.tbcPuzzleLanguage = Object.freeze({
 });
 
 function setTheme(theme) {
-    const isDark = theme === "dark";
-    root.dataset.theme = theme;
+    const isDark        = theme === "dark";
+    root.dataset.theme  = theme;
     themeIcon.className = isDark ? "fa-regular fa-moon" : "fa-regular fa-sun";
-    const label = isDark ? localized("Dark", "黑夜") : localized("Light", "白天");
+    const label         = isDark ? localized("Dark", "黑夜") : localized("Light", "白天");
     themeButton.setAttribute("aria-label", label);
     themeTooltip.textContent = label;
 }
@@ -475,43 +475,43 @@ function tryPlayMusic() {
 }
 
 function playBowlingSound() {
-    bowlingSound.volume = effectsVolume.bowling;
+    bowlingSound.volume      = effectsVolume.bowling;
     bowlingSound.currentTime = 0;
     bowlingSound.play().catch(() => {});
 }
 
 function playPopSound() {
-    popSound.volume = effectsVolume.pop;
+    popSound.volume      = effectsVolume.pop;
     popSound.currentTime = 0;
     popSound.play().catch(() => {});
 }
 
 function playSecretAreaSound() {
-    secretAreaSound.volume = effectsVolume.secretArea;
+    secretAreaSound.volume      = effectsVolume.secretArea;
     secretAreaSound.currentTime = 0;
     secretAreaSound.play().catch(() => {});
 }
 
 function playButtonSound() {
-    buttonSound.volume = effectsVolume.button;
+    buttonSound.volume      = effectsVolume.button;
     buttonSound.currentTime = 0;
     buttonSound.play().catch(() => {});
 }
 
 function playScoreRevealSound() {
-    scoreRevealSound.volume = effectsVolume.scoreReveal;
+    scoreRevealSound.volume      = effectsVolume.scoreReveal;
     scoreRevealSound.currentTime = 0;
     scoreRevealSound.play().catch(() => {});
 }
 
 function playScoreFinalSound() {
-    scoreFinalSound.volume = effectsVolume.scoreFinal;
+    scoreFinalSound.volume      = effectsVolume.scoreFinal;
     scoreFinalSound.currentTime = 0;
     scoreFinalSound.play().catch(() => {});
 }
 
 function playScoreDojoWinSound() {
-    scoreDojoWinSound.volume = 0.03;
+    scoreDojoWinSound.volume      = 0.03;
     scoreDojoWinSound.currentTime = 0;
     scoreDojoWinSound.play().catch(() => {});
 }
@@ -533,10 +533,10 @@ function setActiveMode(mode) {
     scoreModeTab.classList.toggle("is-active", isScoreMode);
     scoreModeTab.setAttribute("aria-selected", String(isScoreMode));
     normalModePanel.hidden = isScoreMode;
-    scoreModePanel.hidden = !isScoreMode;
+    scoreModePanel.hidden  = !isScoreMode;
     if (!isScoreMode) {
         promoteScoreRoundPartsToNormalGroup();
-        scoreRoundTarget = null;
+        scoreRoundTarget   = null;
         scoreRoundTemplate = null;
         scoreRoundFinished = false;
         setScoreRoundCanvasState(false);
@@ -552,8 +552,8 @@ function setScoreRoundCanvasState(isActive) {
     }));
     canvas.classList.toggle("is-score-round", isActive);
     importProjectButton.hidden = isActive;
-    saveProjectButton.hidden = isActive;
-    layerContextMenu.hidden = true;
+    saveProjectButton.hidden   = isActive;
+    layerContextMenu.hidden    = true;
 
     if (isActive) {
         canvasWorld.querySelectorAll(".placed-part").forEach((part) => {
@@ -592,14 +592,14 @@ mobileScoreControlsMedia.addEventListener("change", refreshMobileScoreControls);
 function resetScoreActionConfirmation() {
     window.clearTimeout(scoreActionConfirmationTimer);
     scoreActionConfirmationTimer = null;
-    scoreActionConfirmation = null;
+    scoreActionConfirmation      = null;
     [scoreCancelButton, scoreGradeButton].forEach((button) => {
         button.classList.remove("is-confirming");
         button.removeAttribute("aria-pressed");
         button.removeAttribute("aria-label");
     });
     scoreCancelButton.querySelector("span").textContent = localized("Cancel", "取消");
-    scoreGradeButton.querySelector("span").textContent = localized("Done", "評分");
+    scoreGradeButton.querySelector("span").textContent  = localized("Done", "評分");
 }
 
 function requestScoreActionConfirmation(action) {
@@ -612,12 +612,12 @@ function requestScoreActionConfirmation(action) {
 
     resetScoreActionConfirmation();
     scoreActionConfirmation = action;
-    const button = action === "cancel" ? scoreCancelButton : scoreGradeButton;
+    const button            = action === "cancel" ? scoreCancelButton : scoreGradeButton;
     button.classList.add("is-confirming");
     button.setAttribute("aria-pressed", "true");
     button.setAttribute("aria-label", action === "cancel" ? localized("Confirm cancel: press again", "確認取消，再按一次") : localized("Confirm grade: press again", "確認評分，再按一次"));
     if (action === "grade") button.querySelector("span").textContent = "OK";
-    scoreActionConfirmationTimer = window.setTimeout(resetScoreActionConfirmation, 3000);
+    scoreActionConfirmationTimer                                     = window.setTimeout(resetScoreActionConfirmation, 3000);
 }
 
 function playScoreStartFlash() {
@@ -628,10 +628,10 @@ function playScoreStartFlash() {
 }
 
 function createScoreResultHistoryPane(content, width, height, contentClass) {
-    const pane = document.createElement("span");
-    const stage = document.createElement("span");
-    stage.className = "score-result-history-stage";
-    stage.style.width = `${width}px`;
+    const pane         = document.createElement("span");
+    const stage        = document.createElement("span");
+    stage.className    = "score-result-history-stage";
+    stage.style.width  = `${width}px`;
     stage.style.height = `${height}px`;
     content.classList.add(contentClass);
     content.style.setProperty("width", `${width}px`, "important");
@@ -647,9 +647,9 @@ function renderScoreResultHistory(snapshot, layout) {
     historySnapshot.classList.remove("score-result-canvas");
     const historyAnswer = scoreResultAnswer.cloneNode(true);
     historyAnswer.removeAttribute("id");
-    const comparison = document.createElement("span");
-    const player = createScoreResultHistoryPane(historySnapshot, layout.sceneWidth, layout.previewHeight, "score-result-history-canvas");
-    const answer = createScoreResultHistoryPane(historyAnswer, layout.answerWidth, layout.answerHeight, "score-result-history-answer");
+    const comparison     = document.createElement("span");
+    const player         = createScoreResultHistoryPane(historySnapshot, layout.sceneWidth, layout.previewHeight, "score-result-history-canvas");
+    const answer         = createScoreResultHistoryPane(historyAnswer, layout.answerWidth, layout.answerHeight, "score-result-history-answer");
     comparison.className = "score-result-history-compare";
     comparison.append(player.pane, answer.pane);
     scoreResultHistoryPreview.replaceChildren(comparison);
@@ -657,10 +657,10 @@ function renderScoreResultHistory(snapshot, layout) {
 
     requestAnimationFrame(() => {
         [player, answer].forEach(({ pane, stage, width, height }) => {
-            const bounds = pane.getBoundingClientRect();
-            const scale = Math.max(bounds.width / width, bounds.height / height, 0.01);
-            const offsetX = (bounds.width - width * scale) / 2;
-            const offsetY = (bounds.height - height * scale) / 2;
+            const bounds          = pane.getBoundingClientRect();
+            const scale           = Math.max(bounds.width / width, bounds.height / height, 0.01);
+            const offsetX         = (bounds.width - width * scale) / 2;
+            const offsetY         = (bounds.height - height * scale) / 2;
             stage.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
         });
     });
@@ -668,7 +668,7 @@ function renderScoreResultHistory(snapshot, layout) {
 
 function clearScoreImageOverlay() {
     scoreResultPreview.querySelector(".score-result-image-overlay")?.remove();
-    scoreImageOverlayVisible = false;
+    scoreImageOverlayVisible       = false;
     scoreImageOverlapButton.hidden = true;
     scoreImageOverlapButton.setAttribute("aria-pressed", "false");
     scoreImageOverlapButton.setAttribute("aria-label", localized("Image overlay: off", "影像重疊：關"));
@@ -683,9 +683,9 @@ function renderScoreImageOverlay() {
         return;
     }
 
-    const overlay = document.createElement("span");
-    overlay.className = "score-result-image-overlay";
-    overlay.hidden = !scoreImageOverlayVisible;
+    const overlay      = document.createElement("span");
+    overlay.className  = "score-result-image-overlay";
+    overlay.hidden     = !scoreImageOverlayVisible;
     const overlapWorld = answerWorld.cloneNode(true);
     // The preview and answer panes each have a 3px border.  Their content
     // origins differ by that border width, so compensate only the red clone.
@@ -700,18 +700,18 @@ function renderScoreImageOverlay() {
 }
 
 function openScoreResultOverlay({ result, snapshot, layout, replayScores = false, playIntro = false }) {
-    scoreResultCard.style.width = `${layout.cardWidth}px`;
+    scoreResultCard.style.width         = `${layout.cardWidth}px`;
     scoreResultOverlayStats.style.width = `${layout.statsWidth}px`;
-    scoreResultPreview.style.width = `${layout.sceneWidth}px`;
-    scoreResultPreview.style.height = `${layout.previewHeight}px`;
-    scoreResultAnswer.style.width = `${layout.answerWidth}px`;
-    scoreResultAnswer.style.height = `${layout.answerHeight}px`;
+    scoreResultPreview.style.width      = `${layout.sceneWidth}px`;
+    scoreResultPreview.style.height     = `${layout.previewHeight}px`;
+    scoreResultAnswer.style.width       = `${layout.answerWidth}px`;
+    scoreResultAnswer.style.height      = `${layout.answerHeight}px`;
     scoreResultPreview.replaceChildren(snapshot);
     renderScoreImageOverlay();
     window.clearTimeout(scoreResultCloseTimer);
     root.classList.add("is-score-result-open");
     scoreResultOverlay.hidden = false;
-    scoreResultOpenedAt = performance.now();
+    scoreResultOpenedAt       = performance.now();
     scoreResultOverlay.classList.remove("is-open");
     tryPlayMusic();
     if (playIntro) playScoreDojoWinSound();
@@ -725,20 +725,20 @@ function showScoreResultOverlay(result) {
     scoreAnswerRenderVersion += 1;
     clearScoreImageOverlay();
     scoreResultAnswer.replaceChildren();
-    const snapshot = canvas.cloneNode(true);
-    const snapshotWorld = snapshot.querySelector(".canvas-world");
-    const canvasBounds = canvas.getBoundingClientRect();
-    const aspectRatio = canvasBounds.width / Math.max(canvasBounds.height, 1);
-    const narrowLayout = window.innerWidth < 720;
+    const snapshot           = canvas.cloneNode(true);
+    const snapshotWorld      = snapshot.querySelector(".canvas-world");
+    const canvasBounds       = canvas.getBoundingClientRect();
+    const aspectRatio        = canvasBounds.width / Math.max(canvasBounds.height, 1);
+    const narrowLayout       = window.innerWidth < 720;
     const maximumSceneHeight = Math.max(106, window.innerHeight * (narrowLayout ? 0.29 : 0.34));
-    const narrowSceneWidth = (window.innerWidth * 0.88 - 10) / 2;
+    const narrowSceneWidth   = (window.innerWidth * 0.88 - 10) / 2;
     const sceneWidth = Math.max(1, Math.min(
         narrowLayout ? narrowSceneWidth : window.innerWidth * 0.66,
         narrowLayout ? 410 : 820,
         maximumSceneHeight * aspectRatio,
     ));
     const previewHeight = sceneWidth / aspectRatio;
-    const statsWidth = narrowLayout
+    const statsWidth    = narrowLayout
         ? Math.min(window.innerWidth * 0.94, sceneWidth * 2 + 26)
         : clamp(sceneWidth * 0.32, 156, 230);
     const layout = {
@@ -758,10 +758,10 @@ function showScoreResultOverlay(result) {
     if (snapshotWorld) {
         const parts = currentScoreRoundParts();
         const bounds = parts.reduce((total, part) => {
-            const rect = part.getBoundingClientRect();
-            const left = (rect.left - canvasBounds.left - viewX) / viewScale;
-            const top = (rect.top - canvasBounds.top - viewY) / viewScale;
-            const right = (rect.right - canvasBounds.left - viewX) / viewScale;
+            const rect   = part.getBoundingClientRect();
+            const left   = (rect.left - canvasBounds.left - viewX) / viewScale;
+            const top    = (rect.top - canvasBounds.top - viewY) / viewScale;
+            const right  = (rect.right - canvasBounds.left - viewX) / viewScale;
             const bottom = (rect.bottom - canvasBounds.top - viewY) / viewScale;
             return {
                 left: Math.min(total.left, left),
@@ -772,11 +772,11 @@ function showScoreResultOverlay(result) {
         }, { left: Infinity, top: Infinity, right: -Infinity, bottom: -Infinity });
 
         if (Number.isFinite(bounds.left)) {
-            const centerX = (bounds.left + bounds.right) / 2;
-            const centerY = (bounds.top + bounds.bottom) / 2;
-            const width = Math.max(bounds.right - bounds.left, 1);
-            const height = Math.max(bounds.bottom - bounds.top, 1);
-            const fitScale = Math.min(sceneWidth * 0.86 / width, previewHeight * 0.86 / height);
+            const centerX                 = (bounds.left + bounds.right) / 2;
+            const centerY                 = (bounds.top + bounds.bottom) / 2;
+            const width                   = Math.max(bounds.right - bounds.left, 1);
+            const height                  = Math.max(bounds.bottom - bounds.top, 1);
+            const fitScale                = Math.min(sceneWidth * 0.86 / width, previewHeight * 0.86 / height);
             snapshotWorld.style.transform = `translate(${sceneWidth / 2 - centerX * fitScale}px, ${previewHeight / 2 - centerY * fitScale}px) scale(${fitScale})`;
         } else {
             snapshotWorld.style.transform = "none";
@@ -816,7 +816,7 @@ function closeScoreResultOverlay() {
 }
 
 function startScoreScramble(element, suffix, version) {
-    let active = true;
+    let active         = true;
     let animationFrame = null;
     element.classList.add("is-scrambling");
     const tick = () => {
@@ -825,7 +825,7 @@ function startScoreScramble(element, suffix, version) {
             return;
         }
         element.textContent = `${Math.floor(Math.random() * 101)}${suffix}`;
-        animationFrame = requestAnimationFrame(tick);
+        animationFrame      = requestAnimationFrame(tick);
     };
     tick();
     return () => {
@@ -857,18 +857,18 @@ async function revealScoreResult(result) {
         [localized("Image", "影像"), Math.round(result.image * 100)],
     ];
     const values = metrics.map(([label]) => {
-        const row = document.createElement("div");
-        const title = document.createElement("span");
-        const value = document.createElement("strong");
+        const row         = document.createElement("div");
+        const title       = document.createElement("span");
+        const value       = document.createElement("strong");
         title.textContent = label;
-        value.className = "score-reveal-value";
+        value.className   = "score-reveal-value";
         value.textContent = "--%";
         row.append(title, value);
         return { row, value };
     });
     scoreResultOverlayBreakdown.replaceChildren(...values.map(({ row }) => row));
     scoreResultOverlayScore.innerHTML = `<span class="score-reveal-value">--</span><span>${localized(" pts", "分")}</span>`;
-    const finalValue = scoreResultOverlayScore.querySelector(".score-reveal-value");
+    const finalValue                  = scoreResultOverlayScore.querySelector(".score-reveal-value");
 
     const stopMetricScrambles = values.map(({ value }) => startScoreScramble(value, "%", version));
     await waitForScoreReveal(320);
@@ -911,8 +911,8 @@ function entityNoun(entityType = activeEntityType) {
 
 function entityDisplayName(unitId, entityType = activeEntityType) {
     const catalog = englishNameCatalog();
-    const names = entityType === "enemy" ? catalog.enemies?.[unitId] : catalog.units?.[unitId];
-    const entry = entityIndexFor(entityType)[unitId] ?? loadedEntity(entityType, unitId);
+    const names   = entityType === "enemy" ? catalog.enemies?.[unitId] : catalog.units?.[unitId];
+    const entry   = entityIndexFor(entityType)[unitId] ?? loadedEntity(entityType, unitId);
     if (currentLanguage !== "en") return entry?.name;
     if (names?.[0]) return names[0];
     const existingName = String(entry?.name ?? "");
@@ -922,8 +922,8 @@ function entityDisplayName(unitId, entityType = activeEntityType) {
 
 function entitySearchNames(unitId, entityType = activeEntityType) {
     const catalog = englishNameCatalog();
-    const names = entityType === "enemy" ? catalog.enemies?.[unitId] : catalog.units?.[unitId];
-    const entry = entityIndexFor(entityType)[unitId] ?? {};
+    const names   = entityType === "enemy" ? catalog.enemies?.[unitId] : catalog.units?.[unitId];
+    const entry   = entityIndexFor(entityType)[unitId] ?? {};
     return [entry.name, ...(entry.aliases ?? []), ...(names ?? [])];
 }
 
@@ -956,18 +956,18 @@ function updateScoreRound() {
 
 async function prepareRandomScoreTarget() {
     const entityType = activeEntityType;
-    const unitIds = Object.keys(entityIndexFor(entityType));
+    const unitIds    = Object.keys(entityIndexFor(entityType));
     if (!unitIds.length) return null;
     const unitId = unitIds[Math.floor(Math.random() * unitIds.length)];
-    const unit = await ensureUnitLoaded(unitId, entityType);
-    const ranks = availableRanksForUnit(unit);
+    const unit   = await ensureUnitLoaded(unitId, entityType);
+    const ranks  = availableRanksForUnit(unit);
     if (!ranks.length) return null;
     return { entityType, unitId, rank: ranks[Math.floor(Math.random() * ranks.length)] };
 }
 
 function showScorePartsLoading() {
     scorePartsList.replaceChildren();
-    const loading = document.createElement("p");
+    const loading     = document.createElement("p");
     loading.className = "parts-loading";
     loading.setAttribute("role", "status");
     loading.innerHTML = `<span>${localized("Loading", "載入中")}</span><span class="parts-loading-dots" aria-hidden="true"></span>`;
@@ -975,11 +975,11 @@ function showScorePartsLoading() {
 }
 
 async function renderScoreParts(target, template) {
-    const renderVersion = ++partsRenderVersion;
-    const entityType = targetEntityType(target);
-    const unit = loadedEntity(entityType, target.unitId) ?? await ensureUnitLoaded(target.unitId, entityType);
+    const renderVersion       = ++partsRenderVersion;
+    const entityType          = targetEntityType(target);
+    const unit                = loadedEntity(entityType, target.unitId) ?? await ensureUnitLoaded(target.unitId, entityType);
     const requiredCropIndexes = new Set((template?.parts ?? []).map((part) => part.cropIndex));
-    const candidateParts = availablePartsForRank(unit, target.rank)
+    const candidateParts      = availablePartsForRank(unit, target.rank)
         .filter((part) => requiredCropIndexes.has(cropIndexFromPartId(part.id)));
     showScorePartsLoading();
     try {
@@ -996,9 +996,9 @@ async function renderScoreParts(target, template) {
         return false;
     }
     if (renderVersion !== partsRenderVersion) return false;
-    const parts = withoutTransparentParts(candidateParts);
+    const parts      = withoutTransparentParts(candidateParts);
     const scoreParts = parts.map((part) => ({ ...part, scoreRound: true }));
-    activeParts = new Map(scoreParts.map((part) => [part.id, part]));
+    activeParts      = new Map(scoreParts.map((part) => [part.id, part]));
     scorePartsList.replaceChildren(...scoreParts.map(createPartCard));
     return true;
 }
@@ -1016,17 +1016,17 @@ function createCorrectAnswerPreview(answerParts) {
     const bounds = scoreAnswerBounds(answerParts);
     if (!Number.isFinite(bounds.left)) return null;
 
-    const contentWidth = Math.max(1, bounds.right - bounds.left);
+    const contentWidth  = Math.max(1, bounds.right - bounds.left);
     const contentHeight = Math.max(1, bounds.bottom - bounds.top);
     // Keep the assembled answer at the same preview scale as a normal part card.
-    const previewSize = 76;
-    const fitScale = Math.min((previewSize * 0.82) / contentWidth, (previewSize * 0.82) / contentHeight);
-    const preview = document.createElement("span");
-    const world = document.createElement("span");
-    preview.className = "correct-answer-preview";
-    world.className = "score-answer-world";
-    world.style.left = `${previewSize / 2 - ((bounds.left + bounds.right) / 2) * fitScale}px`;
-    world.style.top = `${previewSize / 2 - ((bounds.top + bounds.bottom) / 2) * fitScale}px`;
+    const previewSize     = 76;
+    const fitScale        = Math.min((previewSize * 0.82) / contentWidth, (previewSize * 0.82) / contentHeight);
+    const preview         = document.createElement("span");
+    const world           = document.createElement("span");
+    preview.className     = "correct-answer-preview";
+    world.className       = "score-answer-world";
+    world.style.left      = `${previewSize / 2 - ((bounds.left + bounds.right) / 2) * fitScale}px`;
+    world.style.top       = `${previewSize / 2 - ((bounds.top + bounds.bottom) / 2) * fitScale}px`;
     world.style.transform = `scale(${fitScale})`;
     answerParts.forEach(({ asset, targetPart }) => {
         const answerPart = createScoreAnswerPart(asset, targetPart);
@@ -1038,11 +1038,11 @@ function createCorrectAnswerPreview(answerParts) {
 
 function addCorrectAnswerToCanvas(answerParts) {
     if (!answerParts.length) return;
-    const groupId = createGroupId();
-    const groupColor = createGroupColor();
-    const insertion = document.createDocumentFragment();
+    const groupId      = createGroupId();
+    const groupColor   = createGroupColor();
+    const insertion    = document.createDocumentFragment();
     const highestLayer = Math.max(0, ...orderedParts().map((part) => Number(part.style.zIndex)));
-    const placedParts = [...answerParts]
+    const placedParts  = [...answerParts]
         .sort((left, right) => (Number(left.targetPart.z) || 0) - (Number(right.targetPart.z) || 0))
         .map(({ asset, targetPart }, index) => {
             const placedPart = addPartToCanvas(asset, 0, 0, {
@@ -1055,7 +1055,7 @@ function addCorrectAnswerToCanvas(answerParts) {
                 zIndex: highestLayer + index + 1,
                 deferUi: true,
             });
-            placedPart.dataset.groupId = groupId;
+            placedPart.dataset.groupId    = groupId;
             placedPart.dataset.groupColor = groupColor;
             return placedPart;
         });
@@ -1066,10 +1066,10 @@ function addCorrectAnswerToCanvas(answerParts) {
 }
 
 function createCorrectAnswerCard(answerParts) {
-    const card = document.createElement("button");
-    const preview = createCorrectAnswerPreview(answerParts);
+    const card     = document.createElement("button");
+    const preview  = createCorrectAnswerPreview(answerParts);
     card.className = "part-card correct-answer-card";
-    card.type = "button";
+    card.type      = "button";
     card.setAttribute("aria-label", localized("Add correct answer", "加入正解"));
     card.addEventListener("click", () => addCorrectAnswerToCanvas(answerParts));
     if (preview) card.append(preview);
@@ -1078,37 +1078,37 @@ function createCorrectAnswerCard(answerParts) {
 
 function createScoreAnswerPart(asset, targetPart) {
     const displayAsset = renderedAsset(asset);
-    const sprite = normalizeSprite(displayAsset.sprite);
+    const sprite       = normalizeSprite(displayAsset.sprite);
     if (!sprite) return null;
 
     const answerPart = document.createElement("span");
-    const crop = document.createElement("span");
-    const image = document.createElement("img");
-    const scaleX = Math.abs(Number(targetPart.scaleX) || 1);
-    const scaleY = Math.abs(Number(targetPart.scaleY) || 1);
-    const flipX = Number(targetPart.flipX) === -1 ? -1 : 1;
-    const flipY = Number(targetPart.flipY) === -1 ? -1 : 1;
-    const angle = Number(targetPart.angle) || 0;
-    const opacity = Number(targetPart.opacity);
+    const crop       = document.createElement("span");
+    const image      = document.createElement("img");
+    const scaleX     = Math.abs(Number(targetPart.scaleX) || 1);
+    const scaleY     = Math.abs(Number(targetPart.scaleY) || 1);
+    const flipX      = Number(targetPart.flipX) === -1 ? -1 : 1;
+    const flipY      = Number(targetPart.flipY) === -1 ? -1 : 1;
+    const angle      = Number(targetPart.angle) || 0;
+    const opacity    = Number(targetPart.opacity);
 
-    answerPart.className = "score-answer-part";
-    answerPart.style.left = `${targetPart.x}px`;
-    answerPart.style.top = `${targetPart.y}px`;
-    answerPart.style.zIndex = String(Number(targetPart.z) || 0);
-    answerPart.style.opacity = String(clamp(Number.isFinite(opacity) ? opacity : 1, 0, 1));
+    answerPart.className       = "score-answer-part";
+    answerPart.style.left      = `${targetPart.x}px`;
+    answerPart.style.top       = `${targetPart.y}px`;
+    answerPart.style.zIndex    = String(Number(targetPart.z) || 0);
+    answerPart.style.opacity   = String(clamp(Number.isFinite(opacity) ? opacity : 1, 0, 1));
     answerPart.style.transform = `translate(-50%, -50%) rotate(${angle}deg) scale(${scaleX * flipX}, ${scaleY * flipY})`;
 
-    crop.className = "placed-sprite-crop";
-    crop.style.width = `${sprite.width}px`;
-    crop.style.height = `${sprite.height}px`;
-    image.className = "sprite-sheet-image";
-    image.src = displayAsset.src;
-    image.alt = "";
-    image.draggable = false;
-    image.style.width = `${sprite.sheetWidth}px`;
+    crop.className     = "placed-sprite-crop";
+    crop.style.width   = `${sprite.width}px`;
+    crop.style.height  = `${sprite.height}px`;
+    image.className    = "sprite-sheet-image";
+    image.src          = displayAsset.src;
+    image.alt          = "";
+    image.draggable    = false;
+    image.style.width  = `${sprite.sheetWidth}px`;
     image.style.height = `${sprite.sheetHeight}px`;
-    image.style.left = `${-sprite.x}px`;
-    image.style.top = `${-sprite.y}px`;
+    image.style.left   = `${-sprite.x}px`;
+    image.style.top    = `${-sprite.y}px`;
     crop.append(image);
     answerPart.append(crop);
     return answerPart;
@@ -1116,13 +1116,13 @@ function createScoreAnswerPart(asset, targetPart) {
 
 function scoreAnswerBounds(parts) {
     return parts.reduce((bounds, { asset, targetPart }) => {
-        const sprite = normalizeSprite(asset.sprite);
-        const scaleX = Math.abs(Number(targetPart.scaleX) || 1);
-        const scaleY = Math.abs(Number(targetPart.scaleY) || 1);
-        const radians = (Number(targetPart.angle) || 0) * (Math.PI / 180);
-        const width = sprite.width * scaleX;
-        const height = sprite.height * scaleY;
-        const rotatedWidth = Math.abs(Math.cos(radians)) * width + Math.abs(Math.sin(radians)) * height;
+        const sprite        = normalizeSprite(asset.sprite);
+        const scaleX        = Math.abs(Number(targetPart.scaleX) || 1);
+        const scaleY        = Math.abs(Number(targetPart.scaleY) || 1);
+        const radians       = (Number(targetPart.angle) || 0) * (Math.PI / 180);
+        const width         = sprite.width * scaleX;
+        const height        = sprite.height * scaleY;
+        const rotatedWidth  = Math.abs(Math.cos(radians)) * width + Math.abs(Math.sin(radians)) * height;
         const rotatedHeight = Math.abs(Math.sin(radians)) * width + Math.abs(Math.cos(radians)) * height;
         return {
             left: Math.min(bounds.left, targetPart.x - rotatedWidth / 2),
@@ -1137,15 +1137,15 @@ async function renderScoreAnswer(target, template, layout) {
     const renderVersion = ++scoreAnswerRenderVersion;
     clearScoreImageOverlay();
     scoreResultAnswer.replaceChildren();
-    const loading = document.createElement("span");
-    loading.className = "score-answer-loading";
+    const loading       = document.createElement("span");
+    loading.className   = "score-answer-loading";
     loading.textContent = localized("Loading answer…", "正解載入中…");
     scoreResultAnswer.append(loading);
     if (!target || !template?.parts?.length) return;
 
     try {
-        const entityType = targetEntityType(target);
-        const unit = loadedEntity(entityType, target.unitId) ?? await ensureUnitLoaded(target.unitId, entityType);
+        const entityType   = targetEntityType(target);
+        const unit         = loadedEntity(entityType, target.unitId) ?? await ensureUnitLoaded(target.unitId, entityType);
         const assetsByCrop = new Map(availablePartsForRank(unit, target.rank)
             .map((part) => [cropIndexFromPartId(part.id), part])
             .filter(([cropIndex]) => cropIndex !== null));
@@ -1157,18 +1157,18 @@ async function renderScoreAnswer(target, template, layout) {
 
         const bounds = scoreAnswerBounds(parts);
         if (!Number.isFinite(bounds.left)) throw new Error("正解沒有可用部件");
-        const contentWidth = Math.max(1, bounds.right - bounds.left);
+        const contentWidth  = Math.max(1, bounds.right - bounds.left);
         const contentHeight = Math.max(1, bounds.bottom - bounds.top);
         const fitScale = Math.min(
             (layout.answerWidth * 0.86) / contentWidth,
             (layout.answerHeight * 0.86) / contentHeight,
         );
-        const world = document.createElement("span");
-        world.className = "score-answer-world";
-        world.style.width = `${contentWidth}px`;
-        world.style.height = `${contentHeight}px`;
-        world.style.left = `${layout.answerWidth / 2 - ((bounds.left + bounds.right) / 2) * fitScale}px`;
-        world.style.top = `${layout.answerHeight / 2 - ((bounds.top + bounds.bottom) / 2) * fitScale}px`;
+        const world           = document.createElement("span");
+        world.className       = "score-answer-world";
+        world.style.width     = `${contentWidth}px`;
+        world.style.height    = `${contentHeight}px`;
+        world.style.left      = `${layout.answerWidth / 2 - ((bounds.left + bounds.right) / 2) * fitScale}px`;
+        world.style.top       = `${layout.answerHeight / 2 - ((bounds.top + bounds.bottom) / 2) * fitScale}px`;
         world.style.transform = `scale(${fitScale})`;
         parts.forEach(({ asset, targetPart }) => {
             const answerPart = createScoreAnswerPart(asset, targetPart);
@@ -1196,13 +1196,13 @@ function scoreTemplateKey(target) {
 async function ensureScoreTemplateLoaded(target) {
     const key = scoreTemplateKey(target);
     if (scoreTemplateCache.has(key)) return scoreTemplateCache.get(key);
-    const entityType = targetEntityType(target);
-    const templateRoot = entityType === "enemy" ? "assets/enemy_scoring/templates" : "assets/unit_scoring/templates";
+    const entityType    = targetEntityType(target);
+    const templateRoot  = entityType === "enemy" ? "assets/enemy_scoring/templates" : "assets/unit_scoring/templates";
     const templateStore = entityType === "enemy" ? "ENEMY_SCORE_TEMPLATES" : "SCORE_TEMPLATES";
     const template = await new Promise((resolve, reject) => {
         const script = document.createElement("script");
         script.async = true;
-        script.src = templateRoot + "/" + encodeURIComponent(target.unitId) + "/" + encodeURIComponent(target.rank) + ".js";
+        script.src   = templateRoot + "/" + encodeURIComponent(target.unitId) + "/" + encodeURIComponent(target.rank) + ".js";
         script.onload = () => {
             const loaded = globalThis[templateStore]?.[key];
             script.remove();
@@ -1233,9 +1233,9 @@ function cropIndexFromPlacedPart(part) {
 }
 
 function isPlaceholderPart(part) {
-    const name = String(part?.name ?? "").trim().toLocaleLowerCase();
+    const name   = String(part?.name ?? "").trim().toLocaleLowerCase();
     const sprite = normalizeSprite(part?.sprite);
-    const width = Number(sprite?.width ?? part?.width);
+    const width  = Number(sprite?.width ?? part?.width);
     const height = Number(sprite?.height ?? part?.height);
     return (width === 1 && height === 1)
         || PLACEHOLDER_PART_MARKERS.some((marker) => name.includes(marker));
@@ -1261,12 +1261,12 @@ function hasVisibleSpritePixels(part) {
     const image = loadedPartImages.get(source);
     if (!image?.complete || !image.naturalWidth) return true;
     try {
-        const raster = document.createElement("canvas");
-        raster.width = sprite.width;
+        const raster  = document.createElement("canvas");
+        raster.width  = sprite.width;
         raster.height = sprite.height;
         const context = raster.getContext("2d", { willReadFrequently: true });
         context.drawImage(image, sprite.x, sprite.y, sprite.width, sprite.height, 0, 0, sprite.width, sprite.height);
-        const pixels = context.getImageData(0, 0, sprite.width, sprite.height).data;
+        const pixels        = context.getImageData(0, 0, sprite.width, sprite.height).data;
         let hasVisiblePixel = false;
         for (let index = 3; index < pixels.length; index += 4) {
             if (pixels[index] > 8) {
@@ -1337,7 +1337,7 @@ function matchScoreParts(templateParts, placedParts) {
     });
 
     const pairs = [];
-    let extras = 0;
+    let extras  = 0;
     playersByCrop.forEach((players, cropIndex) => {
         const targets = [...(targetsByCrop.get(cropIndex) ?? [])]
             .sort((left, right) => left.x - right.x || left.y - right.y || left.modelIndex - right.modelIndex);
@@ -1369,8 +1369,8 @@ function fitScoreLayout(pairs) {
     let targetEnergy = 0;
     const points = pairs.map((pair) => {
         const position = positionOf(pair.player);
-        const target = { x: pair.target.x - targetCenter.x, y: pair.target.y - targetCenter.y };
-        const player = { x: Number.parseFloat(position.left) - playerCenter.x, y: Number.parseFloat(position.top) - playerCenter.y };
+        const target   = { x: pair.target.x - targetCenter.x, y: pair.target.y - targetCenter.y };
+        const player   = { x: Number.parseFloat(position.left) - playerCenter.x, y: Number.parseFloat(position.top) - playerCenter.y };
         targetEnergy += target.x ** 2 + target.y ** 2;
         return { pair, target, player };
     });
@@ -1384,10 +1384,10 @@ function fitScoreLayout(pairs) {
 }
 
 function scoreEntryBounds(entry) {
-    const radians = entry.angle * (Math.PI / 180);
-    const width = entry.sprite.width * Math.abs(entry.scaleX);
-    const height = entry.sprite.height * Math.abs(entry.scaleY);
-    const rotatedWidth = Math.abs(Math.cos(radians)) * width + Math.abs(Math.sin(radians)) * height;
+    const radians       = entry.angle * (Math.PI / 180);
+    const width         = entry.sprite.width * Math.abs(entry.scaleX);
+    const height        = entry.sprite.height * Math.abs(entry.scaleY);
+    const rotatedWidth  = Math.abs(Math.cos(radians)) * width + Math.abs(Math.sin(radians)) * height;
     const rotatedHeight = Math.abs(Math.sin(radians)) * width + Math.abs(Math.cos(radians)) * height;
     return {
         left: entry.x - rotatedWidth / 2,
@@ -1410,14 +1410,14 @@ function scoreImageBounds(entries) {
 }
 
 function scoreRectangleOverlap(first, second) {
-    const firstBounds = scoreEntryBounds(first);
-    const secondBounds = scoreEntryBounds(second);
-    const overlapWidth = Math.max(0, Math.min(firstBounds.right, secondBounds.right) - Math.max(firstBounds.left, secondBounds.left));
+    const firstBounds   = scoreEntryBounds(first);
+    const secondBounds  = scoreEntryBounds(second);
+    const overlapWidth  = Math.max(0, Math.min(firstBounds.right, secondBounds.right) - Math.max(firstBounds.left, secondBounds.left));
     const overlapHeight = Math.max(0, Math.min(firstBounds.bottom, secondBounds.bottom) - Math.max(firstBounds.top, secondBounds.top));
-    const overlap = overlapWidth * overlapHeight;
-    const firstArea = Math.max(0, firstBounds.right - firstBounds.left) * Math.max(0, firstBounds.bottom - firstBounds.top);
-    const secondArea = Math.max(0, secondBounds.right - secondBounds.left) * Math.max(0, secondBounds.bottom - secondBounds.top);
-    const union = firstArea + secondArea - overlap;
+    const overlap       = overlapWidth * overlapHeight;
+    const firstArea     = Math.max(0, firstBounds.right - firstBounds.left) * Math.max(0, firstBounds.bottom - firstBounds.top);
+    const secondArea    = Math.max(0, secondBounds.right - secondBounds.left) * Math.max(0, secondBounds.bottom - secondBounds.top);
+    const union         = firstArea + secondArea - overlap;
     return union ? overlap / union : 0;
 }
 
@@ -1450,22 +1450,22 @@ function scoreImageAlignment(pairs) {
 
     let scale = 1;
     if (pairs.length >= 2) {
-        let numerator = 0;
+        let numerator   = 0;
         let denominator = 0;
         pairs.forEach((pair) => {
             const position = positionOf(pair.player);
-            const playerX = Number.parseFloat(position.left) - playerCenter.x;
-            const playerY = Number.parseFloat(position.top) - playerCenter.y;
-            const targetX = pair.target.x - targetCenter.x;
-            const targetY = pair.target.y - targetCenter.y;
+            const playerX  = Number.parseFloat(position.left) - playerCenter.x;
+            const playerY  = Number.parseFloat(position.top) - playerCenter.y;
+            const targetX  = pair.target.x - targetCenter.x;
+            const targetY  = pair.target.y - targetCenter.y;
             numerator += playerX * targetX + playerY * targetY;
             denominator += playerX ** 2 + playerY ** 2;
         });
         if (denominator > 0 && numerator > 0) scale = numerator / denominator;
     } else {
-        const pair = pairs[0];
-        const playerScale = Math.abs(Number.parseFloat(positionOf(pair.player).scale));
-        const targetScale = (Math.abs(Number(pair.target.scaleX) || 1) + Math.abs(Number(pair.target.scaleY) || 1)) / 2;
+        const pair                 = pairs[0];
+        const playerScale          = Math.abs(Number.parseFloat(positionOf(pair.player).scale));
+        const targetScale          = (Math.abs(Number(pair.target.scaleX) || 1) + Math.abs(Number(pair.target.scaleY) || 1)) / 2;
         if (playerScale > 0) scale = targetScale / playerScale;
     }
     scale = clamp(scale, 0.25, 4);
@@ -1477,10 +1477,10 @@ function scoreImageAlignment(pairs) {
 }
 
 function rasterizeScoreEntries(entries, bounds, scale, canvasSize, padding) {
-    const raster = document.createElement("canvas");
-    raster.width = canvasSize;
-    raster.height = canvasSize;
-    const context = raster.getContext("2d", { willReadFrequently: true });
+    const raster                  = document.createElement("canvas");
+    raster.width                  = canvasSize;
+    raster.height                 = canvasSize;
+    const context                 = raster.getContext("2d", { willReadFrequently: true });
     context.imageSmoothingEnabled = false;
     [...entries]
         .sort((left, right) => left.z - right.z)
@@ -1515,12 +1515,12 @@ async function scoreImageSimilarity(templateParts, placedParts, pairs) {
     if (!scoreRoundTarget || !templateParts.length || !pairs.length) return 0;
 
     const scoreEntityType = targetEntityType(scoreRoundTarget);
-    const unit = loadedEntity(scoreEntityType, scoreRoundTarget.unitId) ?? await ensureUnitLoaded(scoreRoundTarget.unitId, scoreEntityType);
-    const assetsByCrop = new Map(availablePartsForRank(unit, scoreRoundTarget.rank)
+    const unit            = loadedEntity(scoreEntityType, scoreRoundTarget.unitId) ?? await ensureUnitLoaded(scoreRoundTarget.unitId, scoreEntityType);
+    const assetsByCrop    = new Map(availablePartsForRank(unit, scoreRoundTarget.rank)
         .map((part) => [cropIndexFromPartId(part.id), part])
         .filter(([cropIndex]) => cropIndex !== null));
     const targetEntries = templateParts.map((targetPart) => {
-        const asset = assetsByCrop.get(targetPart.cropIndex);
+        const asset  = assetsByCrop.get(targetPart.cropIndex);
         const sprite = normalizeSprite(asset?.sprite);
         if (!asset?.src || !sprite) return null;
         return {
@@ -1542,13 +1542,13 @@ async function scoreImageSimilarity(templateParts, placedParts, pairs) {
     const alignment = scoreImageAlignment(pairs);
 
     const playerEntries = placedParts.map((part) => {
-        const asset = assetFromElement(part);
-        const sprite = normalizeSprite(asset.sprite);
+        const asset    = assetFromElement(part);
+        const sprite   = normalizeSprite(asset.sprite);
         const position = positionOf(part);
-        const x = Number.parseFloat(position.left);
-        const y = Number.parseFloat(position.top);
-        const scale = Number.parseFloat(position.scale);
-        const flipX = Number.parseFloat(position.flipX);
+        const x        = Number.parseFloat(position.left);
+        const y        = Number.parseFloat(position.top);
+        const scale    = Number.parseFloat(position.scale);
+        const flipX    = Number.parseFloat(position.flipX);
         if (!asset.src || !sprite || !Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(scale)) return null;
         return {
             part,
@@ -1570,16 +1570,16 @@ async function scoreImageSimilarity(templateParts, placedParts, pairs) {
 
     const bounds = scoreImageBounds([...targetEntries, ...playerEntries]);
     if (!Number.isFinite(bounds.left)) return 0;
-    const padding = 6;
+    const padding    = 6;
     const canvasSize = 192;
-    const width = Math.max(1, bounds.right - bounds.left);
-    const height = Math.max(1, bounds.bottom - bounds.top);
-    const scale = Math.min((canvasSize - padding * 2) / width, (canvasSize - padding * 2) / height);
+    const width      = Math.max(1, bounds.right - bounds.left);
+    const height     = Math.max(1, bounds.bottom - bounds.top);
+    const scale      = Math.min((canvasSize - padding * 2) / width, (canvasSize - padding * 2) / height);
     try {
         const targetPixels = rasterizeScoreEntries(targetEntries, bounds, scale, canvasSize, padding);
         const playerPixels = rasterizeScoreEntries(playerEntries, bounds, scale, canvasSize, padding);
-        let overlap = 0;
-        let union = 0;
+        let overlap        = 0;
+        let union          = 0;
         for (let index = 3; index < targetPixels.length; index += 4) {
             const targetVisible = targetPixels[index] > 32;
             const playerVisible = playerPixels[index] > 32;
@@ -1596,26 +1596,26 @@ async function scoreImageSimilarity(templateParts, placedParts, pairs) {
 }
 
 async function gradeScoreRound() {
-    const templateParts = scoreRoundTemplate?.parts ?? [];
-    const placedParts = currentScoreRoundParts();
+    const templateParts     = scoreRoundTemplate?.parts ?? [];
+    const placedParts       = currentScoreRoundParts();
     const { pairs, extras } = matchScoreParts(templateParts, placedParts);
-    const rawCoverage = templateParts.length
+    const rawCoverage       = templateParts.length
         ? clamp(pairs.length / (templateParts.length + extras * 1.25), 0, 1)
         : 0;
     // Large characters contain many tiny independent sprites. Missing a few of
     // them should be less punishing, while a sparse random arrangement stays low.
     const coverageExponent = 1 - clamp((templateParts.length - 8) / 72, 0, 0.28);
-    const coverage = rawCoverage ** coverageExponent;
-    const layout = fitScoreLayout(pairs);
+    const coverage         = rawCoverage ** coverageExponent;
+    const layout           = fitScoreLayout(pairs);
 
     const transformQuality = pairs.length === 1 ? 1 : pairs.length ? pairs.reduce((sum, pair) => {
-        const position = positionOf(pair.player);
-        const playerScale = Number.parseFloat(position.scale);
-        const expectedScale = (pair.target.scaleX + pair.target.scaleY) / 2 * Math.max(layout.scale, 0.01);
-        const scaleError = Math.abs(Math.log(Math.max(playerScale, 0.01) / Math.max(expectedScale, 0.01)));
-        const expectedAngle = pair.target.angle + layout.angle;
-        const angleError = Math.abs(normalizeAngle(Number.parseFloat(position.rotation) - expectedAngle));
-        const scaleQuality = clamp(1 - scaleError / 1.15, 0, 1);
+        const position        = positionOf(pair.player);
+        const playerScale     = Number.parseFloat(position.scale);
+        const expectedScale   = (pair.target.scaleX + pair.target.scaleY) / 2 * Math.max(layout.scale, 0.01);
+        const scaleError      = Math.abs(Math.log(Math.max(playerScale, 0.01) / Math.max(expectedScale, 0.01)));
+        const expectedAngle   = pair.target.angle + layout.angle;
+        const angleError      = Math.abs(normalizeAngle(Number.parseFloat(position.rotation) - expectedAngle));
+        const scaleQuality    = clamp(1 - scaleError / 1.15, 0, 1);
         const rotationQuality = clamp(1 - angleError / 135, 0, 1);
         return sum + (scaleQuality + rotationQuality) / 2;
     }, 0) / pairs.length : 0;
@@ -1623,7 +1623,7 @@ async function gradeScoreRound() {
     let orderQuality = pairs.length < 2 ? (pairs.length ? 1 : 0) : 0;
     if (pairs.length >= 2) {
         let comparisons = 0;
-        let correct = 0;
+        let correct     = 0;
         for (let first = 0; first < pairs.length; first += 1) {
             for (let second = first + 1; second < pairs.length; second += 1) {
                 const targetOrder = pairs[first].target.z - pairs[second].target.z;
@@ -1650,7 +1650,7 @@ async function gradeScoreRound() {
     // multiplier to angle and layer order; that made one layout mistake count
     // several times and punished visually close answers too heavily.
     const arrangementGate = coverage * layout.positionQuality;
-    const coreScore = coverage * 20
+    const coreScore       = coverage * 20
         + arrangementGate * 35
         + coverage * transformQuality * 30
         + coverage * orderQuality * 15;
@@ -1660,8 +1660,8 @@ async function gradeScoreRound() {
     // much from image similarity: each required part raises the cap by 3,
     // from +3 for one part to the existing maximum of +60.
     const imageBonusCap = clamp(templateParts.length * 3, 3, 60);
-    const imageBonus = image * imageBonusCap;
-    const total = Math.round(Math.min(100, coreScore + imageBonus));
+    const imageBonus    = image * imageBonusCap;
+    const total         = Math.round(Math.min(100, coreScore + imageBonus));
     return {
         total,
         matched: pairs.length,
@@ -1678,7 +1678,7 @@ async function gradeScoreRound() {
 
 function renderScoreResult(result) {
     scoreFinalScore.firstChild.nodeValue = `${result.total}`;
-    scoreResultMessage.textContent = result.total == 67 ? "🫲🤪🫱" : result.total >= 90 ? localized("You are a master!", "你是記憶拼圖大師吧！") : result.total >= 70 ? localized("Amazing!", "很強了！") : result.total >= 45 ? localized("Not bad!", "還行啦~") : localized("How did we get here?", "你是如何走到這地步的?");
+    scoreResultMessage.textContent       = result.total == 67 ? "🫲🤪🫱" : result.total >= 90 ? localized("You are a master!", "你是記憶拼圖大師吧！") : result.total >= 70 ? localized("Amazing!", "很強了！") : result.total >= 45 ? localized("Not bad!", "還行啦~") : localized("How did we get here?", "你是如何走到這地步的?");
     const details = [
         [localized("Parts", "物件"), `${result.matched} / ${result.targetCount}`],
         [localized("Position", "位置"), `${Math.round(result.layout * 100)}%`],
@@ -1687,10 +1687,10 @@ function renderScoreResult(result) {
         [localized("Image", "影像"), `+${Math.round(result.imageBonus)}${localized(" pts", "分")}`],
     ];
     scoreResultBreakdown.replaceChildren(...details.map(([label, value]) => {
-        const row = document.createElement("div");
-        const text = document.createElement("span");
-        const score = document.createElement("strong");
-        text.textContent = label;
+        const row         = document.createElement("div");
+        const text        = document.createElement("span");
+        const score       = document.createElement("strong");
+        text.textContent  = label;
         score.textContent = value;
         row.append(text, score);
         return row;
@@ -1700,9 +1700,9 @@ function renderScoreResult(result) {
 function clearScoreRoundParts() {
     canvasWorld.querySelectorAll('.placed-part[data-score-round-part="true"]').forEach((part) => part.remove());
     if (scoreHistoryStart !== null) {
-        history.length = scoreHistoryStart;
+        history.length     = scoreHistoryStart;
         redoHistory.length = 0;
-        scoreHistoryStart = null;
+        scoreHistoryStart  = null;
         updateUndoButton();
     }
     selectedParts.clear();
@@ -1717,14 +1717,14 @@ function clearCopiedPartsForScoreRound() {
 }
 
 function resetScorePanelScrollPositions() {
-    sidePanel.scrollTop = 0;
+    sidePanel.scrollTop        = 0;
     scoreSetupScroll.scrollTop = 0;
     scoreRoundScroll.scrollTop = 0;
 }
 
 async function startScoreRound() {
     resetScoreActionConfirmation();
-    let target = null;
+    let target                = null;
     scoreStartButton.disabled = true;
     resetScoreImageExports();
     setScoreRoundInputLocked(false);
@@ -1732,13 +1732,13 @@ async function startScoreRound() {
     try {
         if (scoreQuestionMode === "fixed") {
             if (!scoreFixedUnitId) {
-                scoreUnitSearch.value = "";
+                scoreUnitSearch.value       = "";
                 scoreUnitSearch.placeholder = localized(`Choose a ${entityNoun().toLowerCase()} first`, "請先選擇一隻" + entityNoun());
                 scoreUnitSearch.focus();
                 setScoreModeStatus("", "");
                 return;
             }
-            const unit = await ensureUnitLoaded(scoreFixedUnitId, scoreFixedEntityType);
+            const unit  = await ensureUnitLoaded(scoreFixedUnitId, scoreFixedEntityType);
             const ranks = availableRanksForUnit(unit);
             if (!ranks.includes(scoreFixedRank)) {
                 setScoreModeStatus("This unit does not have the selected form. Choose another form.", "這隻角色沒有選擇的階級，請改選其他階級。");
@@ -1748,44 +1748,44 @@ async function startScoreRound() {
         } else {
             target = scoreRandomTarget ?? await (scoreRandomPreparation ?? prepareRandomScoreTarget());
             if (!target) throw new Error("無法準備隨機題目");
-            scoreRandomTarget = null;
+            scoreRandomTarget      = null;
             scoreRandomPreparation = null;
         }
 
         setScoreModeStatus("Loading answer…", "正在讀取正確答案…");
-        const template = await ensureScoreTemplateLoaded(target);
+        const template   = await ensureScoreTemplateLoaded(target);
         const targetType = targetEntityType(target);
-        const unit = loadedEntity(targetType, target.unitId) ?? await ensureUnitLoaded(target.unitId, targetType);
-        const rankParts = availablePartsForRank(unit, target.rank);
+        const unit       = loadedEntity(targetType, target.unitId) ?? await ensureUnitLoaded(target.unitId, targetType);
+        const rankParts  = availablePartsForRank(unit, target.rank);
         await Promise.all([...new Set(rankParts.map((part) => part.src))].map(ensurePartSourceLoaded));
         const usableTemplate = withoutPlaceholderScoreParts(template, unit, target.rank);
         if (!usableTemplate.parts.length) throw new Error("此題沒有可用的角色部件");
         clearCopiedPartsForScoreRound();
         clearScoreRoundParts();
-        scoreHistoryStart = history.length;
-        scoreRoundTarget = target;
-        scoreRoundTemplate = usableTemplate;
+        scoreHistoryStart       = history.length;
+        scoreRoundTarget        = target;
+        scoreRoundTemplate      = usableTemplate;
         scoreResultPanel.hidden = true;
         scoreResultPanel.classList.remove("is-summary-pending");
         setScoreRoundCanvasState(true);
         playScoreStartFlash();
-        scoreActiveUnit.value = unitLabel(target.unitId, targetType);
-        scoreActiveRank.value = target.rank;
-        const isEnemyTarget = targetType === "enemy";
+        scoreActiveUnit.value              = unitLabel(target.unitId, targetType);
+        scoreActiveRank.value              = target.rank;
+        const isEnemyTarget                = targetType === "enemy";
         scoreActiveEntityLabel.textContent = entityNoun(targetType);
-        scoreActiveRankLabel.hidden = isEnemyTarget;
-        scoreActiveRank.hidden = isEnemyTarget;
-        scoreSetup.hidden = true;
-        scoreRunning.hidden = false;
+        scoreActiveRankLabel.hidden        = isEnemyTarget;
+        scoreActiveRank.hidden             = isEnemyTarget;
+        scoreSetup.hidden                  = true;
+        scoreRunning.hidden                = false;
         refreshMobileScoreControls();
         resetScorePanelScrollPositions();
         requestAnimationFrame(resetScorePanelScrollPositions);
         normalModeTab.disabled = true;
-        const rendered = await renderScoreParts(target, usableTemplate);
+        const rendered         = await renderScoreParts(target, usableTemplate);
         if (scoreRoundTarget !== target) return;
         if (!rendered) throw new Error("無法載入評分部件");
-        scoreRoundStartedAt = Date.now();
-        scoreRoundFinished = false;
+        scoreRoundStartedAt    = Date.now();
+        scoreRoundFinished     = false;
         scoreMusic.currentTime = 0;
         tryPlayMusic();
         window.clearInterval(scoreTimerId);
@@ -1798,8 +1798,8 @@ async function startScoreRound() {
         setScoreRoundCanvasState(false);
         tryPlayMusic();
         setScoreModeStatus("Question setup failed. Please try again.", "題目準備失敗，請再試一次。");
-        scoreRunning.hidden = true;
-        scoreSetup.hidden = false;
+        scoreRunning.hidden    = true;
+        scoreSetup.hidden      = false;
         normalModeTab.disabled = false;
     } finally {
         scoreStartButton.disabled = false;
@@ -1809,20 +1809,20 @@ async function startScoreRound() {
 async function finishScoreRound(finished = false, { clearCanvas = true } = {}) {
     resetScoreActionConfirmation();
     window.clearInterval(scoreTimerId);
-    scoreTimerId = null;
+    scoreTimerId       = null;
     scoreRoundFinished = finished;
     if (finished) {
-        scoreGradeButton.disabled = true;
+        scoreGradeButton.disabled  = true;
         scoreCancelButton.disabled = true;
-        const result = await gradeScoreRound();
+        const result               = await gradeScoreRound();
         renderScoreResult(result);
         scoreCountdown.textContent = localized("Done", "完成");
-        scoreGradeButton.disabled = true;
-        scoreRoundStartedAt = 0;
-        scoreRunning.hidden = true;
+        scoreGradeButton.disabled  = true;
+        scoreRoundStartedAt        = 0;
+        scoreRunning.hidden        = true;
         refreshMobileScoreControls();
         setScoreRoundInputLocked(false);
-        scoreSetup.hidden = true;
+        scoreSetup.hidden       = true;
         scoreResultPanel.hidden = false;
         scoreResultPanel.classList.add("is-summary-pending");
         normalModeTab.disabled = false;
@@ -1834,8 +1834,8 @@ async function finishScoreRound(finished = false, { clearCanvas = true } = {}) {
     }
     setScoreRoundInputLocked(false);
     scoreRoundStartedAt = 0;
-    scoreRoundTarget = null;
-    scoreRoundTemplate = null;
+    scoreRoundTarget    = null;
+    scoreRoundTemplate  = null;
     scoreRunning.hidden = true;
     refreshMobileScoreControls();
     scoreSetup.hidden = false;
@@ -1845,10 +1845,10 @@ async function finishScoreRound(finished = false, { clearCanvas = true } = {}) {
     else promoteScoreRoundPartsToNormalGroup();
     setScoreRoundCanvasState(false);
     tryPlayMusic();
-    scoreGradeButton.disabled = false;
-    scoreCancelButton.disabled = false;
+    scoreGradeButton.disabled   = false;
+    scoreCancelButton.disabled  = false;
     scoreCancelButton.innerHTML = `<i class="fa-solid fa-xmark" aria-hidden="true"></i><span>${localized("Cancel", "取消")}</span>`;
-    normalModeTab.disabled = false;
+    normalModeTab.disabled      = false;
     if (scoreQuestionMode === "fixed" && !scoreFixedUnitId) {
         setScoreModeStatus("", "");
     } else {
@@ -1947,27 +1947,27 @@ function assetFromElement(part) {
 
 function createAssetPreview(asset, className, maximumWidth, maximumHeight) {
     const displayAsset = renderedAsset(asset);
-    const image = document.createElement("img");
-    const sprite = normalizeSprite(displayAsset.sprite);
-    image.src = displayAsset.src;
-    image.alt = "";
-    image.draggable = false;
+    const image        = document.createElement("img");
+    const sprite       = normalizeSprite(displayAsset.sprite);
+    image.src          = displayAsset.src;
+    image.alt          = "";
+    image.draggable    = false;
 
     if (!sprite) {
         image.className = `${className} asset-preview`;
         return image;
     }
 
-    const scale = Math.min(maximumWidth / sprite.width, maximumHeight / sprite.height, 1);
-    const crop = document.createElement("span");
-    crop.className = `${className} asset-preview sprite-preview`;
-    crop.style.width = `${sprite.width * scale}px`;
-    crop.style.height = `${sprite.height * scale}px`;
-    image.className = "sprite-sheet-image";
-    image.style.width = `${sprite.sheetWidth * scale}px`;
+    const scale        = Math.min(maximumWidth / sprite.width, maximumHeight / sprite.height, 1);
+    const crop         = document.createElement("span");
+    crop.className     = `${className} asset-preview sprite-preview`;
+    crop.style.width   = `${sprite.width * scale}px`;
+    crop.style.height  = `${sprite.height * scale}px`;
+    image.className    = "sprite-sheet-image";
+    image.style.width  = `${sprite.sheetWidth * scale}px`;
     image.style.height = `${sprite.sheetHeight * scale}px`;
-    image.style.left = `${-sprite.x * scale}px`;
-    image.style.top = `${-sprite.y * scale}px`;
+    image.style.left   = `${-sprite.x * scale}px`;
+    image.style.top    = `${-sprite.y * scale}px`;
     crop.append(image);
     return crop;
 }
@@ -1978,22 +1978,22 @@ function isPalettePartDrag(dataTransfer) {
 
 function beginPalettePartDrag(part, image, sourceBounds, clientX, clientY, dataTransfer) {
     const displayAsset = renderedAsset(part);
-    const sprite = normalizeSprite(displayAsset.sprite);
-    const partWidth = Number(part.width);
-    const partHeight = Number(part.height);
-    const width = sprite?.width ?? (Number.isFinite(partWidth) ? partWidth : image.naturalWidth);
-    const height = sprite?.height ?? (Number.isFinite(partHeight) ? partHeight : image.naturalHeight);
-    const offsetX = clamp((clientX - sourceBounds.left) / sourceBounds.width, 0, 1) * width;
-    const offsetY = clamp((clientY - sourceBounds.top) / sourceBounds.height, 0, 1) * height;
-    palettePartDrag = { id: part.id, width, height, offsetX, offsetY };
+    const sprite       = normalizeSprite(displayAsset.sprite);
+    const partWidth    = Number(part.width);
+    const partHeight   = Number(part.height);
+    const width        = sprite?.width ?? (Number.isFinite(partWidth) ? partWidth : image.naturalWidth);
+    const height       = sprite?.height ?? (Number.isFinite(partHeight) ? partHeight : image.naturalHeight);
+    const offsetX      = clamp((clientX - sourceBounds.left) / sourceBounds.width, 0, 1) * width;
+    const offsetY      = clamp((clientY - sourceBounds.top) / sourceBounds.height, 0, 1) * height;
+    palettePartDrag    = { id: part.id, width, height, offsetX, offsetY };
 
     if (!dataTransfer?.setDragImage || !image?.naturalWidth || !image.naturalHeight) return;
-    const scale = Math.min(1, 96 / Math.max(width, height));
-    const preview = document.createElement("canvas");
-    preview.className = "native-drag-preview";
-    preview.width = Math.max(1, Math.round(width * scale));
-    preview.height = Math.max(1, Math.round(height * scale));
-    const context = preview.getContext("2d");
+    const scale                   = Math.min(1, 96 / Math.max(width, height));
+    const preview                 = document.createElement("canvas");
+    preview.className             = "native-drag-preview";
+    preview.width                 = Math.max(1, Math.round(width * scale));
+    preview.height                = Math.max(1, Math.round(height * scale));
+    const context                 = preview.getContext("2d");
     context.imageSmoothingEnabled = false;
     if (sprite) {
         context.drawImage(image, sprite.x, sprite.y, sprite.width, sprite.height, 0, 0, preview.width, preview.height);
@@ -2008,7 +2008,7 @@ function beginPalettePartDrag(part, image, sourceBounds, clientX, clientY, dataT
 function showPartsLoading() {
     activeParts = new Map();
     partsList.replaceChildren();
-    const loading = document.createElement("p");
+    const loading     = document.createElement("p");
     loading.className = "parts-loading";
     loading.setAttribute("role", "status");
     loading.setAttribute("aria-label", localized("Loading", "載入中"));
@@ -2044,7 +2044,7 @@ function setPartScale(image, scale, { minScale = 0.5, maxScale = 8 } = {}) {
 }
 
 function setPartFlip(image, flipX) {
-    const value = String(flipX);
+    const value         = String(flipX);
     image.dataset.flipX = value;
     image.style.setProperty("--flip-x", value);
 }
@@ -2059,8 +2059,8 @@ function createGroupColor() {
 
 function snapAngle(angle) {
     const normalized = ((angle % 360) + 360) % 360;
-    const nearest = Math.round(normalized / 90) * 90;
-    const distance = Math.abs(normalized - nearest);
+    const nearest    = Math.round(normalized / 90) * 90;
+    const distance   = Math.abs(normalized - nearest);
     return distance <= 6 ? nearest % 360 : angle;
 }
 
@@ -2084,37 +2084,37 @@ function hasMovementLockedPart(parts) {
 function updateLayerButtons() {
     if (!layerBackButton || !layerFrontButton) return;
     if (!selectedPart?.isConnected || isPartMovementLocked(selectedPart)) {
-        layerBackButton.disabled = true;
+        layerBackButton.disabled  = true;
         layerFrontButton.disabled = true;
         return;
     }
 
-    const groupId = selectedPart.dataset.groupId;
+    const groupId          = selectedPart.dataset.groupId;
     const movesWithinGroup = groupId && !isWholeGroupSelected(selectedPart);
-    const parts = movesWithinGroup
+    const parts            = movesWithinGroup
         ? orderedParts().filter((part) => part.dataset.groupId === groupId)
         : layerBlocks();
-    const current = movesWithinGroup ? selectedPart : layerBlockForPart(selectedPart, parts);
-    const index = parts.indexOf(current);
-    layerBackButton.disabled = index <= 0;
+    const current             = movesWithinGroup ? selectedPart : layerBlockForPart(selectedPart, parts);
+    const index               = parts.indexOf(current);
+    layerBackButton.disabled  = index <= 0;
     layerFrontButton.disabled = index === -1 || index === parts.length - 1;
 }
 
 function selectionBoundsInWorld(part) {
-    const state = positionOf(part);
-    const image = part.querySelector("img");
-    const width = Number.parseFloat(part.style.width) || part.offsetWidth || image?.naturalWidth || 0;
-    const height = Number.parseFloat(part.style.height) || part.offsetHeight || image?.naturalHeight || 0;
-    const scale = Number.parseFloat(state.scale);
+    const state   = positionOf(part);
+    const image   = part.querySelector("img");
+    const width   = Number.parseFloat(part.style.width) || part.offsetWidth || image?.naturalWidth || 0;
+    const height  = Number.parseFloat(part.style.height) || part.offsetHeight || image?.naturalHeight || 0;
+    const scale   = Number.parseFloat(state.scale);
     const centerX = Number.parseFloat(state.left);
     const centerY = Number.parseFloat(state.top);
-    const angle = Number.parseFloat(state.rotation) * Math.PI / 180;
+    const angle   = Number.parseFloat(state.rotation) * Math.PI / 180;
     if (![width, height, scale, centerX, centerY, angle].every(Number.isFinite)) return null;
 
-    const scaledWidth = width * Math.abs(scale);
+    const scaledWidth  = width * Math.abs(scale);
     const scaledHeight = height * Math.abs(scale);
-    const boundWidth = Math.abs(scaledWidth * Math.cos(angle)) + Math.abs(scaledHeight * Math.sin(angle));
-    const boundHeight = Math.abs(scaledWidth * Math.sin(angle)) + Math.abs(scaledHeight * Math.cos(angle));
+    const boundWidth   = Math.abs(scaledWidth * Math.cos(angle)) + Math.abs(scaledHeight * Math.sin(angle));
+    const boundHeight  = Math.abs(scaledWidth * Math.sin(angle)) + Math.abs(scaledHeight * Math.cos(angle));
     return {
         left: centerX - boundWidth / 2,
         top: centerY - boundHeight / 2,
@@ -2141,14 +2141,14 @@ function updateSelectionFrame() {
         // collapse them to zero. Calculate from stored transform data instead.
         const bounds = parts.map(selectionBoundsInWorld).filter(Boolean);
         if (!bounds.length) return;
-        const left = Math.min(...bounds.map((bound) => bound.left));
-        const top = Math.min(...bounds.map((bound) => bound.top));
-        const right = Math.max(...bounds.map((bound) => bound.right));
-        const bottom = Math.max(...bounds.map((bound) => bound.bottom));
-        const padding = 10;
-        selectionFrame.style.left = `${(left + right) / 2}px`;
-        selectionFrame.style.top = `${(top + bottom) / 2}px`;
-        selectionFrame.style.width = `${right - left + padding}px`;
+        const left                  = Math.min(...bounds.map((bound) => bound.left));
+        const top                   = Math.min(...bounds.map((bound) => bound.top));
+        const right                 = Math.max(...bounds.map((bound) => bound.right));
+        const bottom                = Math.max(...bounds.map((bound) => bound.bottom));
+        const padding               = 10;
+        selectionFrame.style.left   = `${(left + right) / 2}px`;
+        selectionFrame.style.top    = `${(top + bottom) / 2}px`;
+        selectionFrame.style.width  = `${right - left + padding}px`;
         selectionFrame.style.height = `${bottom - top + padding}px`;
         selectionFrame.style.setProperty("--rotation", "0deg");
         selectionFrame.classList.add("is-group-selection");
@@ -2157,12 +2157,12 @@ function updateSelectionFrame() {
         return;
     }
 
-    const state = positionOf(selectedPart);
-    const scale = Number.parseFloat(state.scale);
-    const padding = 24;
-    selectionFrame.style.left = state.left;
-    selectionFrame.style.top = state.top;
-    selectionFrame.style.width = `${selectedPart.offsetWidth * scale + padding}px`;
+    const state                 = positionOf(selectedPart);
+    const scale                 = Number.parseFloat(state.scale);
+    const padding               = 24;
+    selectionFrame.style.left   = state.left;
+    selectionFrame.style.top    = state.top;
+    selectionFrame.style.width  = `${selectedPart.offsetWidth * scale + padding}px`;
     selectionFrame.style.height = `${selectedPart.offsetHeight * scale + padding}px`;
     selectionFrame.style.setProperty("--rotation", state.rotation);
     selectionFrame.classList.remove("is-group-selection");
@@ -2191,7 +2191,7 @@ function setSelectedParts(parts, primary = parts.at(-1) ?? null, { expandGroups 
 
 function expandGroupedParts(parts) {
     const available = parts.filter((part) => part.isConnected && !part.classList.contains("is-layer-locked"));
-    const groupIds = new Set(available.map((part) => part.dataset.groupId).filter(Boolean));
+    const groupIds  = new Set(available.map((part) => part.dataset.groupId).filter(Boolean));
     if (!groupIds.size) return available;
     return orderedParts().filter((part) => available.includes(part)
         || (groupIds.has(part.dataset.groupId) && !part.classList.contains("is-layer-locked")));
@@ -2213,7 +2213,7 @@ function setLayerOrder(parts) {
 }
 
 function draggedLayerParts() {
-    const parts = orderedParts();
+    const parts   = orderedParts();
     const groupId = layersPanel.dataset.draggingGroupId;
     if (groupId) return parts.filter((part) => part.dataset.groupId === groupId);
     const index = Number.parseInt(layersPanel.dataset.draggingLayer, 10);
@@ -2228,7 +2228,7 @@ function clearLayerDragState() {
 }
 
 function setGroupDragImage(event, groupContainer, pointerGrab = null) {
-    const bounds = groupContainer.getBoundingClientRect();
+    const bounds  = groupContainer.getBoundingClientRect();
     const preview = groupContainer.cloneNode(true);
     preview.classList.remove("is-dragging", "is-drop-target");
     preview.classList.add("layer-group-drag-preview");
@@ -2244,10 +2244,10 @@ function setGroupDragImage(event, groupContainer, pointerGrab = null) {
 }
 
 function moveLayerBlock(sourceParts, targetParts, insertAbove) {
-    const before = orderedParts();
+    const before    = orderedParts();
     const sourceSet = new Set(sourceParts);
     if (!sourceParts.length || targetParts.some((part) => sourceSet.has(part))) return;
-    const after = before.filter((part) => !sourceSet.has(part));
+    const after         = before.filter((part) => !sourceSet.has(part));
     const targetIndexes = targetParts.map((part) => after.indexOf(part)).filter((index) => index !== -1);
     if (!targetIndexes.length) return;
     const targetIndex = insertAbove ? Math.max(...targetIndexes) + 1 : Math.min(...targetIndexes);
@@ -2258,7 +2258,7 @@ function moveLayerBlock(sourceParts, targetParts, insertAbove) {
 }
 
 function layerBlocks(parts = orderedParts()) {
-    const blocks = [];
+    const blocks     = [];
     const seenGroups = new Set();
     parts.forEach((part) => {
         const groupId = part.dataset.groupId;
@@ -2287,9 +2287,9 @@ function isWholeGroupSelected(part = selectedPart) {
 function movePartWithinGroup(part, direction, toEdge = false) {
     const groupId = part?.dataset.groupId;
     if (!groupId) return false;
-    const before = orderedParts();
-    const members = before.filter((item) => item.dataset.groupId === groupId);
-    const index = members.indexOf(part);
+    const before      = orderedParts();
+    const members     = before.filter((item) => item.dataset.groupId === groupId);
+    const index       = members.indexOf(part);
     const targetIndex = toEdge
         ? (direction > 0 ? members.length - 1 : 0)
         : clamp(index + direction, 0, members.length - 1);
@@ -2315,8 +2315,8 @@ function movePartWithinGroup(part, direction, toEdge = false) {
 function placePartWithinGroup(part, targetPart, insertAbove) {
     const groupId = part?.dataset.groupId;
     if (!groupId || targetPart?.dataset.groupId !== groupId || part === targetPart) return false;
-    const before = orderedParts();
-    const members = before.filter((item) => item.dataset.groupId === groupId);
+    const before      = orderedParts();
+    const members     = before.filter((item) => item.dataset.groupId === groupId);
     const sourceIndex = members.indexOf(part);
     const targetIndex = members.indexOf(targetPart);
     if (sourceIndex === -1 || targetIndex === -1) return false;
@@ -2324,7 +2324,7 @@ function placePartWithinGroup(part, targetPart, insertAbove) {
     const orderedMembers = [...members];
     orderedMembers.splice(sourceIndex, 1);
     const targetAfterRemovalIndex = targetIndex - (sourceIndex < targetIndex ? 1 : 0);
-    const insertionIndex = targetAfterRemovalIndex + (insertAbove ? 1 : 0);
+    const insertionIndex          = targetAfterRemovalIndex + (insertAbove ? 1 : 0);
     orderedMembers.splice(insertionIndex, 0, part);
     const memberSlots = before
         .map((item, itemIndex) => item.dataset.groupId === groupId ? itemIndex : -1)
@@ -2341,10 +2341,10 @@ function placePartWithinGroup(part, targetPart, insertAbove) {
 }
 
 function moveCanvasLayerBlock(part, direction, toEdge = false) {
-    const before = orderedParts();
-    const blocks = layerBlocks(before);
-    const block = layerBlockForPart(part, blocks);
-    const index = blocks.indexOf(block);
+    const before      = orderedParts();
+    const blocks      = layerBlocks(before);
+    const block       = layerBlockForPart(part, blocks);
+    const index       = blocks.indexOf(block);
     const targetIndex = toEdge
         ? (direction > 0 ? blocks.length - 1 : 0)
         : clamp(index + direction, 0, blocks.length - 1);
@@ -2361,7 +2361,7 @@ function moveCanvasLayerBlock(part, direction, toEdge = false) {
 }
 
 function closeLayerContextMenu() {
-    contextLayerPart = null;
+    contextLayerPart        = null;
     layerContextMenu.hidden = true;
 }
 
@@ -2373,7 +2373,7 @@ function contextMenuParts() {
             : [contextLayerPart];
     }
 
-    const selected = [...selectedParts].filter((part) => part.isConnected);
+    const selected         = [...selectedParts].filter((part) => part.isConnected);
     const selectedGroupIds = new Set(selected.map((part) => part.dataset.groupId).filter(Boolean));
     return orderedParts().filter((part) => selected.includes(part) || selectedGroupIds.has(part.dataset.groupId));
 }
@@ -2383,14 +2383,14 @@ function isLayersPanelContext(fromLayersPanel) {
 }
 
 function moveContextPartsToEdge(toFront) {
-    const before = orderedParts();
+    const before       = orderedParts();
     const contextParts = contextMenuParts().filter((part) => part?.isConnected);
     if (!contextParts.length || contextParts.some((part) => part.classList.contains("is-layer-locked"))) return;
 
-    const contextSet = new Set(contextParts);
-    const movingParts = before.filter((part) => contextSet.has(part));
+    const contextSet     = new Set(contextParts);
+    const movingParts    = before.filter((part) => contextSet.has(part));
     const remainingParts = before.filter((part) => !contextSet.has(part));
-    const after = toFront
+    const after          = toFront
         ? [...remainingParts, ...movingParts]
         : [...movingParts, ...remainingParts];
     if (after.every((part, index) => part === before[index])) return;
@@ -2410,30 +2410,30 @@ function showLayerContextMenu(event, part, { fromLayersPanel = false } = {}) {
     } else if (!selectedParts.has(part)) {
         selectPlacedPart(part);
     }
-    contextLayerPart = part;
-    const contextParts = contextMenuParts();
+    contextLayerPart    = part;
+    const contextParts  = contextMenuParts();
     const hasLockedPart = contextParts.some((item) => item.classList.contains("is-layer-locked"));
-    const groupIds = new Set(contextParts.map((item) => item.dataset.groupId).filter(Boolean));
-    const canGroup = contextParts.length > 1 && !(groupIds.size === 1 && contextParts.every((item) => item.dataset.groupId));
+    const groupIds      = new Set(contextParts.map((item) => item.dataset.groupId).filter(Boolean));
+    const canGroup      = contextParts.length > 1 && !(groupIds.size === 1 && contextParts.every((item) => item.dataset.groupId));
     const isSingleGroup = Boolean(part.dataset.groupId)
         && contextParts.length > 0
         && contextParts.every((item) => item.dataset.groupId === part.dataset.groupId);
-    const usesLayersPanelControls = isLayersPanelContext(fromLayersPanel);
-    mergeLayersButton.hidden = !canGroup;
-    ungroupLayersButton.hidden = groupIds.size === 0;
-    flipHorizontalButton.disabled = contextParts.some((item) => item.classList.contains("is-layer-locked"));
-    lockLayerButton.hidden = usesLayersPanelControls || isSingleGroup;
-    lockLayerButton.querySelector("i").className = `fa-solid ${hasLockedPart ? "fa-lock-open" : "fa-lock"}`;
+    const usesLayersPanelControls                     = isLayersPanelContext(fromLayersPanel);
+    mergeLayersButton.hidden                          = !canGroup;
+    ungroupLayersButton.hidden                        = groupIds.size === 0;
+    flipHorizontalButton.disabled                     = contextParts.some((item) => item.classList.contains("is-layer-locked"));
+    lockLayerButton.hidden                            = usesLayersPanelControls || isSingleGroup;
+    lockLayerButton.querySelector("i").className      = `fa-solid ${hasLockedPart ? "fa-lock-open" : "fa-lock"}`;
     lockLayerButton.querySelector("span").textContent = hasLockedPart ? localized("Unlock", "解除鎖定") : localized("Lock", "鎖定");
-    const canToggleSelectedVisibility = fromLayersPanel && contextParts.length > 1 && !isSingleGroup;
-    hideLayersButton.hidden = usesLayersPanelControls || isSingleGroup;
-    showLayersButton.hidden = usesLayersPanelControls || !canToggleSelectedVisibility;
-    layerContextMenu.hidden = false;
-    const margin = 8;
-    const menuWidth = layerContextMenu.offsetWidth;
-    const menuHeight = layerContextMenu.offsetHeight;
-    layerContextMenu.style.left = `${Math.min(event.clientX, window.innerWidth - menuWidth - margin)}px`;
-    layerContextMenu.style.top = `${Math.min(event.clientY, window.innerHeight - menuHeight - margin)}px`;
+    const canToggleSelectedVisibility                 = fromLayersPanel && contextParts.length > 1 && !isSingleGroup;
+    hideLayersButton.hidden                           = usesLayersPanelControls || isSingleGroup;
+    showLayersButton.hidden                           = usesLayersPanelControls || !canToggleSelectedVisibility;
+    layerContextMenu.hidden                           = false;
+    const margin                                      = 8;
+    const menuWidth                                   = layerContextMenu.offsetWidth;
+    const menuHeight                                  = layerContextMenu.offsetHeight;
+    layerContextMenu.style.left                       = `${Math.min(event.clientX, window.innerWidth - menuWidth - margin)}px`;
+    layerContextMenu.style.top                        = `${Math.min(event.clientY, window.innerHeight - menuHeight - margin)}px`;
 }
 
 function setLayerVisibility(parts, hidden) {
@@ -2451,12 +2451,12 @@ function focusCanvasOnParts(parts) {
         .filter(Boolean);
     if (!bounds.length) return;
 
-    const left = Math.min(...bounds.map((bound) => bound.left));
-    const top = Math.min(...bounds.map((bound) => bound.top));
-    const right = Math.max(...bounds.map((bound) => bound.right));
+    const left   = Math.min(...bounds.map((bound) => bound.left));
+    const top    = Math.min(...bounds.map((bound) => bound.top));
+    const right  = Math.max(...bounds.map((bound) => bound.right));
     const bottom = Math.max(...bounds.map((bound) => bound.bottom));
-    viewX = canvas.clientWidth / 2 - ((left + right) / 2) * viewScale;
-    viewY = canvas.clientHeight / 2 - ((top + bottom) / 2) * viewScale;
+    viewX        = canvas.clientWidth / 2 - ((left + right) / 2) * viewScale;
+    viewY        = canvas.clientHeight / 2 - ((top + bottom) / 2) * viewScale;
     updateViewTransform();
     updateSelectionFrame();
 }
@@ -2482,8 +2482,8 @@ function flipSelectedParts(partsToFlip = contextMenuParts()) {
         // 會受旋轉與瀏覽器小數像素影響，連續反轉時會累積位移。
         const bounds = changes.map(({ image }) => selectionBoundsInWorld(image)).filter(Boolean);
         if (!bounds.length) return;
-        const left = Math.min(...bounds.map((bound) => bound.left));
-        const right = Math.max(...bounds.map((bound) => bound.right));
+        const left    = Math.min(...bounds.map((bound) => bound.left));
+        const right   = Math.max(...bounds.map((bound) => bound.right));
         const centerX = (left + right) / 2;
         changes.forEach(({ image, from }) => {
             image.style.left = `${2 * centerX - Number.parseFloat(from.left)}px`;
@@ -2501,17 +2501,17 @@ function flipSelectedParts(partsToFlip = contextMenuParts()) {
 
 function mergeSelectedParts() {
     const beforeOrder = orderedParts();
-    const parts = beforeOrder.filter((part) => selectedParts.has(part) && part.isConnected);
+    const parts       = beforeOrder.filter((part) => selectedParts.has(part) && part.isConnected);
     if (parts.length < 2) return;
     const previousGroups = parts.map((part) => ({ image: part, groupId: part.dataset.groupId ?? "", groupColor: part.dataset.groupColor ?? "" }));
-    const groupId = createGroupId();
-    const groupColor = createGroupColor();
+    const groupId        = createGroupId();
+    const groupColor     = createGroupColor();
     parts.forEach((part) => {
-        part.dataset.groupId = groupId;
+        part.dataset.groupId    = groupId;
         part.dataset.groupColor = groupColor;
     });
     const firstGroupIndex = beforeOrder.findIndex((part) => parts.includes(part));
-    const afterOrder = beforeOrder.filter((part) => !parts.includes(part));
+    const afterOrder      = beforeOrder.filter((part) => !parts.includes(part));
     afterOrder.splice(firstGroupIndex, 0, ...parts);
     setLayerOrder(afterOrder);
     setSelectedParts(parts, parts.at(-1));
@@ -2520,7 +2520,7 @@ function mergeSelectedParts() {
 
 function promoteScoreRoundPartsToNormalGroup() {
     const beforeOrder = orderedParts();
-    const parts = beforeOrder.filter((part) => part.dataset.scoreRoundPart === "true" && part.isConnected);
+    const parts       = beforeOrder.filter((part) => part.dataset.scoreRoundPart === "true" && part.isConnected);
     if (!parts.length) return;
 
     const previousGroups = parts.map((part) => ({
@@ -2530,14 +2530,14 @@ function promoteScoreRoundPartsToNormalGroup() {
     }));
 
     if (parts.length > 1) {
-        const groupId = createGroupId();
+        const groupId    = createGroupId();
         const groupColor = createGroupColor();
         parts.forEach((part) => {
-            part.dataset.groupId = groupId;
+            part.dataset.groupId    = groupId;
             part.dataset.groupColor = groupColor;
         });
         const firstGroupIndex = beforeOrder.findIndex((part) => parts.includes(part));
-        const afterOrder = beforeOrder.filter((part) => !parts.includes(part));
+        const afterOrder      = beforeOrder.filter((part) => !parts.includes(part));
         afterOrder.splice(firstGroupIndex, 0, ...parts);
         setLayerOrder(afterOrder);
         remember({ type: "group", parts: previousGroups, order: beforeOrder });
@@ -2550,9 +2550,9 @@ function promoteScoreRoundPartsToNormalGroup() {
 
 function ungroupContextParts() {
     const contextParts = contextMenuParts();
-    const groupIds = new Set(contextParts.map((part) => part?.dataset.groupId).filter(Boolean));
+    const groupIds     = new Set(contextParts.map((part) => part?.dataset.groupId).filter(Boolean));
     if (!groupIds.size) return;
-    const parts = orderedParts().filter((part) => groupIds.has(part.dataset.groupId));
+    const parts          = orderedParts().filter((part) => groupIds.has(part.dataset.groupId));
     const previousGroups = parts.map((part) => ({ image: part, groupId: part.dataset.groupId, groupColor: part.dataset.groupColor ?? "" }));
     parts.forEach((part) => {
         delete part.dataset.groupId;
@@ -2564,7 +2564,7 @@ function ungroupContextParts() {
 }
 
 function setSelectedPartsLocked(locked) {
-    const parts = contextMenuParts();
+    const parts       = contextMenuParts();
     const targetParts = parts.filter((part) => part?.isConnected);
     if (!targetParts.length) return;
     setPartsLocked(targetParts, locked);
@@ -2600,18 +2600,18 @@ function setPartLocked(part, locked) {
 }
 
 function updateLockStripeOverlay(part) {
-    const image = part.querySelector("img");
+    const image   = part.querySelector("img");
     const overlay = part.querySelector(".lock-stripe-overlay");
     if (!image?.naturalWidth || !image.naturalHeight || !overlay) return;
     const sprite = spriteFromElement(part);
 
-    overlay.width = sprite?.width ?? image.naturalWidth;
+    overlay.width  = sprite?.width ?? image.naturalWidth;
     overlay.height = sprite?.height ?? image.naturalHeight;
-    const context = overlay.getContext("2d");
+    const context  = overlay.getContext("2d");
     context.clearRect(0, 0, overlay.width, overlay.height);
     context.strokeStyle = "rgba(220, 38, 38, 0.25)";
-    context.lineWidth = Math.max(2, Math.round(Math.min(overlay.width, overlay.height) / 24));
-    const spacing = Math.max(7, Math.round(Math.min(overlay.width, overlay.height) / 9));
+    context.lineWidth   = Math.max(2, Math.round(Math.min(overlay.width, overlay.height) / 24));
+    const spacing       = Math.max(7, Math.round(Math.min(overlay.width, overlay.height) / 9));
 
     for (let offset = -overlay.height; offset < overlay.width + overlay.height; offset += spacing) {
         context.beginPath();
@@ -2652,10 +2652,10 @@ function timestampedFileName(extension) {
 }
 
 function downloadBlob(blob, fileName) {
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.href = url;
-    link.download = fileName;
+    const link         = document.createElement("a");
+    const url          = URL.createObjectURL(blob);
+    link.href          = url;
+    link.download      = fileName;
     link.style.display = "none";
     document.body.append(link);
     link.click();
@@ -2690,10 +2690,10 @@ async function pngBlobToDrawable(blob) {
     const url = URL.createObjectURL(blob);
     try {
         return await new Promise((resolve, reject) => {
-            const image = new Image();
-            image.onload = () => resolve(image);
+            const image   = new Image();
+            image.onload  = () => resolve(image);
             image.onerror = () => reject(new Error("無法讀取 PNG 圖片"));
-            image.src = url;
+            image.src     = url;
         });
     } finally {
         URL.revokeObjectURL(url);
@@ -2708,9 +2708,9 @@ function scoreCompositionEntries() {
     return currentScoreRoundParts()
         .filter((part) => !part.classList.contains("is-layer-hidden"))
         .map((part) => {
-            const image = part.querySelector("img");
+            const image  = part.querySelector("img");
             const sprite = spriteFromElement(part);
-            const state = positionOf(part);
+            const state  = positionOf(part);
             if (!image || !sprite) return null;
             return {
                 part,
@@ -2738,11 +2738,11 @@ async function createScoreCompositionPng() {
     if (!entries.length) throw new Error("找不到可複製的組合");
     await Promise.all(entries.map((entry) => waitForExportImage(entry.image)));
 
-    const bounds = scoreImageBounds(entries);
+    const bounds  = scoreImageBounds(entries);
     const padding = 20;
-    const scale = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
-    const output = document.createElement("canvas");
-    output.width = Math.max(1, Math.ceil((bounds.right - bounds.left + padding * 2) * scale));
+    const scale   = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
+    const output  = document.createElement("canvas");
+    output.width  = Math.max(1, Math.ceil((bounds.right - bounds.left + padding * 2) * scale));
     output.height = Math.max(1, Math.ceil((bounds.bottom - bounds.top + padding * 2) * scale));
     const context = output.getContext("2d");
     if (!context) throw new Error("無法建立 PNG 繪圖區");
@@ -2776,8 +2776,8 @@ async function createScoreCompositionPng() {
 async function scoreAnswerEntries() {
     if (!scoreRoundTarget || !scoreRoundTemplate) throw new Error("找不到正解資料");
     const scoreEntityType = targetEntityType(scoreRoundTarget);
-    const unit = loadedEntity(scoreEntityType, scoreRoundTarget.unitId) ?? await ensureUnitLoaded(scoreRoundTarget.unitId, scoreEntityType);
-    const assetsByCrop = new Map(availablePartsForRank(unit, scoreRoundTarget.rank)
+    const unit            = loadedEntity(scoreEntityType, scoreRoundTarget.unitId) ?? await ensureUnitLoaded(scoreRoundTarget.unitId, scoreEntityType);
+    const assetsByCrop    = new Map(availablePartsForRank(unit, scoreRoundTarget.rank)
         .map((part) => [cropIndexFromPartId(part.id), part])
         .filter(([cropIndex]) => cropIndex !== null));
     const sourceAssets = scoreRoundTemplate.parts
@@ -2804,11 +2804,11 @@ async function createScoreAnswerPng() {
     const entries = await scoreAnswerEntries();
     if (!entries.length) throw new Error("找不到正解圖片");
     await Promise.all(entries.map((entry) => waitForExportImage(entry.image)));
-    const bounds = scoreImageBounds(entries);
+    const bounds  = scoreImageBounds(entries);
     const padding = 20;
-    const scale = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
-    const output = document.createElement("canvas");
-    output.width = Math.max(1, Math.ceil((bounds.right - bounds.left + padding * 2) * scale));
+    const scale   = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
+    const output  = document.createElement("canvas");
+    output.width  = Math.max(1, Math.ceil((bounds.right - bounds.left + padding * 2) * scale));
     output.height = Math.max(1, Math.ceil((bounds.bottom - bounds.top + padding * 2) * scale));
     const context = output.getContext("2d");
     if (!context) throw new Error("無法建立正解 PNG 繪圖區");
@@ -2839,50 +2839,50 @@ function roundedCanvasRect(context, x, y, width, height, radius, fillStyle, stro
     context.fill();
     if (strokeStyle) {
         context.strokeStyle = strokeStyle;
-        context.lineWidth = 3;
+        context.lineWidth   = 3;
         context.stroke();
     }
 }
 
 function drawContainedImage(context, image, x, y, width, height, padding = 24) {
     const imageScale = Math.min((width - padding * 2) / image.width, (height - padding * 2) / image.height);
-    const drawWidth = image.width * imageScale;
+    const drawWidth  = image.width * imageScale;
     const drawHeight = image.height * imageScale;
     context.drawImage(image, x + (width - drawWidth) / 2, y + (height - drawHeight) / 2, drawWidth, drawHeight);
 }
 
 async function createScoreResultPng() {
-    const [playerBlob, answerBlob] = await Promise.all([createScoreCompositionPng(), createScoreAnswerPng()]);
+    const [playerBlob, answerBlob]   = await Promise.all([createScoreCompositionPng(), createScoreAnswerPng()]);
     const [playerImage, answerImage] = await Promise.all([pngBlobToDrawable(playerBlob), pngBlobToDrawable(answerBlob)]);
     try {
-        const isDark = root.dataset.theme === "dark";
-        const background = isDark ? "#171717" : "#bdbdbd";
-        const panel = isDark ? "#222222" : "#ffffff";
+        const isDark      = root.dataset.theme === "dark";
+        const background  = isDark ? "#171717" : "#bdbdbd";
+        const panel       = isDark ? "#222222" : "#ffffff";
         const answerPanel = isDark ? "#3c3c3c" : "#eeeeee";
-        const text = isDark ? "#f6f6f6" : "#202020";
-        const muted = isDark ? "#b9b9b9" : "#666666";
-        const output = document.createElement("canvas");
-        output.width = 1200;
-        output.height = 820;
-        const context = output.getContext("2d");
+        const text        = isDark ? "#f6f6f6" : "#202020";
+        const muted       = isDark ? "#b9b9b9" : "#666666";
+        const output      = document.createElement("canvas");
+        output.width      = 1200;
+        output.height     = 820;
+        const context     = output.getContext("2d");
         if (!context) throw new Error("無法建立結算 PNG 繪圖區");
         context.fillStyle = background;
         context.fillRect(0, 0, output.width, output.height);
 
-        const labelWidth = 82;
-        const scenesX = 110;
+        const labelWidth  = 82;
+        const scenesX     = 110;
         const scenesWidth = 780;
-        const statsX = 912;
-        const statsWidth = 240;
+        const statsX      = 912;
+        const statsWidth  = 240;
         const panelHeight = 374;
-        const firstY = 28;
-        const secondY = firstY + panelHeight + 16;
+        const firstY      = 28;
+        const secondY     = firstY + panelHeight + 16;
         roundedCanvasRect(context, scenesX, firstY, scenesWidth, panelHeight, 16, panel, isDark ? "#666" : "#777");
         roundedCanvasRect(context, scenesX, secondY, scenesWidth, panelHeight, 16, answerPanel, isDark ? "#aaa" : "#888");
         roundedCanvasRect(context, statsX, firstY, statsWidth, panelHeight * 2 + 16, 16, panel, isDark ? "#666" : "#777");
 
-        context.font = '700 28px "GenJyuuGothic", sans-serif';
-        context.textAlign = "center";
+        context.font         = '700 28px "GenJyuuGothic", sans-serif';
+        context.textAlign    = "center";
         context.textBaseline = "middle";
         [["你", firstY + panelHeight / 2], ["正解", secondY + panelHeight / 2]].forEach(([label, centerY]) => {
             roundedCanvasRect(context, 12, Number(centerY) - 27, labelWidth, 54, 27, isDark ? "#3c3c3c" : "#f1f1f1", isDark ? "#777" : "#aaa");
@@ -2892,9 +2892,9 @@ async function createScoreResultPng() {
         drawContainedImage(context, playerImage, scenesX, firstY, scenesWidth, panelHeight);
         drawContainedImage(context, answerImage, scenesX, secondY, scenesWidth, panelHeight);
 
-        const result = latestScoreResultView?.result;
+        const result      = latestScoreResultView?.result;
         context.fillStyle = text;
-        context.font = '900 78px "GenJyuuGothic", sans-serif';
+        context.font      = '900 78px "GenJyuuGothic", sans-serif';
         context.fillText(`${result?.total ?? "--"}`, statsX + statsWidth / 2, 116);
         context.font = '700 18px "GenJyuuGothic", sans-serif';
         context.fillText("分", statsX + statsWidth / 2 + 56, 130);
@@ -2906,12 +2906,12 @@ async function createScoreResultPng() {
             ["影像", result ? `+${Math.round(result.imageBonus)} 分` : "--"],
         ];
         metrics.forEach(([label, value], index) => {
-            const y = 220 + index * 105;
+            const y           = 220 + index * 105;
             context.fillStyle = muted;
-            context.font = '700 20px "GenJyuuGothic", sans-serif';
+            context.font      = '700 20px "GenJyuuGothic", sans-serif';
             context.fillText(label, statsX + statsWidth / 2, y);
             context.fillStyle = text;
-            context.font = '800 28px "GenJyuuGothic", sans-serif';
+            context.font      = '800 28px "GenJyuuGothic", sans-serif';
             context.fillText(value, statsX + statsWidth / 2, y + 36);
         });
         return canvasToPngBlob(output);
@@ -2948,16 +2948,16 @@ function markScoreImageCopied(button = null) {
 }
 
 function openScoreImageCopyFallback(blob, filename) {
-    const url = URL.createObjectURL(blob);
-    const dialog = document.createElement("dialog");
+    const url        = URL.createObjectURL(blob);
+    const dialog     = document.createElement("dialog");
     dialog.className = "score-copy-fallback";
     dialog.innerHTML = `
         <button class="score-copy-fallback-close" type="button" aria-label="關閉">×</button>
         <p>長按圖片後選擇「複製」或「儲存圖片」</p>
-        <img alt="可複製的結算圖片">
-        <a download="${filename}" href="${url}">儲存圖片</a>
+        <img alt    = "可複製的結算圖片">
+        <a download = "${filename}" href="${url}">儲存圖片</a>
     `;
-    const close = () => dialog.close();
+    const close                     = () => dialog.close();
     dialog.querySelector("img").src = url;
     dialog.querySelector(".score-copy-fallback-close").addEventListener("click", close);
     dialog.addEventListener("click", (event) => {
@@ -2990,26 +2990,26 @@ function updateScoreImageActionLabels() {
     ];
     actions.forEach(([button, label, iconClass]) => {
         button.setAttribute("aria-label", label);
-        button.title = label;
+        button.title                                      = label;
         button.querySelector(".icon-tooltip").textContent = label;
-        button.querySelector("i").className = iconClass;
+        button.querySelector("i").className               = iconClass;
     });
 }
 
 function resetScoreImageExports() {
     scoreImageExportVersion += 1;
-    scoreCompositionPngBlob = null;
-    scoreResultPngBlob = null;
-    scoreCompositionPngPromise = null;
-    scoreResultPngPromise = null;
+    scoreCompositionPngBlob             = null;
+    scoreResultPngBlob                  = null;
+    scoreCompositionPngPromise          = null;
+    scoreResultPngPromise               = null;
     scoreCopyCompositionButton.disabled = false;
-    scoreCopyResultButton.disabled = false;
+    scoreCopyResultButton.disabled      = false;
 }
 
 function prepareScoreImageExport(kind) {
     const isComposition = kind === "composition";
-    const blob = isComposition ? scoreCompositionPngBlob : scoreResultPngBlob;
-    const pending = isComposition ? scoreCompositionPngPromise : scoreResultPngPromise;
+    const blob          = isComposition ? scoreCompositionPngBlob : scoreResultPngBlob;
+    const pending       = isComposition ? scoreCompositionPngPromise : scoreResultPngPromise;
     if (blob) return Promise.resolve(blob);
     if (pending) return pending;
 
@@ -3018,16 +3018,16 @@ function prepareScoreImageExport(kind) {
     const promise = factory().then((createdBlob) => {
         if (version === scoreImageExportVersion) {
             if (isComposition) scoreCompositionPngBlob = createdBlob;
-            else scoreResultPngBlob = createdBlob;
+            else scoreResultPngBlob                    = createdBlob;
         }
         return createdBlob;
     }).finally(() => {
         if (version !== scoreImageExportVersion) return;
         if (isComposition) scoreCompositionPngPromise = null;
-        else scoreResultPngPromise = null;
+        else scoreResultPngPromise                    = null;
     });
     if (isComposition) scoreCompositionPngPromise = promise;
-    else scoreResultPngPromise = promise;
+    else scoreResultPngPromise                    = promise;
     return promise;
 }
 
@@ -3100,14 +3100,14 @@ function copyScoreImageWithFeedback(createPng, button = null, filename = "battle
 }
 
 async function createPngExport() {
-    const parts = orderedParts().filter((part) => !part.classList.contains("is-layer-hidden"));
+    const parts  = orderedParts().filter((part) => !part.classList.contains("is-layer-hidden"));
     const images = parts.map((part) => part.querySelector("img"));
     if (images.some((image) => !image)) throw new Error("找不到圖層圖片");
     await Promise.all(images.map((image) => waitForExportImage(image)));
 
-    const scale = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
-    const output = document.createElement("canvas");
-    output.width = Math.round(canvas.clientWidth * scale);
+    const scale   = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
+    const output  = document.createElement("canvas");
+    output.width  = Math.round(canvas.clientWidth * scale);
     output.height = Math.round(canvas.clientHeight * scale);
     const context = output.getContext("2d");
     if (!context) throw new Error("無法建立 PNG 繪圖區");
@@ -3116,9 +3116,9 @@ async function createPngExport() {
     parts.forEach((part) => {
         const image = part.querySelector("img");
         if (!image?.naturalWidth || !image.naturalHeight) throw new Error("角色圖片尚未載入完成");
-        const state = positionOf(part);
+        const state     = positionOf(part);
         const partScale = Number.parseFloat(state.scale);
-        const angle = Number.parseFloat(state.rotation) * Math.PI / 180;
+        const angle     = Number.parseFloat(state.rotation) * Math.PI / 180;
         context.save();
         context.translate(viewX + Number.parseFloat(state.left) * viewScale, viewY + Number.parseFloat(state.top) * viewScale);
         context.scale(partScale * viewScale, partScale * viewScale);
@@ -3182,7 +3182,7 @@ function copyCurrentCanvasImage() {
 }
 
 function shareCurrentCanvasImage() {
-    const png = createPngExport();
+    const png                                                   = createPngExport();
     if (shareCanvasImageButton) shareCanvasImageButton.disabled = true;
     void (async () => {
         try {
@@ -3241,7 +3241,7 @@ async function saveLayerProject() {
             ...positionOf(part),
         })),
     };
-    const blob = new Blob([JSON.stringify(project, null, 2)], { type: "application/json" });
+    const blob     = new Blob([JSON.stringify(project, null, 2)], { type: "application/json" });
     const fileName = timestampedFileName("tbc-puzzle");
     if ("showSaveFilePicker" in window) {
         try {
@@ -3275,7 +3275,7 @@ function readLayerProjectText(file) {
 }
 
 async function importLayerProject(event) {
-    const file = event.target.files?.[0];
+    const file         = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
 
@@ -3285,12 +3285,12 @@ async function importLayerProject(event) {
         const layers = project.layers.filter((layer) => typeof layer?.src === "string" && layer.src.length > 0);
 
         orderedParts().forEach((part) => part.remove());
-        history.length = 0;
+        history.length     = 0;
         redoHistory.length = 0;
 
         const importedParts = layers.map((layer, index) => {
             const left = Number.parseFloat(layer.left);
-            const top = Number.parseFloat(layer.top);
+            const top  = Number.parseFloat(layer.top);
             const part = addPartToCanvas({
                 src: layer.src,
                 name: layer.name || localized(`Layer ${index + 1}`, `圖層 ${index + 1}`),
@@ -3301,20 +3301,20 @@ async function importLayerProject(event) {
                 scale: layer.scale,
                 flipX: layer.flipX,
             });
-            const zIndex = Number(layer.zIndex);
+            const zIndex      = Number(layer.zIndex);
             part.style.zIndex = String(Number.isFinite(zIndex) ? zIndex : index + 1);
             part.classList.toggle("is-layer-hidden", Boolean(layer.hidden));
             part.classList.toggle("is-layer-locked", Boolean(layer.locked));
-            if (typeof layer.groupId === "string" && layer.groupId) part.dataset.groupId = layer.groupId;
+            if (typeof layer.groupId === "string" && layer.groupId) part.dataset.groupId          = layer.groupId;
             if (typeof layer.groupColor === "string" && layer.groupColor) part.dataset.groupColor = layer.groupColor;
             return part;
         });
 
-        history.length = 0;
+        history.length     = 0;
         redoHistory.length = 0;
-        viewScale = clamp(Number(project.view?.scale) || 1, 0.5, 2.5);
-        viewX = Number.isFinite(Number(project.view?.x)) ? Number(project.view.x) : canvas.clientWidth / 2;
-        viewY = Number.isFinite(Number(project.view?.y)) ? Number(project.view.y) : canvas.clientHeight / 2;
+        viewScale          = clamp(Number(project.view?.scale) || 1, 0.5, 2.5);
+        viewX              = Number.isFinite(Number(project.view?.x)) ? Number(project.view.x) : canvas.clientWidth / 2;
+        viewY              = Number.isFinite(Number(project.view?.y)) ? Number(project.view.y) : canvas.clientHeight / 2;
         updateViewTransform();
         setSelectedParts([], null);
         updateUndoButton();
@@ -3335,22 +3335,22 @@ function renderLayersPanel() {
     layersPanel.replaceChildren();
     if (!parts.length) return;
 
-    const title = document.createElement("p");
-    title.className = "layers-panel-title";
+    const title       = document.createElement("p");
+    title.className   = "layers-panel-title";
     title.textContent = "";
     layersPanel.append(title);
     const groupContainers = new Map();
 
     [...parts].reverse().forEach((part) => {
-        const row = document.createElement("div");
-        const thumbnail = createAssetPreview(assetFromElement(part), "layer-thumbnail", 58, 44);
-        const visibility = document.createElement("button");
-        const lock = document.createElement("button");
-        row.className = "layer-row";
+        const row              = document.createElement("div");
+        const thumbnail        = createAssetPreview(assetFromElement(part), "layer-thumbnail", 58, 44);
+        const visibility       = document.createElement("button");
+        const lock             = document.createElement("button");
+        row.className          = "layer-row";
         row.dataset.layerIndex = String(parts.indexOf(part));
-        row.draggable = !isPartMovementLocked(part);
-        row.title = part.dataset.name;
-        row.tabIndex = 0;
+        row.draggable          = !isPartMovementLocked(part);
+        row.title              = part.dataset.name;
+        row.tabIndex           = 0;
         row.setAttribute("role", "button");
         row.setAttribute("aria-label", localized(`Select layer: ${part.dataset.name}`, `選取圖層：${part.dataset.name}`));
         row.classList.toggle("is-selected", selectedParts.has(part));
@@ -3359,11 +3359,11 @@ function renderLayersPanel() {
         row.classList.toggle("is-flipped", part.dataset.flipX === "-1");
 
         visibility.className = "layer-visibility";
-        visibility.type = "button";
+        visibility.type      = "button";
         visibility.setAttribute("aria-label", part.classList.contains("is-layer-hidden") ? localized(`Show ${part.dataset.name}`, `顯示 ${part.dataset.name}`) : localized(`Hide ${part.dataset.name}`, `隱藏 ${part.dataset.name}`));
         visibility.innerHTML = `<i class="fa-solid ${part.classList.contains("is-layer-hidden") ? "fa-eye-slash" : "fa-eye"}" aria-hidden="true"></i>`;
-        lock.className = "layer-lock";
-        lock.type = "button";
+        lock.className       = "layer-lock";
+        lock.type            = "button";
         lock.setAttribute("aria-label", part.classList.contains("is-layer-locked") ? localized(`Unlock ${part.dataset.name}`, `解除鎖定 ${part.dataset.name}`) : localized(`Lock ${part.dataset.name}`, `鎖定 ${part.dataset.name}`));
         lock.innerHTML = `<i class="fa-solid ${part.classList.contains("is-layer-locked") ? "fa-lock" : "fa-lock-open"}" aria-hidden="true"></i>`;
 
@@ -3414,10 +3414,10 @@ function renderLayersPanel() {
             clearLayerDragState();
         });
         row.addEventListener("dragover", (event) => {
-            const [source] = draggedLayerParts();
+            const [source]              = draggedLayerParts();
             const canReorderInsideGroup = source?.dataset.groupId && source.dataset.groupId === part.dataset.groupId && source !== part;
-            const canReorderUngrouped = !source?.dataset.groupId && !part.dataset.groupId && source !== part;
-            const canPlaceGroup = source?.dataset.groupId && !part.dataset.groupId;
+            const canReorderUngrouped   = !source?.dataset.groupId && !part.dataset.groupId && source !== part;
+            const canPlaceGroup         = source?.dataset.groupId && !part.dataset.groupId;
             if (!canReorderInsideGroup && !canReorderUngrouped && !canPlaceGroup) return;
             event.preventDefault();
             row.classList.add("is-drop-target");
@@ -3425,7 +3425,7 @@ function renderLayersPanel() {
         row.addEventListener("dragleave", () => row.classList.remove("is-drop-target"));
         row.addEventListener("drop", (event) => {
             const sourceParts = draggedLayerParts();
-            const [source] = sourceParts;
+            const [source]    = sourceParts;
             const canDropOnRow = source && source !== part && (
                 (source.dataset.groupId && source.dataset.groupId === part.dataset.groupId)
                 || (!source.dataset.groupId && !part.dataset.groupId)
@@ -3437,7 +3437,7 @@ function renderLayersPanel() {
             // drop loses its source and appears to do nothing.
             if (!canDropOnRow) return;
             event.preventDefault();
-            const bounds = row.getBoundingClientRect();
+            const bounds      = row.getBoundingClientRect();
             const insertAbove = event.clientY <= bounds.top + bounds.height / 2;
             if (part.dataset.groupId) {
                 placePartWithinGroup(source, part, insertAbove);
@@ -3455,34 +3455,34 @@ function renderLayersPanel() {
 
         let groupContainer = groupContainers.get(part.dataset.groupId);
         if (!groupContainer) {
-            groupContainer = document.createElement("section");
-            groupContainer.className = "layer-group";
+            groupContainer                      = document.createElement("section");
+            groupContainer.className            = "layer-group";
             groupContainer.dataset.layerGroupId = part.dataset.groupId;
-            const groupParts = orderedParts().filter((item) => item.dataset.groupId === part.dataset.groupId);
+            const groupParts                    = orderedParts().filter((item) => item.dataset.groupId === part.dataset.groupId);
             groupContainer.classList.toggle("is-collapsed", collapsedGroupIds.has(part.dataset.groupId));
             groupContainer.classList.toggle("is-selected", groupParts.length > 0 && groupParts.every((item) => selectedParts.has(item)));
             groupContainer.draggable = !orderedParts().some((item) => item.dataset.groupId === part.dataset.groupId && item.classList.contains("is-layer-locked"));
             groupContainer.style.setProperty("--group-color", part.dataset.groupColor || "color-mix(in srgb, var(--button-hover-bg) 65%, transparent)");
-            const header = document.createElement("div");
+            const header     = document.createElement("div");
             header.className = "layer-group-header";
-            const label = document.createElement("button");
-            label.className = "layer-group-collapse";
-            label.type = "button";
+            const label      = document.createElement("button");
+            label.className  = "layer-group-collapse";
+            label.type       = "button";
             label.setAttribute("aria-label", collapsedGroupIds.has(part.dataset.groupId) ? localized("Expand group", "展開群組") : localized("Collapse group", "收合群組"));
             label.setAttribute("aria-expanded", String(!collapsedGroupIds.has(part.dataset.groupId)));
-            label.innerHTML = '<i class="fa-solid fa-object-group" aria-hidden="true"></i>';
-            const controls = document.createElement("div");
-            controls.className = "layer-group-controls";
-            const visibilityToggle = document.createElement("button");
-            const lockToggle = document.createElement("button");
-            const allHidden = groupParts.every((item) => item.classList.contains("is-layer-hidden"));
-            const allLocked = groupParts.every((item) => item.classList.contains("is-layer-locked"));
+            label.innerHTML            = '<i class="fa-solid fa-object-group" aria-hidden="true"></i>';
+            const controls             = document.createElement("div");
+            controls.className         = "layer-group-controls";
+            const visibilityToggle     = document.createElement("button");
+            const lockToggle           = document.createElement("button");
+            const allHidden            = groupParts.every((item) => item.classList.contains("is-layer-hidden"));
+            const allLocked            = groupParts.every((item) => item.classList.contains("is-layer-locked"));
             visibilityToggle.className = "layer-group-control";
-            visibilityToggle.type = "button";
+            visibilityToggle.type      = "button";
             visibilityToggle.setAttribute("aria-label", allHidden ? localized("All group layers are hidden. Click to show all.", "群組目前全部消失，點擊全部出現") : localized("All group layers are shown. Click to hide all.", "群組目前全部出現，點擊全部消失"));
             visibilityToggle.innerHTML = `<i class="fa-solid ${allHidden ? "fa-eye-slash" : "fa-eye"}" aria-hidden="true"></i>`;
-            lockToggle.className = "layer-group-control";
-            lockToggle.type = "button";
+            lockToggle.className       = "layer-group-control";
+            lockToggle.type            = "button";
             lockToggle.setAttribute("aria-label", allLocked ? localized("All group layers are locked. Click to unlock all.", "群組目前全部鎖定，點擊全部解鎖") : localized("All group layers are unlocked. Click to lock all.", "群組目前全部解鎖，點擊全部鎖定"));
             lockToggle.innerHTML = `<i class="fa-solid ${allLocked ? "fa-lock" : "fa-lock-open"}" aria-hidden="true"></i>`;
             visibilityToggle.addEventListener("click", (event) => {
@@ -3511,7 +3511,7 @@ function renderLayersPanel() {
                     clientY: event.clientY,
                 };
                 if (event.ctrlKey || event.metaKey) {
-                    const nextSelection = new Set(selectedParts);
+                    const nextSelection   = new Set(selectedParts);
                     const isGroupSelected = groupParts.every((item) => nextSelection.has(item));
                     groupParts.forEach((item) => {
                         if (isGroupSelected) nextSelection.delete(item);
@@ -3537,7 +3537,7 @@ function renderLayersPanel() {
                 event.dataTransfer.effectAllowed = "move";
                 event.dataTransfer.setData("text/plain", "layer-group");
                 layersPanel.dataset.draggingGroupId = part.dataset.groupId;
-                const pointerGrab = layerGroupPointerGrab?.groupId === part.dataset.groupId ? layerGroupPointerGrab : null;
+                const pointerGrab                   = layerGroupPointerGrab?.groupId === part.dataset.groupId ? layerGroupPointerGrab : null;
                 setGroupDragImage(event, groupContainer, pointerGrab);
             });
             groupContainer.addEventListener("dragend", clearLayerDragState);
@@ -3553,7 +3553,7 @@ function renderLayersPanel() {
             groupContainer.addEventListener("drop", (event) => {
                 event.preventDefault();
                 const targetParts = orderedParts().filter((item) => item.dataset.groupId === part.dataset.groupId);
-                const bounds = groupContainer.getBoundingClientRect();
+                const bounds      = groupContainer.getBoundingClientRect();
                 moveLayerBlock(draggedLayerParts(), targetParts, event.clientY <= bounds.top + bounds.height / 2);
                 clearLayerDragState();
             });
@@ -3563,10 +3563,10 @@ function renderLayersPanel() {
         groupContainer.append(row);
     });
 
-    const unlockAll = document.createElement("button");
+    const unlockAll     = document.createElement("button");
     unlockAll.className = "unlock-all-layers";
-    unlockAll.type = "button";
-    unlockAll.disabled = !parts.some((part) => part.classList.contains("is-layer-locked"));
+    unlockAll.type      = "button";
+    unlockAll.disabled  = !parts.some((part) => part.classList.contains("is-layer-locked"));
     unlockAll.innerHTML = `<i class="fa-solid fa-lock-open" aria-hidden="true"></i><span>${localized("Unlock all", "全部解鎖")}</span>`;
     unlockAll.addEventListener("click", unlockAllLayers);
     layersPanel.append(unlockAll);
@@ -3596,8 +3596,8 @@ function moveSelectedLayer(direction, toEdge = false) {
 
 function resetCanvasView() {
     viewScale = 1;
-    viewX = canvas.clientWidth / 2;
-    viewY = canvas.clientHeight / 2;
+    viewX     = canvas.clientWidth / 2;
+    viewY     = canvas.clientHeight / 2;
     updateViewTransform();
     updateSelectionFrame();
 }
@@ -3619,7 +3619,7 @@ function remember(action) {
 
 function restoreImage(image, position) {
     image.style.left = position.left;
-    image.style.top = position.top;
+    image.style.top  = position.top;
     image.style.setProperty("--rotation", position.rotation ?? "0deg");
     setPartScale(image, position.scale ?? "1.6");
     setPartFlip(image, position.flipX ?? "1");
@@ -3651,7 +3651,7 @@ function undo() {
     });
     if (action.type === "group" && action.order) setLayerOrder(action.order);
     if (action.type === "ungroup") action.parts.forEach(({ image, groupId, groupColor }) => {
-        image.dataset.groupId = groupId;
+        image.dataset.groupId                    = groupId;
         if (groupColor) image.dataset.groupColor = groupColor;
     });
     if (action.type === "layers") setLayerOrder(action.order);
@@ -3701,7 +3701,7 @@ function redo() {
 }
 
 function isOverTrash(clientX, clientY) {
-    const bounds = trashZone.getBoundingClientRect();
+    const bounds     = trashZone.getBoundingClientRect();
     const hitPadding = 40;
     return clientX >= bounds.left - hitPadding
         && clientX <= bounds.right + hitPadding
@@ -3712,7 +3712,7 @@ function isOverTrash(clientX, clientY) {
 function removePlacedPart(image) {
     if (!image.isConnected) return;
     remember({ type: "remove", image, position: positionOf(image) });
-    const wasSelected = selectedParts.has(image);
+    const wasSelected    = selectedParts.has(image);
     const remainingParts = [...selectedParts].filter((part) => part !== image && part.isConnected);
     image.remove();
     if (wasSelected) {
@@ -3755,8 +3755,8 @@ function playTrashClearAnimation() {
 function startClearHold(event) {
     event.preventDefault();
     const holdDuration = 800;
-    const startedAt = performance.now();
-    let frameId = null;
+    const startedAt    = performance.now();
+    let frameId        = null;
     trashZone.setPointerCapture(event.pointerId);
     trashZone.classList.add("is-clearing");
 
@@ -3799,13 +3799,13 @@ function opaqueHitMaskForPart(part) {
     const image = loadedPartImages.get(source) ?? part.querySelector("img");
     if (!image?.complete || !image.naturalWidth) return null;
     try {
-        const raster = document.createElement("canvas");
-        raster.width = sprite.width;
+        const raster  = document.createElement("canvas");
+        raster.width  = sprite.width;
         raster.height = sprite.height;
         const context = raster.getContext("2d", { willReadFrequently: true });
         context.drawImage(image, sprite.x, sprite.y, sprite.width, sprite.height, 0, 0, sprite.width, sprite.height);
         const pixels = context.getImageData(0, 0, sprite.width, sprite.height).data;
-        const alpha = new Uint8Array(sprite.width * sprite.height);
+        const alpha  = new Uint8Array(sprite.width * sprite.height);
         for (let index = 0; index < alpha.length; index += 1) alpha[index] = pixels[index * 4 + 3];
         const mask = { width: sprite.width, height: sprite.height, alpha };
         opaqueHitMasks.set(key, mask);
@@ -3823,26 +3823,26 @@ function isOpaquePartHit(part, clientX, clientY) {
     const sprite = spriteFromElement(part);
     if (!sprite) return true;
     const position = positionOf(part);
-    const scale = Math.abs(Number.parseFloat(position.scale));
-    const flipX = Number.parseFloat(position.flipX) || 1;
-    const left = Number.parseFloat(position.left);
-    const top = Number.parseFloat(position.top);
+    const scale    = Math.abs(Number.parseFloat(position.scale));
+    const flipX    = Number.parseFloat(position.flipX) || 1;
+    const left     = Number.parseFloat(position.left);
+    const top      = Number.parseFloat(position.top);
     if (!Number.isFinite(scale) || !Number.isFinite(left) || !Number.isFinite(top) || scale === 0) return true;
 
-    const point = clientToWorld(clientX, clientY);
-    const radians = (Number.parseFloat(position.rotation) || 0) * (Math.PI / 180);
-    const dx = point.x - left;
-    const dy = point.y - top;
+    const point    = clientToWorld(clientX, clientY);
+    const radians  = (Number.parseFloat(position.rotation) || 0) * (Math.PI / 180);
+    const dx       = point.x - left;
+    const dy       = point.y - top;
     const rotatedX = Math.cos(radians) * dx + Math.sin(radians) * dy;
     const rotatedY = -Math.sin(radians) * dx + Math.cos(radians) * dy;
-    const localX = rotatedX / (scale * flipX) + sprite.width / 2;
-    const localY = rotatedY / scale + sprite.height / 2;
-    const mask = opaqueHitMaskForPart(part);
+    const localX   = rotatedX / (scale * flipX) + sprite.width / 2;
+    const localY   = rotatedY / scale + sprite.height / 2;
+    const mask     = opaqueHitMaskForPart(part);
     if (!mask) return localX >= 0 && localX < sprite.width && localY >= 0 && localY < sprite.height;
 
     const tolerance = Math.max(1, Math.ceil(3 / Math.max(viewScale * scale, 0.01)));
-    const centerX = Math.round(localX);
-    const centerY = Math.round(localY);
+    const centerX   = Math.round(localX);
+    const centerY   = Math.round(localY);
     for (let offsetY = -tolerance; offsetY <= tolerance; offsetY += 1) {
         for (let offsetX = -tolerance; offsetX <= tolerance; offsetX += 1) {
             if (offsetX ** 2 + offsetY ** 2 > tolerance ** 2) continue;
@@ -3870,7 +3870,7 @@ function beginPlacedPartDrag(image, event) {
     if (event.ctrlKey || event.metaKey) {
         event.preventDefault();
         const nextSelection = new Set(selectedParts);
-        const members = image.dataset.groupId
+        const members       = image.dataset.groupId
             ? orderedParts().filter((part) => part.dataset.groupId === image.dataset.groupId)
             : [image];
         const isGroupSelected = members.every((member) => nextSelection.has(member));
@@ -3895,13 +3895,13 @@ function beginPlacedPartDrag(image, event) {
     if (selectedDragParts.length <= 1 && dragParts.length > 1) setSelectedParts(dragParts, image);
     if (dragParts.length === 1) selectPlacedPart(image);
 
-    const from = dragParts.map((part) => ({ image: part, position: positionOf(part) }));
-    const startPoint = clientToWorld(event.clientX, event.clientY);
+    const from          = dragParts.map((part) => ({ image: part, position: positionOf(part) }));
+    const startPoint    = clientToWorld(event.clientX, event.clientY);
     const imagePosition = positionOf(image);
-    const grabOffsetX = startPoint.x - Number.parseFloat(imagePosition.left);
-    const grabOffsetY = startPoint.y - Number.parseFloat(imagePosition.top);
-    let moved = false;
-    let overTrash = false;
+    const grabOffsetX   = startPoint.x - Number.parseFloat(imagePosition.left);
+    const grabOffsetY   = startPoint.y - Number.parseFloat(imagePosition.top);
+    let moved           = false;
+    let overTrash       = false;
     image.setPointerCapture(event.pointerId);
 
     const move = (pointerEvent) => {
@@ -3911,11 +3911,11 @@ function beginPlacedPartDrag(image, event) {
             const deltaY = point.y - startPoint.y;
             from.forEach(({ image: part, position }) => {
                 part.style.left = `${Number.parseFloat(position.left) + deltaX}px`;
-                part.style.top = `${Number.parseFloat(position.top) + deltaY}px`;
+                part.style.top  = `${Number.parseFloat(position.top) + deltaY}px`;
             });
         } else {
             image.style.left = `${point.x - grabOffsetX}px`;
-            image.style.top = `${point.y - grabOffsetY}px`;
+            image.style.top  = `${point.y - grabOffsetY}px`;
         }
         updateSelectionFrame();
         overTrash = isOverTrash(pointerEvent.clientX, pointerEvent.clientY);
@@ -3931,7 +3931,7 @@ function beginPlacedPartDrag(image, event) {
         if (overTrash) {
             from.forEach(({ image: part, position }) => {
                 part.style.left = position.left;
-                part.style.top = position.top;
+                part.style.top  = position.top;
             });
             removePlacedGroup(dragParts, from);
             if (dragParts.length > 1) {
@@ -3968,7 +3968,7 @@ function makePlacedPartDraggable(image) {
         if (event.ctrlKey || event.metaKey) {
             event.preventDefault();
             const nextSelection = new Set(selectedParts);
-            const members = image.dataset.groupId
+            const members       = image.dataset.groupId
                 ? orderedParts().filter((part) => part.dataset.groupId === image.dataset.groupId)
                 : [image];
             const isGroupSelected = members.every((member) => nextSelection.has(member));
@@ -3993,13 +3993,13 @@ function makePlacedPartDraggable(image) {
         if (selectedDragParts.length <= 1 && dragParts.length > 1) setSelectedParts(dragParts, image);
         if (dragParts.length === 1) selectPlacedPart(image);
 
-        const from = dragParts.map((part) => ({ image: part, position: positionOf(part) }));
-        const startPoint = clientToWorld(event.clientX, event.clientY);
+        const from          = dragParts.map((part) => ({ image: part, position: positionOf(part) }));
+        const startPoint    = clientToWorld(event.clientX, event.clientY);
         const imagePosition = positionOf(image);
-        const grabOffsetX = startPoint.x - Number.parseFloat(imagePosition.left);
-        const grabOffsetY = startPoint.y - Number.parseFloat(imagePosition.top);
-        let moved = false;
-        let overTrash = false;
+        const grabOffsetX   = startPoint.x - Number.parseFloat(imagePosition.left);
+        const grabOffsetY   = startPoint.y - Number.parseFloat(imagePosition.top);
+        let moved           = false;
+        let overTrash       = false;
         image.setPointerCapture(event.pointerId);
 
         const move = (pointerEvent) => {
@@ -4009,11 +4009,11 @@ function makePlacedPartDraggable(image) {
                 const deltaY = point.y - startPoint.y;
                 from.forEach(({ image: part, position }) => {
                     part.style.left = `${Number.parseFloat(position.left) + deltaX}px`;
-                    part.style.top = `${Number.parseFloat(position.top) + deltaY}px`;
+                    part.style.top  = `${Number.parseFloat(position.top) + deltaY}px`;
                 });
             } else {
                 image.style.left = `${point.x - grabOffsetX}px`;
-                image.style.top = `${point.y - grabOffsetY}px`;
+                image.style.top  = `${point.y - grabOffsetY}px`;
             }
             updateSelectionFrame();
             overTrash = isOverTrash(pointerEvent.clientX, pointerEvent.clientY);
@@ -4029,7 +4029,7 @@ function makePlacedPartDraggable(image) {
             if (overTrash) {
                 from.forEach(({ image: part, position }) => {
                     part.style.left = position.left;
-                    part.style.top = position.top;
+                    part.style.top  = position.top;
                 });
                 removePlacedGroup(dragParts, from);
                 if (dragParts.length > 1) {
@@ -4066,15 +4066,15 @@ function startMarqueeSelection(event) {
     canvas.setPointerCapture(event.pointerId);
 
     const drawMarquee = (pointerEvent) => {
-        const endX = clamp(pointerEvent.clientX - canvasBounds.left, 0, canvasBounds.width);
-        const endY = clamp(pointerEvent.clientY - canvasBounds.top, 0, canvasBounds.height);
-        const left = Math.min(start.x, endX);
-        const top = Math.min(start.y, endY);
-        const width = Math.abs(endX - start.x);
-        const height = Math.abs(endY - start.y);
-        marqueeSelection.style.left = `${left}px`;
-        marqueeSelection.style.top = `${top}px`;
-        marqueeSelection.style.width = `${width}px`;
+        const endX                    = clamp(pointerEvent.clientX - canvasBounds.left, 0, canvasBounds.width);
+        const endY                    = clamp(pointerEvent.clientY - canvasBounds.top, 0, canvasBounds.height);
+        const left                    = Math.min(start.x, endX);
+        const top                     = Math.min(start.y, endY);
+        const width                   = Math.abs(endX - start.x);
+        const height                  = Math.abs(endY - start.y);
+        marqueeSelection.style.left   = `${left}px`;
+        marqueeSelection.style.top    = `${top}px`;
+        marqueeSelection.style.width  = `${width}px`;
         marqueeSelection.style.height = `${height}px`;
         if (width > 4 || height > 4) {
             hasDragged = true;
@@ -4092,11 +4092,11 @@ function startMarqueeSelection(event) {
             return;
         }
 
-        const endX = clamp(pointerEvent.clientX, canvasBounds.left, canvasBounds.right);
-        const endY = clamp(pointerEvent.clientY, canvasBounds.top, canvasBounds.bottom);
-        const left = Math.min(event.clientX, endX);
-        const right = Math.max(event.clientX, endX);
-        const top = Math.min(event.clientY, endY);
+        const endX   = clamp(pointerEvent.clientX, canvasBounds.left, canvasBounds.right);
+        const endY   = clamp(pointerEvent.clientY, canvasBounds.top, canvasBounds.bottom);
+        const left   = Math.min(event.clientX, endX);
+        const right  = Math.max(event.clientX, endX);
+        const top    = Math.min(event.clientY, endY);
         const bottom = Math.max(event.clientY, endY);
         const partsInRange = orderedParts().filter((part) => {
             const bounds = part.getBoundingClientRect();
@@ -4120,12 +4120,12 @@ function startMarqueeSelection(event) {
 function zoomCanvas(event) {
     if (event.target.closest("button, input, select, .layers-panel")) return;
     event.preventDefault();
-    const bounds = canvas.getBoundingClientRect();
+    const bounds     = canvas.getBoundingClientRect();
     const worldPoint = clientToWorld(event.clientX, event.clientY);
-    const nextScale = clamp(viewScale * Math.exp(-event.deltaY * 0.0015), 0.5, 2.5);
-    viewX = event.clientX - bounds.left - worldPoint.x * nextScale;
-    viewY = event.clientY - bounds.top - worldPoint.y * nextScale;
-    viewScale = nextScale;
+    const nextScale  = clamp(viewScale * Math.exp(-event.deltaY * 0.0015), 0.5, 2.5);
+    viewX            = event.clientX - bounds.left - worldPoint.x * nextScale;
+    viewY            = event.clientY - bounds.top - worldPoint.y * nextScale;
+    viewScale        = nextScale;
     updateViewTransform();
     updateSelectionFrame();
 }
@@ -4133,8 +4133,8 @@ function zoomCanvas(event) {
 function startCanvasPan(event) {
     if (event.button !== 1 && event.button !== 2) return;
     event.preventDefault();
-    const startX = event.clientX;
-    const startY = event.clientY;
+    const startX  = event.clientX;
+    const startY  = event.clientY;
     const originX = viewX;
     const originY = viewY;
     canvas.setPointerCapture(event.pointerId);
@@ -4170,7 +4170,7 @@ function makePlacedPartRotatable(image) {
 
         const rotate = (pointerEvent) => {
             const bounds = image.getBoundingClientRect();
-            const angle = Math.atan2(pointerEvent.clientY - (bounds.top + bounds.height / 2), pointerEvent.clientX - (bounds.left + bounds.width / 2)) * 180 / Math.PI + 90;
+            const angle  = Math.atan2(pointerEvent.clientY - (bounds.top + bounds.height / 2), pointerEvent.clientX - (bounds.left + bounds.width / 2)) * 180 / Math.PI + 90;
             image.style.setProperty("--rotation", `${Math.round(snapAngle(angle))}deg`);
             updateSelectionFrame();
         };
@@ -4196,25 +4196,25 @@ function makeSelectedGroupRotatable() {
         event.preventDefault();
         event.stopPropagation();
         const frameBounds = selectionFrame.getBoundingClientRect();
-        const center = clientToWorld(frameBounds.left + frameBounds.width / 2, frameBounds.top + frameBounds.height / 2);
-        const startAngle = Math.atan2(event.clientY - (frameBounds.top + frameBounds.height / 2), event.clientX - (frameBounds.left + frameBounds.width / 2)) * 180 / Math.PI;
-        const from = parts.map((image) => ({ image, position: positionOf(image) }));
+        const center      = clientToWorld(frameBounds.left + frameBounds.width / 2, frameBounds.top + frameBounds.height / 2);
+        const startAngle  = Math.atan2(event.clientY - (frameBounds.top + frameBounds.height / 2), event.clientX - (frameBounds.left + frameBounds.width / 2)) * 180 / Math.PI;
+        const from        = parts.map((image) => ({ image, position: positionOf(image) }));
         selectionRotateHandle.setPointerCapture(event.pointerId);
 
         const rotate = (pointerEvent) => {
-            const currentAngle = Math.atan2(pointerEvent.clientY - (frameBounds.top + frameBounds.height / 2), pointerEvent.clientX - (frameBounds.left + frameBounds.width / 2)) * 180 / Math.PI;
-            const rawDelta = currentAngle - startAngle;
+            const currentAngle      = Math.atan2(pointerEvent.clientY - (frameBounds.top + frameBounds.height / 2), pointerEvent.clientX - (frameBounds.left + frameBounds.width / 2)) * 180 / Math.PI;
+            const rawDelta          = currentAngle - startAngle;
             const primaryStartAngle = Number.parseFloat(from[0].position.rotation);
-            const delta = snapAngle(primaryStartAngle + rawDelta) - primaryStartAngle;
-            const radians = delta * Math.PI / 180;
-            const cosine = Math.cos(radians);
-            const sine = Math.sin(radians);
+            const delta             = snapAngle(primaryStartAngle + rawDelta) - primaryStartAngle;
+            const radians           = delta * Math.PI / 180;
+            const cosine            = Math.cos(radians);
+            const sine              = Math.sin(radians);
             from.forEach(({ image, position }) => {
                 if (parts.length > 1) {
-                    const x = Number.parseFloat(position.left) - center.x;
-                    const y = Number.parseFloat(position.top) - center.y;
+                    const x          = Number.parseFloat(position.left) - center.x;
+                    const y          = Number.parseFloat(position.top) - center.y;
                     image.style.left = `${center.x + x * cosine - y * sine}px`;
-                    image.style.top = `${center.y + x * sine + y * cosine}px`;
+                    image.style.top  = `${center.y + x * sine + y * cosine}px`;
                 }
                 const rotation = Number.parseFloat(position.rotation) + delta;
                 image.style.setProperty("--rotation", `${rotation}deg`);
@@ -4243,14 +4243,14 @@ function makeSelectionScalable() {
             if (!parts.length || hasMovementLockedPart(parts)) return;
             event.preventDefault();
             event.stopPropagation();
-            const bounds = selectionFrame.getBoundingClientRect();
-            const centerClientX = bounds.left + bounds.width / 2;
-            const centerClientY = bounds.top + bounds.height / 2;
-            const center = clientToWorld(centerClientX, centerClientY);
-            const startVectorX = event.clientX - centerClientX;
-            const startVectorY = event.clientY - centerClientY;
+            const bounds             = selectionFrame.getBoundingClientRect();
+            const centerClientX      = bounds.left + bounds.width / 2;
+            const centerClientY      = bounds.top + bounds.height / 2;
+            const center             = clientToWorld(centerClientX, centerClientY);
+            const startVectorX       = event.clientX - centerClientX;
+            const startVectorY       = event.clientY - centerClientY;
             const startLengthSquared = Math.max(1, startVectorX ** 2 + startVectorY ** 2);
-            const from = parts.map((image) => ({ image, position: positionOf(image) }));
+            const from               = parts.map((image) => ({ image, position: positionOf(image) }));
             const groupMinimumFactor = parts.length > 1
                 ? Math.max(...from.map(({ position }) => 0.5 / Number.parseFloat(position.scale)))
                 : 0.04;
@@ -4261,11 +4261,11 @@ function makeSelectionScalable() {
                 const currentVectorY = pointerEvent.clientY - centerClientY;
                 // Projection prevents a corner from crossing the centre and growing again.
                 const projection = (currentVectorX * startVectorX + currentVectorY * startVectorY) / startLengthSquared;
-                const factor = clamp(projection, groupMinimumFactor, parts.length > 1 ? 24 : 12);
+                const factor     = clamp(projection, groupMinimumFactor, parts.length > 1 ? 24 : 12);
                 from.forEach(({ image, position }) => {
                     if (parts.length > 1) {
                         image.style.left = `${center.x + (Number.parseFloat(position.left) - center.x) * factor}px`;
-                        image.style.top = `${center.y + (Number.parseFloat(position.top) - center.y) * factor}px`;
+                        image.style.top  = `${center.y + (Number.parseFloat(position.top) - center.y) * factor}px`;
                         setPartScale(image, Number.parseFloat(position.scale) * factor, { minScale: 0.5, maxScale: 192 });
                         return;
                     }
@@ -4292,54 +4292,54 @@ function makeSelectionScalable() {
 }
 
 function addPartToCanvas(part, clientX, clientY, options = {}) {
-    const point = options.worldPoint ?? clientToWorld(clientX, clientY);
-    const appendTarget = options.appendTarget ?? canvasWorld;
-    const placedPart = document.createElement("div");
-    const image = document.createElement("img");
-    const displayAsset = renderedAsset(part);
-    const sprite = normalizeSprite(displayAsset.sprite);
-    const lockStripeOverlay = document.createElement("canvas");
-    const rotateHandle = document.createElement("button");
-    placedPart.className = "placed-part";
+    const point                                                                        = options.worldPoint ?? clientToWorld(clientX, clientY);
+    const appendTarget                                                                 = options.appendTarget ?? canvasWorld;
+    const placedPart                                                                   = document.createElement("div");
+    const image                                                                        = document.createElement("img");
+    const displayAsset                                                                 = renderedAsset(part);
+    const sprite                                                                       = normalizeSprite(displayAsset.sprite);
+    const lockStripeOverlay                                                            = document.createElement("canvas");
+    const rotateHandle                                                                 = document.createElement("button");
+    placedPart.className                                                               = "placed-part";
     if (part.scoreRound || isScoreRoundCanvasActive) placedPart.dataset.scoreRoundPart = "true";
-    placedPart.dataset.partId = part.id;
-    placedPart.dataset.src = part.src;
-    placedPart.dataset.name = part.name;
-    if (sprite) placedPart.dataset.sprite = JSON.stringify(sprite);
-    image.src = displayAsset.src;
-    image.alt = part.name;
-    lockStripeOverlay.className = "lock-stripe-overlay";
+    placedPart.dataset.partId                                                          = part.id;
+    placedPart.dataset.src                                                             = part.src;
+    placedPart.dataset.name                                                            = part.name;
+    if (sprite) placedPart.dataset.sprite                                              = JSON.stringify(sprite);
+    image.src                                                                          = displayAsset.src;
+    image.alt                                                                          = part.name;
+    lockStripeOverlay.className                                                        = "lock-stripe-overlay";
     lockStripeOverlay.setAttribute("aria-hidden", "true");
     image.addEventListener("load", () => {
         if (placedPart.classList.contains("is-layer-locked")) updateLockStripeOverlay(placedPart);
         if (!options.deferUi) updateSelectionFrame();
     });
     rotateHandle.className = "rotate-handle";
-    rotateHandle.type = "button";
+    rotateHandle.type      = "button";
     rotateHandle.setAttribute("aria-label", localized("Drag to rotate object", "拖曳旋轉物件"));
     const requestedZIndex = Number(options.zIndex);
-    const highestLayer = Number.isFinite(requestedZIndex)
+    const highestLayer    = Number.isFinite(requestedZIndex)
         ? requestedZIndex - 1
         : Math.max(0, ...orderedParts().map((placedPart) => Number(placedPart.style.zIndex)));
     placedPart.style.zIndex = String(highestLayer + 1);
-    placedPart.style.left = `${point.x}px`;
-    placedPart.style.top = `${point.y}px`;
+    placedPart.style.left   = `${point.x}px`;
+    placedPart.style.top    = `${point.y}px`;
     placedPart.style.setProperty("--rotation", options.rotation ?? "0deg");
     setPartScale(placedPart, options.scale ?? "1.6");
     setPartFlip(placedPart, options.flipX ?? "1");
     if (sprite) {
         const crop = document.createElement("span");
         placedPart.classList.add("has-sprite");
-        placedPart.style.width = `${sprite.width}px`;
+        placedPart.style.width  = `${sprite.width}px`;
         placedPart.style.height = `${sprite.height}px`;
-        crop.className = "placed-sprite-crop";
-        crop.style.width = `${sprite.width}px`;
-        crop.style.height = `${sprite.height}px`;
-        image.className = "sprite-sheet-image";
-        image.style.width = `${sprite.sheetWidth}px`;
-        image.style.height = `${sprite.sheetHeight}px`;
-        image.style.left = `${-sprite.x}px`;
-        image.style.top = `${-sprite.y}px`;
+        crop.className          = "placed-sprite-crop";
+        crop.style.width        = `${sprite.width}px`;
+        crop.style.height       = `${sprite.height}px`;
+        image.className         = "sprite-sheet-image";
+        image.style.width       = `${sprite.sheetWidth}px`;
+        image.style.height      = `${sprite.sheetHeight}px`;
+        image.style.left        = `${-sprite.x}px`;
+        image.style.top         = `${-sprite.y}px`;
         crop.append(image);
         placedPart.append(crop, lockStripeOverlay, rotateHandle);
     } else {
@@ -4354,8 +4354,8 @@ function addPartToCanvas(part, clientX, clientY, options = {}) {
 }
 
 function copySelectedParts() {
-    const parts = orderedParts().filter((part) => selectedParts.has(part) && part.isConnected);
-    const copiedSet = new Set(parts);
+    const parts        = orderedParts().filter((part) => selectedParts.has(part) && part.isConnected);
+    const copiedSet    = new Set(parts);
     const copiedGroups = new Map();
 
     parts.forEach((part) => {
@@ -4374,7 +4374,7 @@ function copySelectedParts() {
 
 function pasteCopiedParts() {
     if (!copiedParts.length) return;
-    const pasteOffset = 24;
+    const pasteOffset  = 24;
     const pastedGroups = new Map();
     const pastedParts = copiedParts.map((part) => {
         const pastedPart = addPartToCanvas(part, 0, 0, {
@@ -4395,8 +4395,8 @@ function pasteCopiedParts() {
                     color: createGroupColor(),
                 });
             }
-            const group = pastedGroups.get(part.groupKey);
-            pastedPart.dataset.groupId = group.id;
+            const group                   = pastedGroups.get(part.groupKey);
+            pastedPart.dataset.groupId    = group.id;
             pastedPart.dataset.groupColor = group.color;
         }
         return pastedPart;
@@ -4406,14 +4406,14 @@ function pasteCopiedParts() {
 }
 
 function createPartCard(part) {
-    const card = document.createElement("button");
-    const preview = createAssetPreview(part, "part-asset-preview", 76, 76);
+    const card     = document.createElement("button");
+    const preview  = createAssetPreview(part, "part-asset-preview", 76, 76);
     card.className = "part-card";
-    card.type = "button";
+    card.type      = "button";
     card.draggable = true;
     card.setAttribute("aria-label", localized(`Drag ${part.form} form part: ${part.name}`, `拖曳 ${part.form} 階級部件：${part.name}`));
-    const image = preview.querySelector?.("img") ?? preview;
-    image.loading = "lazy";
+    const image    = preview.querySelector?.("img") ?? preview;
+    image.loading  = "lazy";
     image.decoding = "async";
     card.addEventListener("pointerdown", (event) => {
         if (event.button !== 0) return;
@@ -4438,12 +4438,12 @@ function createPartCard(part) {
         );
     });
     card.addEventListener("dragend", () => {
-        palettePartDrag = null;
+        palettePartDrag    = null;
         palettePointerGrab = null;
     });
     card.addEventListener("click", () => {
-        palettePointerGrab = null;
-        const spread = 180;
+        palettePointerGrab       = null;
+        const spread             = 180;
         const mobileSpawnOffsetY = window.matchMedia("(max-width: 700px) and (pointer: coarse)").matches ? -120 : 0;
         addPartToCanvas(part, 0, 0, {
             worldPoint: {
@@ -4459,13 +4459,13 @@ function createPartCard(part) {
 
 async function renderParts() {
     const renderVersion = ++partsRenderVersion;
-    const unit = loadedEntity(activeEntityType, unitSelect.value);
+    const unit          = loadedEntity(activeEntityType, unitSelect.value);
     if (!unit) {
         showPartsLoading();
         return;
     }
-    const candidateParts = availablePartsForRank(unit, rankSelect.value);
-    const target = { entityType: activeEntityType, unitId: unitSelect.value, rank: rankSelect.value };
+    const candidateParts  = availablePartsForRank(unit, rankSelect.value);
+    const target          = { entityType: activeEntityType, unitId: unitSelect.value, rank: rankSelect.value };
     const templatePromise = ensureScoreTemplateLoaded(target).catch(() => null);
     showPartsLoading();
     try {
@@ -4482,10 +4482,10 @@ async function renderParts() {
         return;
     }
     if (renderVersion !== partsRenderVersion) return;
-    const parts = withoutTransparentParts(candidateParts);
-    const template = await templatePromise;
+    const parts       = withoutTransparentParts(candidateParts);
+    const template    = await templatePromise;
     const answerParts = template ? answerAssetsFromTemplate(unit, target, template) : [];
-    activeParts = new Map(parts.map((part) => [part.id, part]));
+    activeParts       = new Map(parts.map((part) => [part.id, part]));
     partsList.replaceChildren();
     unitStatus.textContent = parts.length ? localized(`${parts.length} draggable parts`, `${parts.length} 個可拖曳部件`) : localized("This form has no available parts.", "此階級沒有可用部件。");
 
@@ -4496,20 +4496,20 @@ async function renderParts() {
 function updateRankOptions() {
     const unit = loadedEntity(activeEntityType, unitSelect.value);
     if (!unit) return;
-    const forms = new Set(unit.parts.map((part) => part.form));
-    const isEnemy = activeEntityType === "enemy";
-    rankLabel.hidden = isEnemy;
+    const forms        = new Set(unit.parts.map((part) => part.form));
+    const isEnemy      = activeEntityType === "enemy";
+    rankLabel.hidden   = isEnemy;
     rankOptions.hidden = isEnemy;
     if (isEnemy) {
         rankSelect.value = "e";
         return;
     }
     for (const option of rankSelect.options) option.disabled = !forms.has(option.value);
-    if (!forms.has(rankSelect.value)) rankSelect.value = [...forms][0] ?? "f";
+    if (!forms.has(rankSelect.value)) rankSelect.value       = [...forms][0] ?? "f";
     rankButtons.forEach((button) => {
         const isAvailable = forms.has(button.dataset.rank);
-        const isSelected = button.dataset.rank === rankSelect.value;
-        button.disabled = !isAvailable;
+        const isSelected  = button.dataset.rank === rankSelect.value;
+        button.disabled   = !isAvailable;
         button.classList.toggle("is-selected", isSelected);
         button.setAttribute("aria-pressed", String(isSelected));
     });
@@ -4520,10 +4520,10 @@ function availableRanksForUnit(unit) {
 }
 
 function updateScoreFixedRankOptions(unit) {
-    const forms = new Set(unit?.parts?.map((part) => part.form) ?? []);
-    const isEnemy = forms.has("e");
+    const forms                = new Set(unit?.parts?.map((part) => part.form) ?? []);
+    const isEnemy              = forms.has("e");
     scoreFixedRankLabel.hidden = isEnemy;
-    scoreFixedRanks.hidden = isEnemy;
+    scoreFixedRanks.hidden     = isEnemy;
     if (isEnemy) {
         scoreFixedRank = "e";
         scoreFixedRankButtons.forEach((button) => {
@@ -4576,10 +4576,10 @@ function ensureUnitLoaded(unitId, entityType = activeEntityType) {
     const request = new Promise((resolve, reject) => {
         const script = document.createElement("script");
         script.async = true;
-        script.src = (entityType === "enemy" ? "assets/enemies/manifests/" : "assets/units/manifests/") + encodeURIComponent(unitId) + ".js";
+        script.src   = (entityType === "enemy" ? "assets/enemies/manifests/" : "assets/units/manifests/") + encodeURIComponent(unitId) + ".js";
         script.onload = () => {
             const manifestStore = entityType === "enemy" ? globalThis.ENEMY_MANIFESTS : globalThis.UNIT_MANIFESTS;
-            const unit = manifestStore?.[unitId];
+            const unit          = manifestStore?.[unitId];
             script.remove();
             if (!unit) {
                 reject(new Error(entityNoun(entityType) + " " + unitId + " 的資料格式無效"));
@@ -4613,10 +4613,10 @@ function closeScoreUnitResults() {
 async function chooseFixedScoreUnit(unitId) {
     const entityType = activeEntityType;
     if (!entityIndexFor(entityType)[unitId]) return;
-    scoreFixedUnitId = unitId;
-    scoreFixedEntityType = entityType;
+    scoreFixedUnitId            = unitId;
+    scoreFixedEntityType        = entityType;
     scoreUnitSearch.placeholder = localized("Search ID or name", "搜尋編號或名稱");
-    scoreUnitSearch.value = unitLabel(unitId, entityType);
+    scoreUnitSearch.value       = unitLabel(unitId, entityType);
     closeScoreUnitResults();
     setScoreFixedRankButtonsDisabled(true);
     setScoreModeStatus(
@@ -4644,12 +4644,12 @@ async function chooseFixedScoreUnit(unitId) {
 }
 
 function renderScoreUnitResults() {
-    const query = scoreUnitSearch.value.trim().toLocaleLowerCase();
-    const entityType = activeEntityType;
-    const index = entityIndexFor(entityType);
-    const noun = entityNoun(entityType);
-    const pluralNoun = entityType === "enemy" ? "Enemies" : "Units";
-    const allUnitIds = Object.keys(index).sort();
+    const query       = scoreUnitSearch.value.trim().toLocaleLowerCase();
+    const entityType  = activeEntityType;
+    const index       = entityIndexFor(entityType);
+    const noun        = entityNoun(entityType);
+    const pluralNoun  = entityType === "enemy" ? "Enemies" : "Units";
+    const allUnitIds  = Object.keys(index).sort();
     const suggestions = query
         ? allUnitIds.filter((unitId) => unitMatchesSearch(unitId, query, entityType))
         : allUnitIds;
@@ -4658,21 +4658,21 @@ function renderScoreUnitResults() {
     scoreUnitResults.scrollTop = 0;
 
     const addSectionTitle = (text) => {
-        const title = document.createElement("p");
-        title.className = "unit-result-section";
+        const title       = document.createElement("p");
+        title.className   = "unit-result-section";
         title.textContent = text;
         scoreUnitResults.append(title);
     };
     const addResult = (unitId) => {
-        const result = document.createElement("button");
-        const id = document.createElement("span");
-        const name = document.createElement("span");
+        const result     = document.createElement("button");
+        const id         = document.createElement("span");
+        const name       = document.createElement("span");
         result.className = "unit-result";
-        result.type = "button";
+        result.type      = "button";
         result.setAttribute("role", "option");
-        id.className = "unit-result-id";
-        name.className = "unit-result-name";
-        id.textContent = unitId;
+        id.className     = "unit-result-id";
+        name.className   = "unit-result-name";
+        id.textContent   = unitId;
         name.textContent = entityDisplayName(unitId, entityType) ?? "";
         result.append(id, name);
         result.addEventListener("click", () => chooseFixedScoreUnit(unitId));
@@ -4680,8 +4680,8 @@ function renderScoreUnitResults() {
     };
 
     if (!suggestions.length) {
-        const empty = document.createElement("p");
-        empty.className = "unit-result-empty";
+        const empty       = document.createElement("p");
+        empty.className   = "unit-result-empty";
         empty.textContent = localized(`No matching ${noun.toLowerCase()} found.`, "找不到相符的" + noun);
         scoreUnitResults.append(empty);
     }
@@ -4695,7 +4695,7 @@ function renderScoreUnitResults() {
 
 function setScoreQuestionMode(mode) {
     scoreQuestionMode = mode;
-    const isFixed = mode === "fixed";
+    const isFixed     = mode === "fixed";
     scoreQuestionModeButtons.forEach((button) => {
         const isSelected = button.dataset.scoreMode === mode;
         button.classList.toggle("is-selected", isSelected);
@@ -4717,7 +4717,7 @@ function setScoreQuestionMode(mode) {
 
     scoreRandomTarget = null;
     setScoreModeStatus("Preparing random question…", "正在準備隨機題目…");
-    const preparation = prepareRandomScoreTarget();
+    const preparation      = prepareRandomScoreTarget();
     scoreRandomPreparation = preparation;
     preparation
         .then((target) => {
@@ -4775,13 +4775,13 @@ async function chooseUnit(unitId, preferredRank = null) {
 
 async function chooseRandomUnitAndRank() {
     const entityType = activeEntityType;
-    const unitIds = Object.keys(entityIndexFor(entityType));
+    const unitIds    = Object.keys(entityIndexFor(entityType));
     if (!unitIds.length) return;
 
     randomUnitButton.disabled = true;
     try {
         const unitId = unitIds[Math.floor(Math.random() * unitIds.length)];
-        const unit = await ensureUnitLoaded(unitId, entityType);
+        const unit   = await ensureUnitLoaded(unitId, entityType);
         if (activeEntityType !== entityType) return;
         const ranks = availableRanksForUnit(unit);
         if (!ranks.length) return;
@@ -4793,39 +4793,39 @@ async function chooseRandomUnitAndRank() {
 }
 
 function renderUnitResults() {
-    const query = unitSearch.value.trim().toLocaleLowerCase();
-    const entityType = activeEntityType;
-    const index = entityIndexFor(entityType);
-    const noun = entityNoun(entityType);
-    const pluralNoun = entityType === "enemy" ? "Enemies" : "Units";
-    const allUnitIds = Object.keys(index).sort();
+    const query            = unitSearch.value.trim().toLocaleLowerCase();
+    const entityType       = activeEntityType;
+    const index            = entityIndexFor(entityType);
+    const noun             = entityNoun(entityType);
+    const pluralNoun       = entityType === "enemy" ? "Enemies" : "Units";
+    const allUnitIds       = Object.keys(index).sort();
     const suggestedUnitIds = query
         ? allUnitIds.filter((unitId) => unitMatchesSearch(unitId, query, entityType))
         : allUnitIds;
     const remainingUnitIds = query
         ? allUnitIds.filter((unitId) => !suggestedUnitIds.includes(unitId))
         : [];
-    matchingUnitIds = [...suggestedUnitIds, ...remainingUnitIds];
+    matchingUnitIds       = [...suggestedUnitIds, ...remainingUnitIds];
     activeUnitResultIndex = -1;
     unitResults.replaceChildren();
     unitResults.scrollTop = 0;
 
     const addSectionTitle = (text) => {
-        const title = document.createElement("p");
-        title.className = "unit-result-section";
+        const title       = document.createElement("p");
+        title.className   = "unit-result-section";
         title.textContent = text;
         unitResults.append(title);
     };
     const addResult = (unitId) => {
-        const result = document.createElement("button");
-        const id = document.createElement("span");
-        const name = document.createElement("span");
+        const result     = document.createElement("button");
+        const id         = document.createElement("span");
+        const name       = document.createElement("span");
         result.className = "unit-result";
-        result.type = "button";
+        result.type      = "button";
         result.setAttribute("role", "option");
-        id.className = "unit-result-id";
-        name.className = "unit-result-name";
-        id.textContent = unitId;
+        id.className     = "unit-result-id";
+        name.className   = "unit-result-name";
+        id.textContent   = unitId;
         name.textContent = entityDisplayName(unitId, entityType) ?? "";
         result.append(id, name);
         result.addEventListener("click", () => chooseUnit(unitId));
@@ -4833,8 +4833,8 @@ function renderUnitResults() {
     };
 
     if (!suggestedUnitIds.length) {
-        const empty = document.createElement("p");
-        empty.className = "unit-result-empty";
+        const empty       = document.createElement("p");
+        empty.className   = "unit-result-empty";
         empty.textContent = localized(`No matching ${noun.toLowerCase()} found.`, "找不到相符的" + noun);
         unitResults.append(empty);
     }
@@ -4852,8 +4852,8 @@ function populateUnitSelect() {
     const entityType = activeEntityType;
     unitSelect.replaceChildren();
     for (const unitId of Object.keys(entityIndexFor(entityType)).sort()) {
-        const option = document.createElement("option");
-        option.value = unitId;
+        const option       = document.createElement("option");
+        option.value       = unitId;
         option.textContent = unitLabel(unitId, entityType);
         unitSelect.append(option);
     }
@@ -4862,7 +4862,7 @@ function populateUnitSelect() {
 
 function syncEntityTypeControls() {
     const isEnemy = activeEntityType === "enemy";
-    const noun = entityNoun();
+    const noun    = entityNoun();
     entityTypeButtons.forEach((button) => {
         const isSelected = button.dataset.entityType === activeEntityType;
         button.classList.toggle("is-selected", isSelected);
@@ -4872,14 +4872,14 @@ function syncEntityTypeControls() {
         button.setAttribute("title", localized(isEnemyButton ? "Enemies" : "Units", isEnemyButton ? "敵人" : "角色"));
     });
     normalEntityLabel.textContent = noun;
-    scoreEntityLabel.textContent = noun;
+    scoreEntityLabel.textContent  = noun;
     unitResults.setAttribute("aria-label", localized(`${noun} search results`, noun + "搜尋結果"));
     scoreUnitResults.setAttribute("aria-label", localized(`Score mode ${noun} search results`, "評分模式" + noun + "搜尋結果"));
     randomUnitButton.setAttribute("aria-label", isEnemy ? localized("Random enemy", "隨機敵人") : localized("Random unit and form", "隨機角色與階級"));
-    rankLabel.hidden = isEnemy;
-    rankOptions.hidden = isEnemy;
+    rankLabel.hidden           = isEnemy;
+    rankOptions.hidden         = isEnemy;
     scoreFixedRankLabel.hidden = isEnemy;
-    scoreFixedRanks.hidden = isEnemy;
+    scoreFixedRanks.hidden     = isEnemy;
 }
 
 function initializeActiveEntityPalette() {
@@ -4910,15 +4910,15 @@ function setActiveEntityType(entityType) {
         unitStatus.textContent = entityType === "enemy" ? "敵人資料讀取中，請稍後再試。" : "角色資料讀取中，請稍後再試。";
         return;
     }
-    activeEntityType = entityType;
-    scoreFixedUnitId = "";
-    scoreFixedEntityType = entityType;
-    scoreFixedRank = entityRank(entityType);
-    scoreUnitSearch.value = "";
+    activeEntityType            = entityType;
+    scoreFixedUnitId            = "";
+    scoreFixedEntityType        = entityType;
+    scoreFixedRank              = entityRank(entityType);
+    scoreUnitSearch.value       = "";
     scoreUnitSearch.placeholder = localized("Search ID or name", "搜尋編號或名稱");
     updateScoreFixedRankOptions(entityType === "enemy" ? { parts: [{ form: "e" }] } : null);
     if (scoreQuestionMode === "random") {
-        scoreRandomTarget = null;
+        scoreRandomTarget      = null;
         scoreRandomPreparation = null;
         setScoreQuestionMode("random");
     } else {
@@ -4942,7 +4942,7 @@ function refreshEnglishEntityNames() {
     if (unitSelect.options.length) populateUnitSelect();
     if (unitResults.classList.contains("is-open")) renderUnitResults();
     if (scoreUnitResults.classList.contains("is-open")) renderScoreUnitResults();
-    if (unitSelect.value) unitSearch.value = unitLabel(unitSelect.value);
+    if (unitSelect.value) unitSearch.value      = unitLabel(unitSelect.value);
     if (scoreFixedUnitId) scoreUnitSearch.value = unitLabel(scoreFixedUnitId, scoreFixedEntityType);
 }
 
@@ -4962,11 +4962,11 @@ updateUndoButton();
 makeSelectedGroupRotatable();
 makeSelectionScalable();
 
-let lastCanvasSize = { width: canvas.clientWidth, height: canvas.clientHeight };
+let lastCanvasSize      = { width: canvas.clientWidth, height: canvas.clientHeight };
 let pendingCanvasResize = 0;
 function keepCanvasViewStableAfterResize() {
     pendingCanvasResize = 0;
-    const nextSize = { width: canvas.clientWidth, height: canvas.clientHeight };
+    const nextSize      = { width: canvas.clientWidth, height: canvas.clientHeight };
     if (nextSize.width <= 0 || nextSize.height <= 0) return;
     if (lastCanvasSize.width > 0 && lastCanvasSize.height > 0) {
         // 旋轉平板時維持同一個世界中心，避免畫面與選取框沿用舊的長寬座標。
@@ -5059,7 +5059,7 @@ scoreResultOverlay.addEventListener("pointerdown", (event) => {
 scoreUnitSearch.addEventListener("focus", renderScoreUnitResults);
 scoreUnitSearch.addEventListener("input", () => {
     scoreUnitSearch.placeholder = localized("Search ID or name", "搜尋編號或名稱");
-    scoreFixedUnitId = "";
+    scoreFixedUnitId            = "";
     updateScoreFixedRankOptions(activeEntityType === "enemy" ? { parts: [{ form: "e" }] } : null);
     renderScoreUnitResults();
 });
@@ -5091,7 +5091,7 @@ effectsButton.addEventListener("click", () => {
 });
 volumeSlider.addEventListener("input", () => {
     const volume = Number.parseFloat(volumeSlider.value);
-    const muted = volume === 0;
+    const muted  = volume === 0;
     setVolume(volume);
     localStorage.setItem("muted", String(muted));
     setMuted(muted);
@@ -5100,7 +5100,7 @@ volumeSlider.addEventListener("input", () => {
 document.addEventListener("pointerdown", tryPlayMusic, { once: true });
 document.addEventListener("click", (event) => {
     if (!(event.target instanceof Element)) return;
-    const button = event.target.closest("button");
+    const button     = event.target.closest("button");
     const isExcluded = event.target.closest("#trash-zone, #help-button, #random-unit-button, .part-card, .unit-result");
     if (button && !button.disabled && !isExcluded) playButtonSound();
 });
@@ -5125,11 +5125,11 @@ function setActiveHelpPage(index) {
     }
     helpCardPages.forEach((page, pageIndex) => {
         const isActive = pageIndex === activeHelpPageIndex;
-        page.hidden = !isActive;
+        page.hidden    = !isActive;
         page.classList.toggle("is-active", isActive);
     });
     helpPageHitboxes.forEach((hitbox) => {
-        const delta = Number(hitbox.dataset.helpPageDelta);
+        const delta     = Number(hitbox.dataset.helpPageDelta);
         hitbox.disabled = delta < 0
             ? activeHelpPageIndex === 0
             : activeHelpPageIndex === helpCardPages.length - 1;
@@ -5166,21 +5166,21 @@ newsDialog.addEventListener("click", (event) => {
 function enableNewsMarqueeDrag() {
     if (!newsMarquee || !newsMarqueeTrack) return;
 
-    const autoSpeed = 36;
-    let loopWidth = 0;
-    let offset = 0;
-    let velocity = autoSpeed;
-    let isDragging = false;
-    let pointerId = null;
-    let lastPointerX = 0;
+    const autoSpeed     = 36;
+    let loopWidth       = 0;
+    let offset          = 0;
+    let velocity        = autoSpeed;
+    let isDragging      = false;
+    let pointerId       = null;
+    let lastPointerX    = 0;
     let lastPointerTime = 0;
-    let dragDistance = 0;
-    let suppressClick = false;
-    let lastFrameTime = performance.now();
+    let dragDistance    = 0;
+    let suppressClick   = false;
+    let lastFrameTime   = performance.now();
 
     const updateLoopWidth = () => {
-        const sets = newsMarqueeTrack.querySelectorAll(".news-marquee-set");
-        const firstSet = sets[0];
+        const sets         = newsMarqueeTrack.querySelectorAll(".news-marquee-set");
+        const firstSet     = sets[0];
         const duplicateSet = sets[1];
         if (!firstSet || !duplicateSet) {
             loopWidth = 0;
@@ -5198,7 +5198,7 @@ function enableNewsMarqueeDrag() {
     };
     const animate = (time) => {
         const elapsedSeconds = Math.min((time - lastFrameTime) / 1000, 0.05);
-        lastFrameTime = time;
+        lastFrameTime        = time;
         if (!isDragging && loopWidth) {
             velocity += (autoSpeed - velocity) * Math.min(1, elapsedSeconds * 3.2);
             offset += velocity * elapsedSeconds;
@@ -5223,11 +5223,11 @@ function enableNewsMarqueeDrag() {
         if (event.pointerType === "mouse" && event.button !== 0) return;
         // Keep news links as ordinary links; only the card background and images begin a drag.
         if (event.target.closest("a")) return;
-        isDragging = true;
-        pointerId = event.pointerId;
-        lastPointerX = event.clientX;
+        isDragging      = true;
+        pointerId       = event.pointerId;
+        lastPointerX    = event.clientX;
         lastPointerTime = performance.now();
-        dragDistance = 0;
+        dragDistance    = 0;
         newsMarqueeTrack.classList.add("is-dragging");
         newsMarqueeTrack.setPointerCapture(pointerId);
         event.preventDefault();
@@ -5235,13 +5235,13 @@ function enableNewsMarqueeDrag() {
 
     newsMarqueeTrack.addEventListener("pointermove", (event) => {
         if (!isDragging || event.pointerId !== pointerId) return;
-        const now = performance.now();
-        const distance = event.clientX - lastPointerX;
+        const now            = performance.now();
+        const distance       = event.clientX - lastPointerX;
         const elapsedSeconds = Math.max((now - lastPointerTime) / 1000, 0.001);
         offset -= distance;
         velocity = -distance / elapsedSeconds;
         dragDistance += Math.abs(distance);
-        lastPointerX = event.clientX;
+        lastPointerX    = event.clientX;
         lastPointerTime = now;
         draw();
         event.preventDefault();
@@ -5251,7 +5251,7 @@ function enableNewsMarqueeDrag() {
         if (!isDragging || event.pointerId !== pointerId) return;
         if (newsMarqueeTrack.hasPointerCapture(pointerId)) newsMarqueeTrack.releasePointerCapture(pointerId);
         isDragging = false;
-        pointerId = null;
+        pointerId  = null;
         newsMarqueeTrack.classList.remove("is-dragging");
         if (dragDistance > 5) {
             suppressClick = true;
@@ -5299,7 +5299,7 @@ unitSearch.addEventListener("keydown", (event) => {
         event.preventDefault();
         if (!unitResults.classList.contains("is-open")) renderUnitResults();
         if (!matchingUnitIds.length) return;
-        const direction = event.key === "ArrowDown" ? 1 : -1;
+        const direction       = event.key === "ArrowDown" ? 1 : -1;
         activeUnitResultIndex = (activeUnitResultIndex + direction + matchingUnitIds.length) % matchingUnitIds.length;
         updateActiveUnitResult();
     }
@@ -5388,10 +5388,10 @@ canvas.addEventListener("dragover", (event) => {
 canvas.addEventListener("drop", (event) => {
     if (!isPalettePartDrag(event.dataTransfer)) return;
     event.preventDefault();
-    const part = activeParts.get(event.dataTransfer.getData(PART_DRAG_TYPE));
+    const part  = activeParts.get(event.dataTransfer.getData(PART_DRAG_TYPE));
     const point = clientToWorld(event.clientX, event.clientY);
     if (part) {
-        const drag = palettePartDrag?.id === part.id ? palettePartDrag : null;
+        const drag  = palettePartDrag?.id === part.id ? palettePartDrag : null;
         const scale = 1.6;
         addPartToCanvas(part, 0, 0, {
             worldPoint: drag
@@ -5405,8 +5405,8 @@ canvas.addEventListener("drop", (event) => {
     palettePartDrag = null;
 });
 document.addEventListener("keydown", (event) => {
-    const target = event.target;
-    const isTyping = target instanceof HTMLInputElement || target instanceof HTMLSelectElement || target instanceof HTMLTextAreaElement || target?.isContentEditable;
+    const target      = event.target;
+    const isTyping    = target instanceof HTMLInputElement || target instanceof HTMLSelectElement || target instanceof HTMLTextAreaElement || target?.isContentEditable;
     const isDeleteKey = event.key === "Delete" || event.key === "Del" || event.key === "Backspace" || event.code === "Delete" || event.code === "Backspace";
     if (!isDeleteKey || isTyping || helpDialog.open || (!selectedParts.size && !selectedPart?.isConnected)) return;
     event.preventDefault();
@@ -5421,7 +5421,7 @@ window.addEventListener("keydown", (event) => {
         return;
     }
 
-    const target = event.target;
+    const target   = event.target;
     const isTyping = target instanceof HTMLInputElement || target instanceof HTMLSelectElement || target instanceof HTMLTextAreaElement || target?.isContentEditable;
     if (isTyping || helpDialog.open) return;
 
@@ -5477,12 +5477,12 @@ window.tbcPuzzleMobile = Object.freeze({
         updateSelectionFrame();
     },
     zoomCanvasAt(clientX, clientY, factor) {
-        const bounds = canvas.getBoundingClientRect();
+        const bounds     = canvas.getBoundingClientRect();
         const worldPoint = clientToWorld(clientX, clientY);
-        const nextScale = clamp(viewScale * factor, 0.5, 2.5);
-        viewX = clientX - bounds.left - worldPoint.x * nextScale;
-        viewY = clientY - bounds.top - worldPoint.y * nextScale;
-        viewScale = nextScale;
+        const nextScale  = clamp(viewScale * factor, 0.5, 2.5);
+        viewX            = clientX - bounds.left - worldPoint.x * nextScale;
+        viewY            = clientY - bounds.top - worldPoint.y * nextScale;
+        viewScale        = nextScale;
         updateViewTransform();
         updateSelectionFrame();
     },
@@ -5492,7 +5492,7 @@ window.tbcPuzzleMobile = Object.freeze({
     togglePartSelection(part) {
         if (!part?.isConnected || part.classList.contains("is-layer-locked")) return;
         const nextSelection = new Set(selectedParts);
-        const members = part.dataset.groupId
+        const members       = part.dataset.groupId
             ? orderedParts().filter((item) => item.dataset.groupId === part.dataset.groupId && !item.classList.contains("is-layer-locked"))
             : [part];
         const isSelected = members.every((member) => nextSelection.has(member));
@@ -5527,8 +5527,8 @@ window.tbcPuzzleMobile = Object.freeze({
             : orderedParts();
         const sourcePart = Number.isInteger(sourceIndex) ? visibleParts[sourceIndex] : null;
         const targetPart = Number.isInteger(targetIndex) ? visibleParts[targetIndex] : null;
-        const sourceId = sourceGroupId || sourcePart?.dataset.groupId || "";
-        const targetId = targetGroupId || targetPart?.dataset.groupId || "";
+        const sourceId   = sourceGroupId || sourcePart?.dataset.groupId || "";
+        const targetId   = targetGroupId || targetPart?.dataset.groupId || "";
         if (!sourcePart && !sourceId) return;
         if (!targetPart && !targetId) return;
 
@@ -5538,7 +5538,7 @@ window.tbcPuzzleMobile = Object.freeze({
             return;
         }
 
-        const allParts = orderedParts();
+        const allParts    = orderedParts();
         const sourceParts = sourceId
             ? allParts.filter((part) => part.dataset.groupId === sourceId)
             : [sourcePart];
