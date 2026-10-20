@@ -45,13 +45,12 @@
     }
 
     function makeImportAction(label, action, { persistentLabel = false, zhLabel = label } = {}) {
-        const control = document.createElement("label");
-        control.className = "mobile-action file-import-action";
-        control.htmlFor = "import-project-input";
-        control.innerHTML = `<i class="fa-solid fa-folder-open" aria-hidden="true"></i>${persistentLabel ? '<span class="icon-tooltip mobile-more-tooltip" aria-hidden="true"></span>' : ""}`;
-        setMobileLabel(control, label, zhLabel);
-        control.addEventListener("click", action);
-        return control;
+        return makeAction("fa-folder-open", label, () => {
+            // The mobile menu is separate from the original hidden file input.
+            // Trigger it directly while this user gesture is still active.
+            document.querySelector("#import-project-input")?.click();
+            action();
+        }, { persistentLabel, zhLabel });
     }
 
     function initializeMobileControls() {

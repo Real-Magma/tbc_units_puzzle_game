@@ -2041,8 +2041,9 @@ html[data-theme="dark"] .help-dialog .help-page-hitbox-next { cursor: url("data:
 .news-cheat-button:hover,
 .news-cheat-button:focus-visible { background: var(--button-hover-bg); color: var(--text); opacity: 0.9; }
 .news-cheat-button .icon-tooltip { top: 50%; right: calc(100% + 7px); left: auto; transform: translate(4px, -50%); }
-.news-cheat-button:hover .icon-tooltip,
-.news-cheat-button:focus-visible .icon-tooltip { opacity: 1; transform: translate(0, -50%); }
+.news-cheat-button:not([aria-pressed="true"]) .icon-tooltip { display: none; }
+.news-cheat-button[aria-pressed="true"]:hover .icon-tooltip,
+.news-cheat-button[aria-pressed="true"]:focus-visible .icon-tooltip { opacity: 1; transform: translate(0, -50%); }
 .news-cheat-button[aria-pressed="true"] {
     color: #d4901c;
     opacity: 0.75;

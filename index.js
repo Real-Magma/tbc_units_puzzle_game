@@ -223,7 +223,7 @@ function updateCorrectAnswerCheatButton() {
     const label = localized(enabled ? "Hide answer" : "Reveal answer", enabled ? "隱藏正解" : "顯示正解");
     correctAnswerCheatButton.setAttribute("aria-pressed", String(enabled));
     correctAnswerCheatButton.setAttribute("aria-label", label);
-    correctAnswerCheatButton.querySelector(".icon-tooltip").textContent = "你是怎麼看到的???";
+    correctAnswerCheatButton.querySelector(".icon-tooltip").textContent = localized("How did you find this???", "你是怎麼看到的???");
     correctAnswerCheatButton.querySelector("i").className = enabled ? "fa-solid fa-eye" : "fa-solid fa-eye-slash";
 }
 
@@ -333,7 +333,7 @@ function applyLanguage() {
         [".score-question-mode[data-score-mode='random']", "Random", "隨機"],
         ["#score-start-button span", "Start", "開始"],
         ["#score-cancel-button span", "Cancel", "取消"],
-        ["#score-grade-button span", "Grade", "評分"],
+        ["#score-grade-button span", "Done", "評分"],
         ["#score-retry-button span", "Play Again", "再來一局"],
         [".score-result-history-label", "Review", "回顧紀錄"],
         ["#merge-layers-button span", "Group", "群組"],
@@ -410,6 +410,9 @@ function applyLanguage() {
     if (scoreFixedUnitId) scoreUnitSearch.value = unitLabel(scoreFixedUnitId, scoreFixedEntityType);
     if (unitResults.classList.contains("is-open")) renderUnitResults();
     if (scoreUnitResults.classList.contains("is-open")) renderScoreUnitResults();
+    // Layer rows and the Unlock all button are created dynamically, so redraw
+    // them after a language change instead of leaving their previous text.
+    renderLayersPanel();
     setActiveHelpPage(activeHelpPageIndex);
     updateScoreImageActionLabels();
     window.dispatchEvent(new CustomEvent("tbcPuzzleLanguageChange", { detail: { language: currentLanguage } }));
@@ -596,7 +599,7 @@ function resetScoreActionConfirmation() {
         button.removeAttribute("aria-label");
     });
     scoreCancelButton.querySelector("span").textContent = localized("Cancel", "取消");
-    scoreGradeButton.querySelector("span").textContent = localized("Grade", "評分");
+    scoreGradeButton.querySelector("span").textContent = localized("Done", "評分");
 }
 
 function requestScoreActionConfirmation(action) {
