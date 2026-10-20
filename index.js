@@ -344,7 +344,7 @@ function applyLanguage() {
         ["#move-layers-to-back-button span", "Send to Back", "最下層"],
         ["#hide-layers-button span", "Hide", "消失"],
         ["#focus-layer-button span", "Go to It", "傳送到它"],
-        ["#help-title", "How to Play", "操作手冊"],
+        ["#help-title", "How to Play", "How to Play"],
         [".help-lead", "Remaking CATS From Your Memory!!", "利用記憶, 拼出八親不認的貓咪吧！"],
         ["#news-title", "News", "消息"],
         ["#news-memory-title", "Remaking CATS From Memory!!", "只憑記憶，能還原貓咪嗎？"],
@@ -1040,20 +1040,26 @@ function addCorrectAnswerToCanvas(answerParts) {
     if (!answerParts.length) return;
     const groupId = createGroupId();
     const groupColor = createGroupColor();
+    const insertion = document.createDocumentFragment();
+    const highestLayer = Math.max(0, ...orderedParts().map((part) => Number(part.style.zIndex)));
     const placedParts = [...answerParts]
         .sort((left, right) => (Number(left.targetPart.z) || 0) - (Number(right.targetPart.z) || 0))
-        .map(({ asset, targetPart }) => {
+        .map(({ asset, targetPart }, index) => {
             const placedPart = addPartToCanvas(asset, 0, 0, {
                 worldPoint: { x: Number(targetPart.x) || 0, y: Number(targetPart.y) || 0 },
                 rotation: `${Number(targetPart.angle) || 0}deg`,
                 scale: String(Math.sqrt(Math.abs(Number(targetPart.scaleX) || 1) * Math.abs(Number(targetPart.scaleY) || 1))),
                 flipX: Number(targetPart.flipX) === -1 ? "-1" : "1",
                 remember: false,
+                appendTarget: insertion,
+                zIndex: highestLayer + index + 1,
+                deferUi: true,
             });
             placedPart.dataset.groupId = groupId;
             placedPart.dataset.groupColor = groupColor;
             return placedPart;
         });
+    canvasWorld.append(insertion);
     setSelectedParts(placedParts, placedParts.at(-1));
     remember({ type: "add-answer-group", parts: placedParts });
     playPopSound();
@@ -1071,7 +1077,8 @@ function createCorrectAnswerCard(answerParts) {
 }
 
 function createScoreAnswerPart(asset, targetPart) {
-    const sprite = normalizeSprite(asset.sprite);
+    const displayAsset = renderedAsset(asset);
+    const sprite = normalizeSprite(displayAsset.sprite);
     if (!sprite) return null;
 
     const answerPart = document.createElement("span");
@@ -1095,7 +1102,7 @@ function createScoreAnswerPart(asset, targetPart) {
     crop.style.width = `${sprite.width}px`;
     crop.style.height = `${sprite.height}px`;
     image.className = "sprite-sheet-image";
-    image.src = asset.src;
+    image.src = displayAsset.src;
     image.alt = "";
     image.draggable = false;
     image.style.width = `${sprite.sheetWidth}px`;
@@ -1889,6 +1896,38 @@ function normalizeSprite(sprite) {
     return { x, y, width, height, sheetWidth, sheetHeight };
 }
 
+// This BCU crop is labelled as an aqua additive effect. Its source uses an
+// opaque black matte, so use a derived alpha asset instead of treating black
+// as transparent globally; many ordinary sprites intentionally contain black.
+const effectRenderOverrides = new Map([
+    [
+        "assets/unit_sprites/351%20%E9%9B%99%E6%8E%8C%E6%98%9F%E8%A5%BF%E5%85%92%EF%BC%86%E5%B0%8F%E6%AF%AC/c.webp|c-138",
+        {
+            src: "assets/effects/351-c-138-additive.png",
+            sprite: { x: 0, y: 0, width: 21, height: 21, sheetWidth: 21, sheetHeight: 21 },
+        },
+    ],
+    [
+        "assets/unit_sprites/351%20%E9%9B%99%E6%8E%8C%E6%98%9F%E8%A5%BF%E5%85%92%EF%BC%86%E5%B0%8F%E6%AF%AC/f.webp|f-138",
+        {
+            src: "assets/effects/351-f-138-additive.png",
+            sprite: { x: 0, y: 0, width: 21, height: 21, sheetWidth: 21, sheetHeight: 21 },
+        },
+    ],
+    [
+        "assets/unit_sprites/351%20%E9%9B%99%E6%8E%8C%E6%98%9F%E8%A5%BF%E5%85%92%EF%BC%86%E5%B0%8F%E6%AF%AC/s.webp|s-138",
+        {
+            src: "assets/effects/351-s-138-additive.png",
+            sprite: { x: 0, y: 0, width: 21, height: 21, sheetWidth: 21, sheetHeight: 21 },
+        },
+    ],
+]);
+
+function renderedAsset(asset) {
+    const override = effectRenderOverrides.get(`${asset?.src ?? ""}|${asset?.id ?? ""}`);
+    return override ? { ...asset, ...override } : asset;
+}
+
 function spriteFromElement(part) {
     try {
         return normalizeSprite(JSON.parse(part.dataset.sprite ?? ""));
@@ -1907,9 +1946,10 @@ function assetFromElement(part) {
 }
 
 function createAssetPreview(asset, className, maximumWidth, maximumHeight) {
+    const displayAsset = renderedAsset(asset);
     const image = document.createElement("img");
-    const sprite = normalizeSprite(asset.sprite);
-    image.src = asset.src;
+    const sprite = normalizeSprite(displayAsset.sprite);
+    image.src = displayAsset.src;
     image.alt = "";
     image.draggable = false;
 
@@ -1937,7 +1977,8 @@ function isPalettePartDrag(dataTransfer) {
 }
 
 function beginPalettePartDrag(part, image, sourceBounds, clientX, clientY, dataTransfer) {
-    const sprite = normalizeSprite(part.sprite);
+    const displayAsset = renderedAsset(part);
+    const sprite = normalizeSprite(displayAsset.sprite);
     const partWidth = Number(part.width);
     const partHeight = Number(part.height);
     const width = sprite?.width ?? (Number.isFinite(partWidth) ? partWidth : image.naturalWidth);
@@ -4252,9 +4293,11 @@ function makeSelectionScalable() {
 
 function addPartToCanvas(part, clientX, clientY, options = {}) {
     const point = options.worldPoint ?? clientToWorld(clientX, clientY);
+    const appendTarget = options.appendTarget ?? canvasWorld;
     const placedPart = document.createElement("div");
     const image = document.createElement("img");
-    const sprite = normalizeSprite(part.sprite);
+    const displayAsset = renderedAsset(part);
+    const sprite = normalizeSprite(displayAsset.sprite);
     const lockStripeOverlay = document.createElement("canvas");
     const rotateHandle = document.createElement("button");
     placedPart.className = "placed-part";
@@ -4263,18 +4306,21 @@ function addPartToCanvas(part, clientX, clientY, options = {}) {
     placedPart.dataset.src = part.src;
     placedPart.dataset.name = part.name;
     if (sprite) placedPart.dataset.sprite = JSON.stringify(sprite);
-    image.src = part.src;
+    image.src = displayAsset.src;
     image.alt = part.name;
     lockStripeOverlay.className = "lock-stripe-overlay";
     lockStripeOverlay.setAttribute("aria-hidden", "true");
     image.addEventListener("load", () => {
-        updateLockStripeOverlay(placedPart);
-        updateSelectionFrame();
+        if (placedPart.classList.contains("is-layer-locked")) updateLockStripeOverlay(placedPart);
+        if (!options.deferUi) updateSelectionFrame();
     });
     rotateHandle.className = "rotate-handle";
     rotateHandle.type = "button";
     rotateHandle.setAttribute("aria-label", localized("Drag to rotate object", "拖曳旋轉物件"));
-    const highestLayer = Math.max(0, ...orderedParts().map((placedPart) => Number(placedPart.style.zIndex)));
+    const requestedZIndex = Number(options.zIndex);
+    const highestLayer = Number.isFinite(requestedZIndex)
+        ? requestedZIndex - 1
+        : Math.max(0, ...orderedParts().map((placedPart) => Number(placedPart.style.zIndex)));
     placedPart.style.zIndex = String(highestLayer + 1);
     placedPart.style.left = `${point.x}px`;
     placedPart.style.top = `${point.y}px`;
@@ -4301,8 +4347,8 @@ function addPartToCanvas(part, clientX, clientY, options = {}) {
     }
     makePlacedPartDraggable(placedPart);
     makePlacedPartRotatable(placedPart);
-    canvasWorld.append(placedPart);
-    selectPlacedPart(placedPart);
+    appendTarget.append(placedPart);
+    if (!options.deferUi) selectPlacedPart(placedPart);
     if (options.remember !== false) remember({ type: "add", image: placedPart });
     return placedPart;
 }
