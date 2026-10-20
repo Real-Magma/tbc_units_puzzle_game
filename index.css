@@ -593,15 +593,13 @@ html.is-score-result-open .score-result-overlay {
     gap: clamp(1px, min(3cqw, 1cqh), 4px);
     color: color-mix(in srgb, var(--text) 68%, transparent);
     font-family: "GenJyuuGothic", sans-serif;
-    font-size: clamp(0.72rem, 1.35vw, 0.9rem);
-    font-size: clamp(0.58rem, min(9cqw, 4cqh), 0.9rem);
+    font-size: clamp(0.68rem, min(10.5cqw, 4.8cqh), 1.05rem);
     font-weight: 700;
     text-align: center;
 }
 .score-result-overlay-breakdown strong {
     color: var(--text);
-    font-size: clamp(1rem, 1.85vw, 1.22rem);
-    font-size: clamp(0.7rem, min(13cqw, 5.5cqh), 1.22rem);
+    font-size: clamp(0.9rem, min(16cqw, 6.2cqh), 1.45rem);
 }
 .score-result-overlay-score {
     grid-row: 1;
@@ -613,8 +611,7 @@ html.is-score-result-open .score-result-overlay {
     text-align: center;
     color: var(--text);
     font-family: "GenJyuuGothic", sans-serif;
-    font-size: clamp(2.1rem, 5vw, 3.5rem);
-    font-size: clamp(1.15rem, min(25cqw, 12cqh), 3.5rem);
+    font-size: clamp(1.8rem, min(34cqw, 14cqh), 4.4rem);
     font-weight: 900;
     line-height: 1;
 }
@@ -630,17 +627,20 @@ html.is-score-result-open .score-result-overlay {
     .score-result-scene-label { position: static; margin: 0; justify-self: center; transform: none; }
     .score-result-overlay-stats {
         display: grid;
-        grid-template-columns: repeat(5, max-content);
-        grid-template-rows: none;
+        /* `size` containment collapses an auto-height mobile stats card. */
+        container-type: inline-size;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-rows: auto auto auto;
         justify-content: center;
-        column-gap: clamp(8px, 2.4vw, 14px);
+        column-gap: clamp(4px, 1.6vw, 10px);
         margin-top: 0;
-        padding: 18px 16px 20px;
+        padding: 12px 12px 14px;
     }
     .score-result-overlay-breakdown { position: static; display: contents; }
-    .score-result-overlay-breakdown div { display: grid; width: auto; justify-content: initial; justify-items: center; gap: 3px; }
-    .score-result-overlay-score { grid-row: auto; grid-column: 1 / -1; margin: 20px 0 22px; }
-    .score-result-actions { position: static; grid-column: 1 / -1; margin: 0 auto; transform: none; }
+    .score-result-overlay-breakdown div { display: grid; grid-row: 2; width: auto; justify-content: initial; justify-items: center; gap: 3px; font-size: clamp(0.5rem, 2.3vw, 0.78rem); }
+    .score-result-overlay-breakdown strong { font-size: clamp(0.68rem, 3.3vw, 1rem); }
+    .score-result-overlay-score { grid-row: 1; grid-column: 1 / -1; margin: 0 0 8px; font-size: clamp(1.55rem, 8.5vw, 2.7rem); }
+    .score-result-actions { position: static; grid-row: 3; grid-column: 1 / -1; margin: 10px auto 0; transform: none; }
 }
 
 @keyframes score-scramble-shake {
