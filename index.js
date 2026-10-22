@@ -183,6 +183,7 @@ let scoreCompositionPngBlob      = null;
 let scoreResultPngBlob           = null;
 let scoreCompositionPngPromise   = null;
 let scoreResultPngPromise        = null;
+let scoreCompositionExportEntries = null;
 const scoreTemplateCache         = new Map();
 
 const savedTheme          = localStorage.getItem("theme");
@@ -1815,6 +1816,12 @@ async function finishScoreRound(finished = false, { clearCanvas = true } = {}) {
         scoreGradeButton.disabled  = true;
         scoreCancelButton.disabled = true;
         const result               = await gradeScoreRound();
+        // 結算後會立刻把本局物件轉成一般模式群組，因此要在標記移除前
+        // 保存匯出資料，否則結算圖片會找不到本局物件。
+        captureScoreCompositionExportEntries();
+        // Android 的原生分享必須由按鈕的使用者手勢直接開啟，不能等使用者
+        // 按下分享後才慢慢建立圖片。此時資料仍完整，先在背景準備好。
+        precomputeAndroidScoreShares();
         renderScoreResult(result);
         scoreCountdown.textContent = localized("Done", "完成");
         scoreGradeButton.disabled  = true;
@@ -2733,12 +2740,26 @@ function scoreCompositionEntries() {
             && Number.isFinite(entry.angle));
 }
 
-async function createScoreCompositionPng() {
-    const entries = scoreCompositionEntries();
-    if (!entries.length) throw new Error("找不到可複製的組合");
-    await Promise.all(entries.map((entry) => waitForExportImage(entry.image)));
+function captureScoreCompositionExportEntries() {
+    scoreCompositionExportEntries = scoreCompositionEntries().map(({ part, image, sprite, ...entry }) => ({
+        ...entry,
+        image,
+        sprite: { ...sprite },
+    }));
+}
 
-    const bounds  = scoreImageBounds(entries);
+async function createScoreCompositionPng() {
+    const entries = scoreCompositionExportEntries ?? scoreCompositionEntries();
+    if (!entries.length) throw new Error("找不到可複製的組合");
+    // Match the answer export: draw from the dedicated preloaded image rather
+    // than a rendered DOM image whose source may have been replaced by CSS.
+    const exportEntries = await Promise.all(entries.map(async (entry) => {
+        const source = entry.image.currentSrc || entry.image.src;
+        if (!source) throw new Error("角色圖片載入失敗");
+        return { ...entry, image: await ensurePartSourceLoaded(source) };
+    }));
+
+    const bounds  = scoreImageBounds(exportEntries);
     const padding = 20;
     const scale   = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
     const output  = document.createElement("canvas");
@@ -2749,7 +2770,7 @@ async function createScoreCompositionPng() {
 
     context.scale(scale, scale);
     context.translate(padding - bounds.left, padding - bounds.top);
-    entries
+    [...exportEntries]
         .sort((left, right) => left.z - right.z)
         .forEach((entry) => {
             context.save();
@@ -2930,14 +2951,6 @@ function writeScorePngToClipboard(png) {
     return navigator.clipboard.write([new ClipboardItem({ "image/png": png })]);
 }
 
-function copyScoreCompositionImage() {
-    return createScoreCompositionPng();
-}
-
-function copyScoreResultImage() {
-    return createScoreResultPng();
-}
-
 function markScoreImageCopied(button = null) {
     scoreResultPreview.classList.add("is-image-copied");
     if (button) button.classList.add("is-copied");
@@ -2950,12 +2963,16 @@ function markScoreImageCopied(button = null) {
 function openScoreImageCopyFallback(blob, filename) {
     const url        = URL.createObjectURL(blob);
     const dialog     = document.createElement("dialog");
+    const instruction = localized(
+        "Right-click the image to copy it, or save the image below.",
+        "右鍵圖片後選擇「複製圖片」，或直接儲存圖片。",
+    );
     dialog.className = "score-copy-fallback";
     dialog.innerHTML = `
-        <button class="score-copy-fallback-close" type="button" aria-label="關閉">×</button>
-        <p>長按圖片後選擇「複製」或「儲存圖片」</p>
-        <img alt    = "可複製的結算圖片">
-        <a download = "${filename}" href="${url}">儲存圖片</a>
+        <button class="score-copy-fallback-close" type="button" aria-label="${localized("Close", "關閉")}">×</button>
+        <p>${instruction}</p>
+        <img alt    = "${localized("Copyable score image", "可複製的結算圖片")}">
+        <a download = "${filename}" href="${url}">${localized("Save image", "儲存圖片")}</a>
     `;
     const close                     = () => dialog.close();
     dialog.querySelector("img").src = url;
@@ -3002,8 +3019,11 @@ function resetScoreImageExports() {
     scoreResultPngBlob                  = null;
     scoreCompositionPngPromise          = null;
     scoreResultPngPromise               = null;
-    scoreCopyCompositionButton.disabled = false;
-    scoreCopyResultButton.disabled      = false;
+    scoreCompositionExportEntries       = null;
+    [scoreCopyCompositionButton, scoreCopyResultButton].forEach((button) => {
+        button.disabled = usesAndroidScoreShare();
+        button.removeAttribute("aria-busy");
+    });
 }
 
 function prepareScoreImageExport(kind) {
@@ -3033,6 +3053,7 @@ function prepareScoreImageExport(kind) {
 
 function precomputeAndroidScoreShares() {
     if (!usesAndroidScoreShare()) return;
+    const version = scoreImageExportVersion;
     const exports = [
         ["composition", scoreCopyCompositionButton],
         ["result", scoreCopyResultButton],
@@ -3041,10 +3062,12 @@ function precomputeAndroidScoreShares() {
         button.setAttribute("aria-busy", "true");
         void prepareScoreImageExport(kind)
             .catch((error) => {
-                console.warn("預先建立分享圖片失敗", error);
+                console.warn("預先建立結算圖片失敗", error);
             })
             .finally(() => {
+                if (version !== scoreImageExportVersion) return;
                 button.removeAttribute("aria-busy");
+                button.disabled = false;
             });
     });
 }
@@ -3052,7 +3075,26 @@ function precomputeAndroidScoreShares() {
 function sharePreparedScoreImage(kind, button, filename) {
     const blob = kind === "composition" ? scoreCompositionPngBlob : scoreResultPngBlob;
     if (!blob) {
-        window.alert("圖片正在準備中，請稍後再點一次。");
+        button.disabled = true;
+        button.setAttribute("aria-busy", "true");
+        void prepareScoreImageExport(kind)
+            .then(() => {
+                window.alert(localized(
+                    "Your image is ready. Tap Share again.",
+                    "圖片已準備完成，請再按一次分享。",
+                ));
+            })
+            .catch((error) => {
+                console.error("重新建立分享圖片失敗", error);
+                window.alert(localized(
+                    "Unable to prepare the image for sharing. Please reopen the result and try again.",
+                    "無法準備分享圖片，請重新開啟結算畫面後再試。",
+                ));
+            })
+            .finally(() => {
+                button.disabled = false;
+                button.removeAttribute("aria-busy");
+            });
         return;
     }
     void shareScorePng(blob, filename)
@@ -3064,38 +3106,41 @@ function sharePreparedScoreImage(kind, button, filename) {
         });
 }
 
-function copyScoreImageWithFeedback(createPng, button = null, filename = "battle-cats-puzzle.png") {
-    let png;
-    try {
-        png = Promise.resolve(createPng());
-    } catch (error) {
-        console.error("建立結算圖片失敗", error);
-        window.alert("無法建立圖片，請確認角色圖片已載入完成後再試一次。");
-        return;
-    }
+function copyScoreCompositionImage() {
+    return writeScorePngToClipboard(createScoreCompositionPng());
+}
 
-    void writeScorePngToClipboard(png)
+function copyScoreResultImage() {
+    return writeScorePngToClipboard(createScoreResultPng());
+}
+
+function copyScoreImageWithFeedback(copyImage, button = null) {
+    void copyImage()
         .then(() => {
             markScoreImageCopied(button);
         })
-        .catch(async (clipboardError) => {
-            console.warn("直接複製圖片不可用，改用手機相容流程。", clipboardError);
-            try {
-                const blob = await png;
-                try {
-                    await shareScorePng(blob, filename);
-                    markScoreImageCopied(button);
-                } catch (shareError) {
-                    if (shareError?.name === "AbortError") return;
-                    openScoreImageCopyFallback(blob, filename);
-                }
-            } catch (imageError) {
-                console.error("建立結算圖片失敗", imageError);
-                const message = window.location.protocol === "file:"
-                    ? "直接雙擊 index.html 的 file:// 模式無法複製圖片。請使用 GitHub Pages 或「啟動本機網站.cmd」開啟 localhost 網頁。"
-                    : "無法建立圖片，請確認角色圖片已載入完成後再試一次。";
-                window.alert(message);
-            }
+        .catch((error) => {
+            console.error("結算圖片複製失敗", error);
+            const message = error?.name === "SecurityError"
+                ? window.location.protocol === "file:"
+                    ? localized(
+                        "Opening index.html directly blocks image export. Start the local website and use http://localhost:8080 instead.",
+                        "直接雙擊 index.html 會阻擋圖片匯出。請執行「啟動本機網站.cmd」，再用 http://localhost:8080 開啟。",
+                    )
+                    : localized(
+                        "An image was blocked by browser security and cannot be exported.",
+                        "有圖片被瀏覽器安全限制擋下，無法匯出。",
+                    )
+                : window.location.protocol === "file:"
+                ? localized(
+                    "Opening index.html directly cannot copy images. Use GitHub Pages or localhost.",
+                    "直接雙擊 index.html 的 file:// 模式無法複製圖片。請使用 GitHub Pages 或 localhost 網頁。",
+                )
+                : localized(
+                    "Unable to copy the image. Please try again.",
+                    "無法複製圖片，請再試一次。",
+                );
+            window.alert(message);
         });
 }
 
@@ -5038,19 +5083,19 @@ scoreCopyCompositionButton.addEventListener("click", () => {
         sharePreparedScoreImage("composition", scoreCopyCompositionButton, "battle-cats-your-composition.png");
         return;
     }
-    copyScoreImageWithFeedback(copyScoreCompositionImage, scoreCopyCompositionButton, "battle-cats-your-composition.png");
+    copyScoreImageWithFeedback(copyScoreCompositionImage, scoreCopyCompositionButton);
 });
 scoreCopyResultButton.addEventListener("click", () => {
     if (usesAndroidScoreShare()) {
         sharePreparedScoreImage("result", scoreCopyResultButton, "battle-cats-puzzle-result.png");
         return;
     }
-    copyScoreImageWithFeedback(copyScoreResultImage, scoreCopyResultButton, "battle-cats-puzzle-result.png");
+    copyScoreImageWithFeedback(copyScoreResultImage, scoreCopyResultButton);
 });
     scoreResultPreview.title = localized("Right-click to copy your composition image", "右鍵複製你的組合圖片");
 scoreResultPreview.addEventListener("contextmenu", (event) => {
     event.preventDefault();
-    copyScoreImageWithFeedback(copyScoreCompositionImage, null, "battle-cats-your-composition.png");
+    copyScoreImageWithFeedback(copyScoreCompositionImage);
 });
 scoreResultOverlay.addEventListener("pointerdown", (event) => {
     const hasJustOpened = performance.now() - scoreResultOpenedAt < SCORE_RESULT_CLOSE_GUARD_MS;
