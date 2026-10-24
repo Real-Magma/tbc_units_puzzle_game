@@ -5469,12 +5469,12 @@ window.addEventListener("keydown", (event) => {
     const target   = event.target;
     const isTyping = target instanceof HTMLInputElement || target instanceof HTMLSelectElement || target instanceof HTMLTextAreaElement || target?.isContentEditable;
     if (isTyping || helpDialog.open) return;
-
+/*
     if (isScoreRoundCanvasActive && ["c", "v"].includes(event.key.toLowerCase())) {
         event.preventDefault();
         return;
     }
-
+*/
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "a") {
         event.preventDefault();
         setSelectedParts(orderedParts());
