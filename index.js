@@ -224,7 +224,7 @@ function updateCorrectAnswerCheatButton() {
     const label   = localized(enabled ? "Hide answer" : "Reveal answer", enabled ? "隱藏正解" : "顯示正解");
     correctAnswerCheatButton.setAttribute("aria-pressed", String(enabled));
     correctAnswerCheatButton.setAttribute("aria-label", label);
-    correctAnswerCheatButton.querySelector(".icon-tooltip").textContent = localized("How did you find this???", "你是怎麼看到的???");
+    //correctAnswerCheatButton.querySelector(".icon-tooltip").textContent = localized("How did you find this???", "你是怎麼看到的???");
     correctAnswerCheatButton.querySelector("i").className               = enabled ? "fa-solid fa-eye" : "fa-solid fa-eye-slash";
 }
 
@@ -348,8 +348,8 @@ function applyLanguage() {
         ["#help-title", "How to Play", "How to Play"],
         [".help-lead", "Remaking CATS From Your Memory!!", "利用記憶, 拼出八親不認的貓咪吧！"],
         ["#news-title", "News", "消息"],
-        ["#news-memory-title", "Remaking CATS From Memory!!", "只憑記憶，能還原貓咪嗎？"],
-        [".news-memory-title-copy", "Remaking CATS From Memory!!", "只憑記憶，能還原貓咪嗎？"],
+        [".news-memory-title", "Remaking CATS From Memory!!", "只憑記憶，能還原貓咪嗎？"],
+        [".news-eggeggfox-title", "I challenge eggeggfox!? (in TBC Puzzle Game)", "我挑戰蛋蛋狐來拼一堆貓咪！？"],
         ["#news-audio-credit-label", "Credit:", "音樂來源："],
         ["#copyright-owner", "2026 Magma - Website code and original content.", "2026 阿岩 - 網站程式與原創內容。"],
         ["#copyright-ponos", "The Battle Cats name, characters, and related materials are the property of PONOS Corp.", "貓咪大戰爭之名稱、角色及相關素材權利歸 PONOS Corp. 所有。"],
@@ -5211,6 +5211,23 @@ newsDialog.addEventListener("click", (event) => {
 function enableNewsMarqueeDrag() {
     if (!newsMarquee || !newsMarqueeTrack) return;
 
+    const firstSet = newsMarqueeTrack.querySelector(".news-marquee-set");
+    if (!firstSet) return;
+
+    // Repeat complete sets only: arbitrary pixel padding would make the reset visibly jump.
+    const extraLoopSets      = 1;
+    const loopCycles         = extraLoopSets + 1;
+    const duplicateSets      = [];
+    let insertionPoint       = firstSet;
+    for (let index = 0; index < loopCycles; index += 1) {
+        const duplicateSet = firstSet.cloneNode(true);
+        duplicateSet.setAttribute("aria-hidden", "true");
+        duplicateSet.querySelectorAll("a").forEach((link) => { link.tabIndex = -1; });
+        insertionPoint.after(duplicateSet);
+        insertionPoint = duplicateSet;
+        duplicateSets.push(duplicateSet);
+    }
+
     const autoSpeed     = 36;
     let loopWidth       = 0;
     let offset          = 0;
@@ -5224,14 +5241,11 @@ function enableNewsMarqueeDrag() {
     let lastFrameTime   = performance.now();
 
     const updateLoopWidth = () => {
-        const sets         = newsMarqueeTrack.querySelectorAll(".news-marquee-set");
-        const firstSet     = sets[0];
-        const duplicateSet = sets[1];
-        if (!firstSet || !duplicateSet) {
+        if (duplicateSets.some((duplicateSet) => !duplicateSet.isConnected)) {
             loopWidth = 0;
             return;
         }
-        loopWidth = duplicateSet.getBoundingClientRect().left - firstSet.getBoundingClientRect().left;
+        loopWidth = firstSet.getBoundingClientRect().width * loopCycles;
     };
     const normalizeOffset = () => {
         if (!loopWidth) return;
