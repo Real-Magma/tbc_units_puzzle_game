@@ -753,7 +753,7 @@ function showScoreResultOverlay(result) {
 
     snapshot.removeAttribute("id");
     snapshot.classList.add("score-result-canvas");
-    snapshot.querySelectorAll(".selection-frame, .marquee-selection, .layer-controls, .layers-panel, .layer-context-menu").forEach((element) => element.remove());
+    snapshot.querySelectorAll(".selection-frame, .group-hover-frame, .marquee-selection, .layer-controls, .layers-panel, .layer-context-menu").forEach((element) => element.remove());
     snapshot.querySelectorAll("[id]").forEach((element) => element.removeAttribute("id"));
     snapshot.querySelectorAll("button").forEach((button) => button.remove());
     if (snapshotWorld) {
@@ -1046,10 +1046,14 @@ function addCorrectAnswerToCanvas(answerParts) {
     const placedParts  = [...answerParts]
         .sort((left, right) => (Number(left.targetPart.z) || 0) - (Number(right.targetPart.z) || 0))
         .map(({ asset, targetPart }, index) => {
-            const placedPart = addPartToCanvas(asset, 0, 0, {
+            const is783Stage = ["c-65", "c-73"].includes(asset.id) && asset.src === "assets/unit_sprites/783%20%E4%BF%8F%E5%96%B5/c.webp";
+            const stageWidth = asset.id === "c-65" ? 246 : 160;
+            const stageHeight = asset.id === "c-65" ? 39 : 62;
+            const canvasAsset = is783Stage ? { ...asset, src: `assets/effects/783-${asset.id}-stage.png`, sprite: { x: 0, y: 0, width: stageWidth, height: stageHeight, sheetWidth: stageWidth, sheetHeight: stageHeight } } : asset;
+            const placedPart = addPartToCanvas(canvasAsset, 0, 0, {
                 worldPoint: { x: Number(targetPart.x) || 0, y: Number(targetPart.y) || 0 },
                 rotation: `${Number(targetPart.angle) || 0}deg`,
-                scale: String(Math.sqrt(Math.abs(Number(targetPart.scaleX) || 1) * Math.abs(Number(targetPart.scaleY) || 1))),
+                scale: String(is783Stage ? Math.abs(Number(targetPart.scaleY) || 1) : Math.sqrt(Math.abs(Number(targetPart.scaleX) || 1) * Math.abs(Number(targetPart.scaleY) || 1))),
                 flipX: Number(targetPart.flipX) === -1 ? "-1" : "1",
                 remember: false,
                 appendTarget: insertion,
@@ -1908,6 +1912,21 @@ function normalizeSprite(sprite) {
 // as transparent globally; many ordinary sprites intentionally contain black.
 const effectRenderOverrides = new Map([
     [
+        "assets/unit_sprites/044%20%E6%83%A1%E9%AC%BC%E5%96%B5%E9%AD%94/s.webp|s-50",
+        { src: "assets/effects/044-s-50-additive.png", sprite: { x: 0, y: 0, width: 42, height: 43, sheetWidth: 42, sheetHeight: 43 } },
+    ],
+    [
+        "assets/unit_sprites/783%20%E4%BF%8F%E5%96%B5/c.webp|c-121",
+        { src: "assets/effects/783-c-121-test.png", sprite: { x: 0, y: 0, width: 43, height: 19, sheetWidth: 43, sheetHeight: 19 } },
+    ],
+    [
+        "assets/unit_sprites/783%20%E4%BF%8F%E5%96%B5/f.webp|f-74",
+        {
+            src: "assets/effects/783-f-74-test.png",
+            sprite: { x: 0, y: 0, width: 81, height: 21, sheetWidth: 81, sheetHeight: 21 },
+        },
+    ],
+    [
         "assets/unit_sprites/351%20%E9%9B%99%E6%8E%8C%E6%98%9F%E8%A5%BF%E5%85%92%EF%BC%86%E5%B0%8F%E6%AF%AC/c.webp|c-138",
         {
             src: "assets/effects/351-c-138-additive.png",
@@ -2194,6 +2213,11 @@ function setSelectedParts(parts, primary = parts.at(-1) ?? null, { expandGroups 
     updateLayerButtons();
     updateSelectionFrame();
     renderLayersPanel();
+    requestAnimationFrame(() => {
+        hoveredGroupId = null;
+        groupHoverFrame.hidden = true;
+        updateHoveredPartGroup(canvasWorld.querySelector(".placed-part:hover"));
+    });
 }
 
 function expandGroupedParts(parts) {
@@ -3836,12 +3860,12 @@ function startClearHold(event) {
 
 function opaqueHitMaskForPart(part) {
     const sprite = spriteFromElement(part);
-    const source = part.dataset.src;
+    const image = part.querySelector("img");
+    const source = image?.currentSrc || image?.src;
     if (!sprite || !source) return null;
     const key = `${source}|${sprite.x},${sprite.y},${sprite.width},${sprite.height}`;
     if (opaqueHitMasks.has(key)) return opaqueHitMasks.get(key);
 
-    const image = loadedPartImages.get(source) ?? part.querySelector("img");
     if (!image?.complete || !image.naturalWidth) return null;
     try {
         const raster  = document.createElement("canvas");
@@ -3885,18 +3909,9 @@ function isOpaquePartHit(part, clientX, clientY) {
     const mask     = opaqueHitMaskForPart(part);
     if (!mask) return localX >= 0 && localX < sprite.width && localY >= 0 && localY < sprite.height;
 
-    const tolerance = Math.max(1, Math.ceil(3 / Math.max(viewScale * scale, 0.01)));
-    const centerX   = Math.round(localX);
-    const centerY   = Math.round(localY);
-    for (let offsetY = -tolerance; offsetY <= tolerance; offsetY += 1) {
-        for (let offsetX = -tolerance; offsetX <= tolerance; offsetX += 1) {
-            if (offsetX ** 2 + offsetY ** 2 > tolerance ** 2) continue;
-            const x = centerX + offsetX;
-            const y = centerY + offsetY;
-            if (x >= 0 && x < mask.width && y >= 0 && y < mask.height && mask.alpha[y * mask.width + x] > 24) return true;
-        }
-    }
-    return false;
+    const x = Math.floor(localX);
+    const y = Math.floor(localY);
+    return x >= 0 && x < mask.width && y >= 0 && y < mask.height && mask.alpha[y * mask.width + x] > 0;
 }
 
 function topOpaquePartAt(clientX, clientY) {
@@ -3947,6 +3962,7 @@ function beginPlacedPartDrag(image, event) {
     const grabOffsetY   = startPoint.y - Number.parseFloat(imagePosition.top);
     let moved           = false;
     let overTrash       = false;
+    canvasWorld.classList.add("is-dragging-parts");
     image.setPointerCapture(event.pointerId);
 
     const move = (pointerEvent) => {
@@ -3967,7 +3983,14 @@ function beginPlacedPartDrag(image, event) {
         trashZone.classList.toggle("is-ready", overTrash);
         moved = true;
     };
-    const stop = () => {
+    const stop = (pointerEvent) => {
+        canvasWorld.classList.remove("is-dragging-parts");
+        hoveredGroupId = null;
+        groupHoverFrame.hidden = true;
+        if (pointerEvent.type === "pointerup" && pointerEvent.pointerType !== "touch") {
+            const { clientX, clientY } = pointerEvent;
+            requestAnimationFrame(() => updateHoveredPartGroup(document.elementFromPoint(clientX, clientY)));
+        }
         image.removeEventListener("pointermove", move);
         image.removeEventListener("pointerup", stop);
         image.removeEventListener("pointercancel", stop);
@@ -4346,6 +4369,7 @@ function addPartToCanvas(part, clientX, clientY, options = {}) {
     const lockStripeOverlay                                                            = document.createElement("canvas");
     const rotateHandle                                                                 = document.createElement("button");
     placedPart.className                                                               = "placed-part";
+    if ((part.id === "f-74" && part.src === "assets/unit_sprites/783%20%E4%BF%8F%E5%96%B5/f.webp") || (part.id === "c-121" && part.src === "assets/unit_sprites/783%20%E4%BF%8F%E5%96%B5/c.webp") || (part.id === "s-50" && part.src === "assets/unit_sprites/044%20%E6%83%A1%E9%AC%BC%E5%96%B5%E9%AD%94/s.webp")) placedPart.classList.add("test-additive-light");
     if (part.scoreRound || isScoreRoundCanvasActive) placedPart.dataset.scoreRoundPart = "true";
     placedPart.dataset.partId                                                          = part.id;
     placedPart.dataset.src                                                             = part.src;
@@ -5430,6 +5454,86 @@ canvas.addEventListener("pointerdown", (event) => {
     if (target.closest(".placed-part, .selection-corner, .layer-controls, .trash-zone")) return;
     if (target === canvas || target === canvasWorld) selectPlacedPart(null);
 }, true);
+let hoveredGroupId = null;
+const selectedHoverKey = Symbol("selected parts");
+const groupHoverFrame = document.createElement("canvas");
+groupHoverFrame.className = "group-hover-frame";
+groupHoverFrame.hidden = true;
+groupHoverFrame.setAttribute("aria-hidden", "true");
+canvasWorld.append(groupHoverFrame);
+function updateHoveredPartGroup(target) {
+    if (canvasWorld.classList.contains("is-dragging-parts")) return;
+    const part = target instanceof Element ? target.closest(".placed-part") : null;
+    const eligible = part && canvasWorld.contains(part) && !isPartMovementLocked(part);
+    const groupId = eligible && selectedParts.size > 1 && selectedParts.has(part) ? selectedHoverKey : (eligible ? part.dataset.groupId : null);
+    if ((groupId || null) === hoveredGroupId) return;
+    hoveredGroupId = groupId || null;
+    groupHoverFrame.hidden = true;
+    if (!groupId) return;
+    let bounds = null;
+    const members = [];
+    const candidates = groupId === selectedHoverKey ? [...selectedParts] : [...canvasWorld.querySelectorAll(".placed-part[data-group-id]")].filter((member) => member.dataset.groupId === groupId);
+    const lockedGroups = new Set([...canvasWorld.querySelectorAll(".placed-part.is-layer-locked[data-group-id]")].map((member) => member.dataset.groupId));
+    candidates.forEach((member) => {
+        if (member.classList.contains("is-layer-locked") || lockedGroups.has(member.dataset.groupId) || member.classList.contains("is-layer-hidden") || !member.getClientRects().length) return;
+        const rect = selectionBoundsInWorld(member);
+        if (!rect) return;
+        members.push(member);
+        if (!bounds) bounds = { ...rect };
+        else {
+            bounds.left = Math.min(bounds.left, rect.left);
+            bounds.top = Math.min(bounds.top, rect.top);
+            bounds.right = Math.max(bounds.right, rect.right);
+            bounds.bottom = Math.max(bounds.bottom, rect.bottom);
+        }
+    });
+    if (!bounds) return;
+    const padding = 3 / Math.max(viewScale, 0.01);
+    const width = bounds.right - bounds.left + 2 * padding;
+    const height = bounds.bottom - bounds.top + 2 * padding;
+    const resolution = Math.min(viewScale, 2048 / width, 2048 / height);
+    if (!(resolution > 0)) return;
+    const mask = document.createElement("canvas");
+    mask.width = groupHoverFrame.width = Math.max(1, Math.ceil(width * resolution));
+    mask.height = groupHoverFrame.height = Math.max(1, Math.ceil(height * resolution));
+    const context = mask.getContext("2d");
+    context.scale(resolution, resolution);
+    context.translate(-bounds.left + padding, -bounds.top + padding);
+    members.forEach((member) => {
+        const image = member.querySelector("img");
+        const sprite = spriteFromElement(member);
+        if (!image?.complete || !image.naturalWidth || !sprite) return;
+        const state = positionOf(member);
+        const scale = Number.parseFloat(state.scale);
+        context.save();
+        context.translate(Number.parseFloat(state.left), Number.parseFloat(state.top));
+        context.rotate((Number.parseFloat(state.rotation) || 0) * Math.PI / 180);
+        context.scale(scale * (Number.parseFloat(state.flipX) || 1), scale);
+        context.drawImage(image, sprite.x, sprite.y, sprite.width, sprite.height, -sprite.width / 2, -sprite.height / 2, sprite.width, sprite.height);
+        context.restore();
+    });
+    const outline = groupHoverFrame.getContext("2d");
+    for (const [x, y] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) outline.drawImage(mask, x, y);
+    outline.globalCompositeOperation = "source-in";
+    outline.fillStyle = "#22c55e";
+    outline.fillRect(0, 0, mask.width, mask.height);
+    outline.globalCompositeOperation = "destination-out";
+    outline.drawImage(mask, 0, 0);
+    outline.globalCompositeOperation = "source-over";
+    groupHoverFrame.style.left = `${bounds.left - padding}px`;
+    groupHoverFrame.style.top = `${bounds.top - padding}px`;
+    groupHoverFrame.style.width = `${width}px`;
+    groupHoverFrame.style.height = `${height}px`;
+    groupHoverFrame.hidden = false;
+}
+
+canvasWorld.addEventListener("pointerover", (event) => {
+    if (event.pointerType !== "touch") updateHoveredPartGroup(event.target);
+});
+canvasWorld.addEventListener("pointerout", (event) => {
+    if (event.pointerType !== "touch") updateHoveredPartGroup(event.relatedTarget);
+});
+
 canvas.addEventListener("pointerdown", startMarqueeSelection);
 canvas.addEventListener("pointerdown", startCanvasPan);
 canvas.addEventListener("wheel", zoomCanvas, { passive: false });

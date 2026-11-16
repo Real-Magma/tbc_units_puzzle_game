@@ -769,6 +769,24 @@ html[data-theme="dark"] .rounded-box.is-rotating {
     pointer-events: none;
 }
 
+/* Test additive blending for unit 783's first-form spotlight. */
+.canvas-world .placed-part.test-additive-light { mix-blend-mode: plus-lighter; }
+
+@media (hover: hover) {
+    .canvas-world:not(.is-dragging-parts) .placed-part:not([data-group-id]):not(.is-layer-locked):hover > :is(img, .placed-sprite-crop) {
+        filter: drop-shadow(1px 0 0 #22c55e) drop-shadow(-1px 0 0 #22c55e)
+                drop-shadow(0 1px 0 #22c55e) drop-shadow(0 -1px 0 #22c55e);
+    }
+    .canvas-world.has-group-selection .placed-part.is-selected:hover > :is(img, .placed-sprite-crop) { filter: none !important; }
+}
+
+.group-hover-frame {
+    position: absolute;
+    z-index: 9999;
+    pointer-events: none;
+}
+.canvas-world.is-dragging-parts .group-hover-frame { display: none; }
+
 .placed-sprite-crop,
 .sprite-preview {
     position: relative;
